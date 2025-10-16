@@ -1,13 +1,31 @@
+
 """Tests for Query class and filter composition on a mini filesystem."""
 
 import pathlib
+import shutil
 import pytest
+import time
 from pathql.query import Query
 from pathql.filters.size import Size
 from pathql.filters.suffix import Suffix
 from pathql.filters.stem import Stem
 from pathql.filters.age import AgeMinutes, AgeDays
 from pathql.filters.type import Type
+from pathql.filters import Filter
+
+
+@pytest.fixture
+def hundred_files(tmp_path):
+    """
+    Create a temp folder with 100 files for benchmarking and concurrency tests.
+    Deletes the folder and files after the test.
+    """
+    folder = tmp_path / "hundred_files"
+    folder.mkdir()
+    for i in range(100):
+        (folder / f"file_{i}.txt").write_text("x")
+    yield folder
+    shutil.rmtree(folder)
 
 @pytest.fixture
 def mini_fs(tmp_path):
@@ -60,4 +78,17 @@ def test_query_complex(mini_fs):
     files = list(q.files(mini_fs, recursive=True, files=True))
     names = sorted(f.name for f in files)
     assert names == ["bar.md", "foo.txt", "qux.txt"]
+
+
+def test_threaded_vs_unthreaded_equivalence_hundred(hundred_files):
+    """
+    Verify that threaded and unthreaded Query methods yield the same results on 100 files.
+    """
+    q = Query(Suffix == "txt")
+    threaded = set(f.name for f in q.files(hundred_files, recursive=True, files=True))
+    unthreaded = set(f.name for f in q.unthreaded_files(hundred_files, recursive=True, files=True))
+    assert threaded == unthreaded
+    assert len(threaded) == 100
+
+
 

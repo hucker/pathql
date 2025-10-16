@@ -1,7 +1,6 @@
 """Extra tests for Size filter, including error handling and custom file creation."""
 
 import pytest
-import pathlib
 from pathql.filters.size import Size
 
 def make_file(tmp_path, size=1):

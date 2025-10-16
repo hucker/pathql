@@ -1,17 +1,77 @@
+"""
+Query engine for pathql: threaded producer-consumer file search and filtering.
+
+This module defines the Query class, which uses a producer thread to walk the filesystem and a consumer (main thread) to filter files using pathql filters.
+"""
+
 import pathlib
 from .filters.base import Filter
 from typing import Iterator
-
+import threading
+import queue
 import time
 
+
 class Query(Filter):
+    """
+    Query engine for pathql.
+
+    Uses a threaded producer-consumer model to walk the filesystem and filter files.
+
+    Args:
+        filter_expr (Filter): The filter expression to apply to files.
+    """
+
+
     def __init__(self, filter_expr: Filter):
+        """
+        Initialize Query.
+
+        Args:
+            filter_expr (Filter): The filter expression to apply to files.
+        """
         self.filter_expr = filter_expr
 
-    def files(self, path: 'pathlib.Path', recursive=True, files=True, now=None) -> Iterator['pathlib.Path']:
+
+    def match(self, path: 'pathlib.Path', now=None, stat_result=None) -> bool:
+        """
+        Check if a single path matches the filter expression.
+
+        Args:
+            path (pathlib.Path): File or directory to check.
+            now (float, optional): Reference time for filters. Defaults to current time.
+            stat_result (os.stat_result, optional): Cached stat result. If None, will stat the path.
+
+        Returns:
+            bool: True if the path matches the filter, False otherwise.
+        """
         if now is None:
             now = time.time()
-        for p in path.rglob("*" if recursive else "*"):
+        if stat_result is None:
+            try:
+                stat_result = path.stat()
+            except Exception:
+                stat_result = None
+        return self.filter_expr.match(path, now=now, stat_result=stat_result)
+    
+
+    def unthreaded_files(self, path: 'pathlib.Path', recursive=True, files=True, now=None) -> Iterator['pathlib.Path']:
+        """
+        Yield files matching the filter expression using a single-threaded approach (no queue/thread).
+
+        Args:
+            path (pathlib.Path): Root directory to search.
+            recursive (bool): If True, search recursively. If False, only top-level files.
+            files (bool): If True, yield only files (not directories).
+            now (float, optional): Reference time for filters. Defaults to current time.
+
+        Yields:
+            pathlib.Path: Files matching the filter expression.
+        """
+        if now is None:
+            now = time.time()
+        iterator = path.rglob("*") if recursive else path.glob("*")
+        for p in iterator:
             if files and not p.is_file():
                 continue
             try:
@@ -21,13 +81,51 @@ class Query(Filter):
             if self.filter_expr.match(p, now=now, stat_result=stat_result):
                 yield p
 
-    def match(self, path: 'pathlib.Path', now=None, stat_result=None) -> bool:
+
+
+    def files(self, path: 'pathlib.Path', recursive=True, files=True, now=None) -> Iterator['pathlib.Path']:
+        """
+        Yield files matching the filter expression using a threaded producer-consumer model.
+
+        Args:
+            path (pathlib.Path): Root directory to search.
+            recursive (bool): If True, search recursively. If False, only top-level files.
+            files (bool): If True, yield only files (not directories).
+            now (float, optional): Reference time for filters. Defaults to current time.
+
+        Yields:
+            pathlib.Path: Files matching the filter expression.
+        """
         if now is None:
-            import time
             now = time.time()
-        if stat_result is None:
-            try:
-                stat_result = path.stat()
-            except Exception:
-                stat_result = None
-        return self.filter_expr.match(path, now=now, stat_result=stat_result)
+        q = queue.Queue(maxsize=10)
+
+        def producer():
+            """
+            Producer thread: walks the filesystem and enqueues (path, stat_result) tuples.
+
+            Uses rglob for recursive search, glob for non-recursive.
+            """
+            iterator = path.rglob("*") if recursive else path.glob("*")
+            for p in iterator:
+                if files and not p.is_file():
+                    continue
+                try:
+                    stat_result = p.stat()
+                except Exception:
+                    stat_result = None
+                q.put((p, stat_result))
+            q.put(None)  # Sentinel to signal completion
+
+        t = threading.Thread(target=producer, daemon=True)
+        t.start()
+        while True:
+            item = q.get()
+            if item is None:
+                break
+            p, stat_result = item
+            if self.filter_expr.match(p, now=now, stat_result=stat_result):
+                yield p
+        t.join()
+
+
