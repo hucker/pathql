@@ -4,5 +4,10 @@
         "VIRTUAL_ENV": "${workspaceFolder}\\.venv",
         "PATH": "${workspaceFolder}\\.venv\\Scripts;${env:PATH}"
     },
-    "python.defaultInterpreterPath": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
+    "python.defaultInterpreterPath": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+    "python.testing.pytestArgs": [
+        "test"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true
 }

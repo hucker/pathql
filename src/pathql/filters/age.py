@@ -3,7 +3,23 @@ import time
 from .base import Filter
 
 
-class AgeDays(Filter):
+
+# Metaclass for class-level operator overloading
+class _AgeMeta(type):
+    def __le__(cls, other):
+        return cls(lambda x, y: x <= y, other)
+    def __lt__(cls, other):
+        return cls(lambda x, y: x < y, other)
+    def __ge__(cls, other):
+        return cls(lambda x, y: x >= y, other)
+    def __gt__(cls, other):
+        return cls(lambda x, y: x > y, other)
+    def __eq__(cls, other):
+        return cls(lambda x, y: x == y, other)
+    def __ne__(cls, other):
+        return cls(lambda x, y: x != y, other)
+
+class AgeDays(Filter, metaclass=_AgeMeta):
     def __init__(self, op=None, value=None):
         self.op = op
         self.value = value
@@ -20,20 +36,8 @@ class AgeDays(Filter):
         except Exception:
             return False
 
-    def __le__(self, other):
-        return AgeDays.__new__(AgeDays, lambda x, y: x <= y, other)
-    def __lt__(self, other):
-        return AgeDays.__new__(AgeDays, lambda x, y: x < y, other)
-    def __ge__(self, other):
-        return AgeDays.__new__(AgeDays, lambda x, y: x >= y, other)
-    def __gt__(self, other):
-        return AgeDays.__new__(AgeDays, lambda x, y: x > y, other)
-    def __eq__(self, other):
-        return AgeDays.__new__(AgeDays, lambda x, y: x == y, other)
-    def __ne__(self, other):
-        return AgeDays.__new__(AgeDays, lambda x, y: x != y, other)
 
-class AgeYears(Filter):
+class AgeYears(Filter, metaclass=_AgeMeta):
     def __init__(self, op=None, value=None):
         self.op = op
         self.value = value
@@ -50,21 +54,9 @@ class AgeYears(Filter):
         except Exception:
             return False
 
-    def __le__(self, other):
-        return AgeYears.__new__(AgeYears, lambda x, y: x <= y, other)
-    def __lt__(self, other):
-        return AgeYears.__new__(AgeYears, lambda x, y: x < y, other)
-    def __ge__(self, other):
-        return AgeYears.__new__(AgeYears, lambda x, y: x >= y, other)
-    def __gt__(self, other):
-        return AgeYears.__new__(AgeYears, lambda x, y: x > y, other)
-    def __eq__(self, other):
-        return AgeYears.__new__(AgeYears, lambda x, y: x == y, other)
-    def __ne__(self, other):
-        return AgeYears.__new__(AgeYears, lambda x, y: x != y, other)
 
 
-class AgeMinutes(Filter):
+class AgeMinutes(Filter, metaclass=_AgeMeta):
     def __init__(self, op=None, value=None):
         self.op = op
         self.value = value
@@ -80,16 +72,3 @@ class AgeMinutes(Filter):
             return self.op(age_m, self.value)
         except Exception:
             return False
-
-    def __le__(self, other):
-        return AgeMinutes.__new__(AgeMinutes, lambda x, y: x <= y, other)
-    def __lt__(self, other):
-        return AgeMinutes.__new__(AgeMinutes, lambda x, y: x < y, other)
-    def __ge__(self, other):
-        return AgeMinutes.__new__(AgeMinutes, lambda x, y: x >= y, other)
-    def __gt__(self, other):
-        return AgeMinutes.__new__(AgeMinutes, lambda x, y: x > y, other)
-    def __eq__(self, other):
-        return AgeMinutes.__new__(AgeMinutes, lambda x, y: x == y, other)
-    def __ne__(self, other):
-        return AgeMinutes.__new__(AgeMinutes, lambda x, y: x != y, other)

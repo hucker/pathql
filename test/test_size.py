@@ -5,7 +5,7 @@
 #   200.txt (200 bytes)
 
 import pathlib
-from src.pathql.filters.size import Size
+from pathql.filters.size import Size
 
 def test_size_eq(size_test_folder):
     """Test Size == operator."""

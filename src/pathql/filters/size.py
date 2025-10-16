@@ -2,12 +2,54 @@
 import pathlib
 from .base import Filter
 
-class Size(Filter):
+class FilterMeta(type):
+    def __le__(cls, other):
+        return cls(lambda x, y: x <= y, other)
+    def __lt__(cls, other):
+        return cls(lambda x, y: x < y, other)
+    def __ge__(cls, other):
+        return cls(lambda x, y: x >= y, other)
+    def __gt__(cls, other):
+        return cls(lambda x, y: x > y, other)
+    def __eq__(cls, other):
+        return cls(lambda x, y: x == y, other)
+    def __ne__(cls, other):
+        return cls(lambda x, y: x != y, other)
+
+class Size(Filter, metaclass=FilterMeta):
     def __init__(self, op=None, value=None):
         self.op = op
         self.value = value
 
-    def match(self, path: 'pathlib.Path') -> bool:
+    # Class-level operator overloads for declarative syntax
+    def __class_getitem__(cls, item):
+        return cls(lambda x, y: x == y, item)
+
+    @classmethod
+    def __le__(cls, other):
+        return cls(lambda x, y: x <= y, other)
+
+    @classmethod
+    def __lt__(cls, other):
+        return cls(lambda x, y: x < y, other)
+
+    @classmethod
+    def __ge__(cls, other):
+        return cls(lambda x, y: x >= y, other)
+
+    @classmethod
+    def __gt__(cls, other):
+        return cls(lambda x, y: x > y, other)
+
+    @classmethod
+    def __eq__(cls, other):
+        return cls(lambda x, y: x == y, other)
+
+    @classmethod
+    def __ne__(cls, other):
+        return cls(lambda x, y: x != y, other)
+
+    def match(self, path: 'pathlib.Path', now=None) -> bool:
         if self.op is None or self.value is None:
             raise ValueError("Size filter not fully specified.")
         try:

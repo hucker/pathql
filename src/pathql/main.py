@@ -1,9 +1,9 @@
 
 import pathlib
-from .filters.fileext import FileExt
-from .filters.size import Size
-from .filters.age import AgeMinutes
-from .query import Query
+from pathql.filters.fileext import FileExt
+from pathql.filters.size import Size
+from pathql.filters.age import AgeMinutes
+from pathql.query import Query
 
 # Example usage
 if __name__ == "__main__":

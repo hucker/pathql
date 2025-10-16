@@ -1,6 +1,6 @@
 from .base import Filter
-from .fileext import FileExt
+from .suffix import Suffix, Ext
 from .size import Size
 from .age import AgeMinutes, AgeDays, AgeYears
-from .name import Name
+from .stem import Stem, Name
 from .type import Type

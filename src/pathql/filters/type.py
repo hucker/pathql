@@ -2,7 +2,29 @@
 import pathlib
 from .base import Filter
 
-class Type(Filter):
+class _TypeMeta(type):
+    def __eq__(cls, other):
+        return Type(other)
+    def __or__(cls, other):
+        if isinstance(other, Type):
+            return Type({other})
+        elif isinstance(other, str):
+            return Type({other})
+        elif isinstance(other, set):
+            return Type(other)
+        else:
+            return NotImplemented
+    def __ror__(cls, other):
+        if isinstance(other, Type):
+            return Type({other})
+        elif isinstance(other, str):
+            return Type({other})
+        elif isinstance(other, set):
+            return Type(other)
+        else:
+            return NotImplemented
+
+class Type(Filter, metaclass=_TypeMeta):
     """
     Filter for file type: file, directory, link, or unknown.
     Usage: Type == Type.FILE, Type in {Type.FILE, Type.DIRECTORY}
@@ -36,6 +58,8 @@ class Type(Filter):
         """
         import stat
         try:
+            if not path.exists():
+                return Type.UNKNOWN in self.type_names
             st = path.lstat()
             mode = st.st_mode
             type_map = {
@@ -50,19 +74,37 @@ class Type(Filter):
                 return not any(type_map.values())
             return False
         except Exception:
-            return False
+            # If lstat fails for any reason, treat as unknown if requested
+            return Type.UNKNOWN in self.type_names
+
 
     def __eq__(self, other: object) -> 'Type':
         """Return a Type filter for equality comparison."""
-        return Type.__new__(Type, other)
+        return Type(other)
+
 
     def __or__(self, other: object) -> 'Type':
         """Return a Type filter for set union."""
-        return Type.__new__(Type, other)
+        if isinstance(other, Type):
+            return Type(self.type_names | other.type_names)
+        elif isinstance(other, str):
+            return Type(self.type_names | {other})
+        elif isinstance(other, set):
+            return Type(self.type_names | set(other))
+        else:
+            return NotImplemented
+
 
     def __ror__(self, other: object) -> 'Type':
         """Return a Type filter for set union (reversed)."""
-        return Type.__new__(Type, other)
+        if isinstance(other, Type):
+            return Type(self.type_names | other.type_names)
+        elif isinstance(other, str):
+            return Type(self.type_names | {other})
+        elif isinstance(other, set):
+            return Type(self.type_names | set(other))
+        else:
+            return NotImplemented
 
     def __contains__(self, item: str) -> bool:
         """Check if a type string is in the filter's type set."""
