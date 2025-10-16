@@ -8,11 +8,10 @@ __pycache__/
 
 # Distribution / packaging
 .Python
+<<<<<<< HEAD
 env/
-build/
-develop-eggs/
-dist/
-downloads/
+=======
+>>>>>>> feature/dates
 eggs/
 .eggs/
 lib/
@@ -24,6 +23,17 @@ var/
 .installed.cfg
 *.egg
 
+<<<<<<< HEAD
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+coverage.xml
+*.cover
+<<<<<<< HEAD
+.hypothesis/
+.pytest_cache/
+
+
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
@@ -32,14 +42,14 @@ pip-delete-this-directory.txt
 htmlcov/
 .tox/
 .nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
 .hypothesis/
 .pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
 
 # VS Code
 .vscode/
@@ -56,9 +66,6 @@ Desktop.ini
 
 # Jupyter
 .ipynb_checkpoints/
-
-# Misc
-*.log
 *.tmp
 *.bak
 *.swp
@@ -73,3 +80,31 @@ ENV/
 
 # PathQL specific
 # (add any project-specific ignores below)
+=======
+*.py,cover
+.hypothesis/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Test output
+*.out
+*.err
+
+# Git
+.git/
+>>>>>>> feature/dates

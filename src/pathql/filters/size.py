@@ -2,16 +2,78 @@
 import pathlib
 from .base import Filter
 
-class Size(Filter):
+class FilterMeta(type):
+    def __le__(cls, other):
+        return cls(lambda x, y: x <= y, other)
+    def __lt__(cls, other):
+        return cls(lambda x, y: x < y, other)
+    def __ge__(cls, other):
+        return cls(lambda x, y: x >= y, other)
+    def __gt__(cls, other):
+        return cls(lambda x, y: x > y, other)
+    def __eq__(cls, other):
+        return cls(lambda x, y: x == y, other)
+    def __ne__(cls, other):
+        return cls(lambda x, y: x != y, other)
+
+class Size(Filter, metaclass=FilterMeta):
+    """
+    Filter for file size (in bytes).
+
+    Allows declarative queries on file size using operator overloads:
+        Size <= 1024
+        Size > 1_000_000
+        Size(lambda x, y: x % 2 == 0, None)  # custom logic
+
+    Args:
+        op (callable, optional): Operator function (e.g., operator.le, operator.gt).
+        value (int, optional): Value to compare file size against.
+    """
     def __init__(self, op=None, value=None):
+        """
+        Initialize a Size filter.
+
+        Args:
+            op (callable, optional): Operator function (e.g., operator.le, operator.gt).
+            value (int, optional): Value to compare file size against.
+        """
         self.op = op
         self.value = value
 
-    def match(self, path: 'pathlib.Path') -> bool:
+    # Class-level operator overloads for declarative syntax
+    def __class_getitem__(cls, item):
+        return cls(lambda x, y: x == y, item)
+
+    @classmethod
+    def __le__(cls, other):
+        return cls(lambda x, y: x <= y, other)
+
+    @classmethod
+    def __lt__(cls, other):
+        return cls(lambda x, y: x < y, other)
+
+    @classmethod
+    def __ge__(cls, other):
+        return cls(lambda x, y: x >= y, other)
+
+    @classmethod
+    def __gt__(cls, other):
+        return cls(lambda x, y: x > y, other)
+
+    @classmethod
+    def __eq__(cls, other):
+        return cls(lambda x, y: x == y, other)
+
+    @classmethod
+    def __ne__(cls, other):
+        return cls(lambda x, y: x != y, other)
+
+    def match(self, path: 'pathlib.Path', now=None, stat_result=None) -> bool:
         if self.op is None or self.value is None:
             raise ValueError("Size filter not fully specified.")
         try:
-            size = path.stat().st_size
+            st = stat_result if stat_result is not None else path.stat()
+            size = st.st_size
             return self.op(size, self.value)
         except Exception:
             return False

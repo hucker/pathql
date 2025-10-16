@@ -1,4 +1,4 @@
-from .filters.fileext import FileExt
+from .filters.suffix import Suffix,Ext
 from .filters.size import Size
 from .filters.age import AgeMinutes
 from .filters.type import Type
