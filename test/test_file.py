@@ -1,3 +1,5 @@
+"""Tests for File filter, especially curly-brace extension patterns and case insensitivity."""
+
 import pytest
 import pathlib
 from pathql.filters import File

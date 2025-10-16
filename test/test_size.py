@@ -1,3 +1,5 @@
+"""Tests for Size filter using a fixture with files of known sizes."""
+
 
 # Tests for Size filter using the size_test_folder fixture.
 # size_test_folder contains:

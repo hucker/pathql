@@ -1,3 +1,5 @@
+"""Extra tests for Suffix and Ext filters, including nosplit and case-insensitive matching."""
+
 import pytest
 import pathlib
 from pathql.filters.suffix import Suffix, Ext

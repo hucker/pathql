@@ -1,5 +1,8 @@
+"""
+Stem filter for matching file stems (filename without extension) using glob patterns.
+Provides declarative, pathlib-like queries for filesystem filtering.
+"""
 import pathlib
-import re
 from .base import Filter
 
 
@@ -40,7 +43,16 @@ class Stem(Filter):
         self.ignore_case = ignore_case
         self._fnmatch = fnmatch
 
-    def match(self, path: 'pathlib.Path', now=None, stat_result=None) -> bool:
+    def match(self, path: pathlib.Path, now=None, stat_result=None) -> bool:
+        """
+        Check if the given path's stem matches any of the filter's glob patterns.
+        Args:
+            path (pathlib.Path): The file path to check.
+            now: Ignored (for compatibility).
+            stat_result: Optional stat result to reuse.
+        Returns:
+            bool: True if the stem matches any pattern, else False.
+        """
         stem = path.stem
         if self.ignore_case:
             stem = stem.lower()

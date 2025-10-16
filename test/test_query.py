@@ -1,3 +1,5 @@
+"""Tests for Query class and filter composition on a mini filesystem."""
+
 import pathlib
 import pytest
 from pathql.query import Query

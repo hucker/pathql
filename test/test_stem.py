@@ -1,3 +1,5 @@
+"""Tests for Stem and Name filters, including equality and multiple stem matching."""
+
 import pathlib
 import pytest
 from pathql.filters.stem import Stem, Name

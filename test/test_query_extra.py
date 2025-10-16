@@ -1,3 +1,5 @@
+"""Extra tests for Query and custom filters, including AlwaysTrue/AlwaysFalse and file creation helpers."""
+
 import pytest
 import pathlib
 from pathql.query import Query

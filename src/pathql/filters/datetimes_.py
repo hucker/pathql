@@ -1,7 +1,62 @@
+
 import datetime as dt
 import pathlib
-from .base import Filter
 import operator
+from .base import Filter
+
+# Top-level filter classes for exact datetime matches
+class _DayFilter(Filter):
+	"""Filter for exact year, month, and day match."""
+	def __init__(self, other):
+		self.other = other
+	def match(self, path, now=None, stat_result=None):
+		if stat_result is None:
+			stat_result = path.stat()
+		ts = getattr(stat_result, 'st_mtime')
+		dt_obj = dt.datetime.fromtimestamp(ts)
+		return (dt_obj.year == self.other.year and dt_obj.month == self.other.month and dt_obj.day == self.other.day)
+
+class _HourFilter(Filter):
+	"""Filter for exact year, month, day, and hour match."""
+	def __init__(self, other):
+		self.other = other
+	def match(self, path, now=None, stat_result=None):
+		if stat_result is None:
+			stat_result = path.stat()
+		ts = getattr(stat_result, 'st_mtime')
+		dt_obj = dt.datetime.fromtimestamp(ts)
+		if isinstance(self.other, dt.datetime):
+			return (dt_obj.year == self.other.year and dt_obj.month == self.other.month and dt_obj.day == self.other.day and dt_obj.hour == self.other.hour)
+		else:
+			return (dt_obj.year == self.other.year and dt_obj.month == self.other.month and dt_obj.day == self.other.day)
+
+class _MinuteFilter(Filter):
+	"""Filter for exact year, month, day, hour, and minute match."""
+	def __init__(self, other):
+		self.other = other
+	def match(self, path, now=None, stat_result=None):
+		if stat_result is None:
+			stat_result = path.stat()
+		ts = getattr(stat_result, 'st_mtime')
+		dt_obj = dt.datetime.fromtimestamp(ts)
+		if isinstance(self.other, dt.datetime):
+			return (dt_obj.year == self.other.year and dt_obj.month == self.other.month and dt_obj.day == self.other.day and dt_obj.hour == self.other.hour and dt_obj.minute == self.other.minute)
+		else:
+			return (dt_obj.year == self.other.year and dt_obj.month == self.other.month and dt_obj.day == self.other.day)
+
+class _SecondFilter(Filter):
+	"""Filter for exact year, month, day, hour, minute, and second match."""
+	def __init__(self, other):
+		self.other = other
+	def match(self, path, now=None, stat_result=None):
+		if stat_result is None:
+			stat_result = path.stat()
+		ts = getattr(stat_result, 'st_mtime')
+		dt_obj = dt.datetime.fromtimestamp(ts)
+		if isinstance(self.other, dt.datetime):
+			return (dt_obj.year == self.other.year and dt_obj.month == self.other.month and dt_obj.day == self.other.day and dt_obj.hour == self.other.hour and dt_obj.minute == self.other.minute and dt_obj.second == self.other.second)
+		else:
+			return (dt_obj.year == self.other.year and dt_obj.month == self.other.month and dt_obj.day == self.other.day)
 
 # Month name mapping (case-insensitive, 3-letter and full names)
 _MONTH_NAME_TO_NUM = {
@@ -114,51 +169,13 @@ class _DateTimePart:
 			if self.part == 'month':
 				return self._filter(operator.eq, other.month)
 			if self.part == 'day':
-				# Match year, month, and day
-				class _DayFilter(Filter):
-					def match(_, path, now=None, stat_result=None):
-						if stat_result is None:
-							stat_result = path.stat()
-						ts = getattr(stat_result, 'st_mtime')
-						dt_obj = dt.datetime.fromtimestamp(ts)
-						return (dt_obj.year == other.year and dt_obj.month == other.month and dt_obj.day == other.day)
-				return _DayFilter()
+				return _DayFilter(other)
 			if self.part == 'hour':
-				class _HourFilter(Filter):
-					def match(_, path, now=None, stat_result=None):
-						if stat_result is None:
-							stat_result = path.stat()
-						ts = getattr(stat_result, 'st_mtime')
-						dt_obj = dt.datetime.fromtimestamp(ts)
-						if isinstance(other, dt.datetime):
-							return (dt_obj.year == other.year and dt_obj.month == other.month and dt_obj.day == other.day and dt_obj.hour == other.hour)
-						else:
-							return (dt_obj.year == other.year and dt_obj.month == other.month and dt_obj.day == other.day)
-				return _HourFilter()
+				return _HourFilter(other)
 			if self.part == 'minute':
-				class _MinuteFilter(Filter):
-					def match(_, path, now=None, stat_result=None):
-						if stat_result is None:
-							stat_result = path.stat()
-						ts = getattr(stat_result, 'st_mtime')
-						dt_obj = dt.datetime.fromtimestamp(ts)
-						if isinstance(other, dt.datetime):
-							return (dt_obj.year == other.year and dt_obj.month == other.month and dt_obj.day == other.day and dt_obj.hour == other.hour and dt_obj.minute == other.minute)
-						else:
-							return (dt_obj.year == other.year and dt_obj.month == other.month and dt_obj.day == other.day)
-				return _MinuteFilter()
+				return _MinuteFilter(other)
 			if self.part == 'second':
-				class _SecondFilter(Filter):
-					def match(_, path, now=None, stat_result=None):
-						if stat_result is None:
-							stat_result = path.stat()
-						ts = getattr(stat_result, 'st_mtime')
-						dt_obj = dt.datetime.fromtimestamp(ts)
-						if isinstance(other, dt.datetime):
-							return (dt_obj.year == other.year and dt_obj.month == other.month and dt_obj.day == other.day and dt_obj.hour == other.hour and dt_obj.minute == other.minute and dt_obj.second == other.second)
-						else:
-							return (dt_obj.year == other.year and dt_obj.month == other.month and dt_obj.day == other.day)
-				return _SecondFilter()
+				return _SecondFilter(other)
 		# Special handling for month: allow string names
 		if self.part == 'month':
 			return self._filter(operator.eq, self._normalize_month(other))

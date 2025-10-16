@@ -1,3 +1,5 @@
+"""Tests for Suffix and Ext filters, including operator and multiple extension cases."""
+
 
 import pathlib
 import pytest

@@ -9,5 +9,7 @@
         "test"
     ],
     "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true
+    "python.testing.pytestEnabled": true,
+    "ruff.format.enable": true,
+    "python.formatting.provider": "ruff"
 }

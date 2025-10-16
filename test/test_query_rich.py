@@ -1,3 +1,5 @@
+"""Tests for Query on a rich filesystem, including size, suffix, stem, age, and type filters."""
+
 import pathlib
 import re
 import pytest
