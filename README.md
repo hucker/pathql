@@ -1,12 +1,35 @@
+## Threaded and Non-Threaded Crawling
+
+PathQL supports both threaded and non-threaded filesystem crawling. Threaded crawling can provide performance gains on systems with slow disks (HDD), as it overlaps I/O operations. However, on modern hardware with SSDs, the overhead of thread management and task switching is often comparable to the cost of stat calls, so performance gains may be limited or even negative. For SSDs, non-threaded crawling may be just as fast or faster.
+## Threaded and Non-Threaded Query Engines
+
+PathQL provides both threaded and non-threaded (single-threaded) query engines for filesystem traversal and filtering. The threaded engine uses a producer-consumer model to parallelize file system stat calls and filtering, while the non-threaded engine processes files sequentially.
+
+### Why Threading?
+
+Threading is used to help isolate and potentially speed up the operating system stat calls (which are often the main bottleneck when querying large filesystems, especially on traditional spinning hard drives). By overlapping I/O-bound operations, the threaded engine can provide significant speedups when disk access is slow.
+
+### SSD vs HDD Performance
+
+On modern machines with SSDs, the cost of stat calls and file access is extremely low. In these environments, the overhead of threading (context switching, queueing, etc.) can actually make the threaded engine slightly slower than the non-threaded version. On older machines or systems with spinning hard drives (HDDs), the threaded engine can provide substantial performance improvements by overlapping slow I/O operations.
+
+### Usage
+
+- Use `Query.files(...)` for the threaded engine (default).
+- Use `Query.unthreaded_files(...)` for the non-threaded, sequential engine.
+
+Both methods yield the same results, but performance characteristics will depend on your hardware and workload.
 
 # PathQL: Declarative Filesystem Query Language for Python
 
 PathQL is a declarative, composable, and efficient query language for filesystem operations in Python. It enables expressive, readable, and powerful queries over files and directories, inspired by `pathlib` and modern query languages. PathQL is designed for performance (stat caching), extensibility, and testability, with robust operator overloading and a familiar, Pythonic API.
 
 ## Features
+
 - **Declarative Query Syntax**: Compose filters using Python operators (`&`, `|`, `~`, etc.)
 - **Pathlib-like Naming**: Filters and queries mimic `pathlib` conventions (e.g., `Stem`, `Suffix`, `Type`)
 - **Stat Caching**: Each file is stat-ed only once per query for efficiency
+- **Threaded Filesystem Search**: Query engine uses a producer-consumer model with a dedicated thread for filesystem crawling and a main thread for filtering, improving responsiveness and throughput for large directory trees.
 - **Short-circuiting Boolean Logic**: AND/OR/NOT combinators short-circuit as expected
 - **Extensible Filters**: Easily add new filters for custom logic
 - **Comprehensive Testing**: Robust, parameterized pytest suite with coverage
@@ -24,6 +47,7 @@ Or simply copy the `src/pathql` directory into your project.
 ## Basic Concepts
 
 ### Filters
+
 Filters are composable objects that match files based on attributes such as size, age, suffix, stem, or type. Each filter can be combined using boolean operators:
 
 - `&` (AND)
@@ -31,6 +55,7 @@ Filters are composable objects that match files based on attributes such as size
 - `~` (NOT)
 
 #### Example Filters
+
 - `Size <= 1_000_000` — files up to 1MB
 - `Suffix({".png", ".jpg"})` — files with .png or .jpg extension
 - `Stem("report_*")` — files whose stem matches a glob pattern (e.g., starts with "report_")
@@ -38,11 +63,22 @@ Filters are composable objects that match files based on attributes such as size
 - `AgeMinutes < 10` — modified in the last 10 minutes
 
 ### Query
+
 A `Query` object recursively walks a directory and lazily yields files matching the filter expression, one at a time as they are found. Stat results are cached and passed to all filters for efficiency.
+
+#### Threaded Producer-Consumer Model
+
+PathQL's query engine uses a threaded producer-consumer model:
+
+- A dedicated producer thread crawls the filesystem and enqueues file info.
+- The main thread consumes from the queue, applies filters, and yields matches.
+- The queue size is limited (default: 10) to balance memory and throughput.
+This design improves responsiveness and performance, especially for large or slow filesystems.
 
 ## Usage Examples
 
 ### 1. Find all PNG or BMP images under 1MB, modified in the last 10 minutes
+
 ```python
 from pathql.filters import Suffix, Size, AgeMinutes
 from pathql.query import Query
@@ -53,6 +89,7 @@ for path in Query("/some/dir", query):
 ```
 
 ### 2. Find all files with stem starting with "report_" (case-insensitive)
+
 ```python
 from pathql.filters import Stem, Type
 from pathql.query import Query
@@ -63,6 +100,7 @@ for path in Query("/data/reports", query):
 ```
 
 ### 3. Find all directories older than 1 year
+
 ```python
 from pathql.filters import Type, AgeYears
 from pathql.query import Query
@@ -73,6 +111,7 @@ for path in Query("/archive", query):
 ```
 
 ### 4. Use with custom filters
+
 You can define your own filters by subclassing `Filter`:
 ```python
 from pathql.filters.base import Filter
