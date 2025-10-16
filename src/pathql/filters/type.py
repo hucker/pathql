@@ -27,7 +27,14 @@ class _TypeMeta(type):
 class Type(Filter, metaclass=_TypeMeta):
     """
     Filter for file type: file, directory, link, or unknown.
-    Usage: Type == Type.FILE, Type in {Type.FILE, Type.DIRECTORY}
+
+    Usage:
+        Type == Type.FILE
+        Type in {Type.FILE, Type.DIRECTORY}
+        Type("file")
+
+    Args:
+        type_name (str | set[str] | None): File type(s) to match. Use Type.FILE, Type.DIRECTORY, etc.
     """
     FILE: str = "file"
     DIRECTORY: str = "directory"
@@ -37,8 +44,9 @@ class Type(Filter, metaclass=_TypeMeta):
     def __init__(self, type_name: str | set[str] | None = None) -> None:
         """
         Initialize a Type filter.
+
         Args:
-            type_name: A type string or set of type strings (FILE, DIRECTORY, LINK, UNKNOWN)
+            type_name (str | set[str] | None): File type(s) to match. Use Type.FILE, Type.DIRECTORY, etc.
         """
         if isinstance(type_name, set):
             self.type_names: set[str] = set(type_name)

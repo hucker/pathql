@@ -12,11 +12,26 @@ class SuffixMeta(type):
         return cls([])  # Not meaningful, but for completeness
 
 class Suffix(Filter, metaclass=SuffixMeta):
-    """Filter for matching the file extension (suffix), mimics pathlib.Path.suffix (without dot).
-    If given a string, splits on whitespace to allow Suffix("png bmp").
+    """
+    Filter for matching the file extension (suffix), mimics pathlib.Path.suffix (without dot).
+
+    Accepts a string or list of extensions (e.g., Suffix("png bmp") or Suffix(["png", "bmp"]))
+    and matches files with those extensions. By default, a string is split on whitespace.
     Set nosplit=True to treat the string as a single extension (for rare cases with spaces).
+
+    Args:
+        patterns (str | list[str] | None): Extensions to match (without dot).
+        nosplit (bool): If True, do not split string patterns on whitespace.
     """
     def __init__(self, patterns=None, nosplit=False):
+        """
+        Initialize a Suffix filter.
+
+        Args:
+            patterns (str | list[str] | None): Extensions to match (without dot).
+                If a string and nosplit=False, splits on whitespace.
+            nosplit (bool, optional): If True, do not split string patterns on whitespace.
+        """
         if isinstance(patterns, str) and not nosplit:
             self.patterns = set(patterns.split())
         elif isinstance(patterns, str):
@@ -25,6 +40,8 @@ class Suffix(Filter, metaclass=SuffixMeta):
             self.patterns = set(patterns)
         else:
             self.patterns = set()
+
+
 
     def match(self, path: 'pathlib.Path', now=None, stat_result=None) -> bool:
         if not self.patterns:
@@ -37,10 +54,21 @@ class Suffix(Filter, metaclass=SuffixMeta):
         return item in self.patterns
 
     def __call__(self, *patterns):
+        # Flatten if a single list/tuple is passed
+        if len(patterns) == 1 and isinstance(patterns[0], (list, tuple)):
+            return Suffix(patterns[0])
         return Suffix(patterns)
 
+
     def __eq__(self, other):
-        return Suffix([other])
+        if not isinstance(other, Suffix):
+            return NotImplemented
+        return self.patterns == other.patterns
+
+    def __ne__(self, other):
+        if not isinstance(other, Suffix):
+            return NotImplemented
+        return self.patterns != other.patterns
 
     def __ror__(self, other):
         return Suffix(other)
@@ -78,5 +106,7 @@ class Suffix(Filter, metaclass=SuffixMeta):
     def __rtruediv__(self, other):
         return Suffix(other)
 
-# Alias for compatibility: Ext = Suffix
+# Alias for pathlib-like naming
+Ext = Suffix
+Ext.__doc__ = "Alias for Suffix. See Suffix for usage."
 Ext = Suffix

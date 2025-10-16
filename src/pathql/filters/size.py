@@ -17,7 +17,26 @@ class FilterMeta(type):
         return cls(lambda x, y: x != y, other)
 
 class Size(Filter, metaclass=FilterMeta):
+    """
+    Filter for file size (in bytes).
+
+    Allows declarative queries on file size using operator overloads:
+        Size <= 1024
+        Size > 1_000_000
+        Size(lambda x, y: x % 2 == 0, None)  # custom logic
+
+    Args:
+        op (callable, optional): Operator function (e.g., operator.le, operator.gt).
+        value (int, optional): Value to compare file size against.
+    """
     def __init__(self, op=None, value=None):
+        """
+        Initialize a Size filter.
+
+        Args:
+            op (callable, optional): Operator function (e.g., operator.le, operator.gt).
+            value (int, optional): Value to compare file size against.
+        """
         self.op = op
         self.value = value
 

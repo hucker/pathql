@@ -20,7 +20,25 @@ class _AgeMeta(type):
         return cls(lambda x, y: x != y, other)
 
 class AgeDays(Filter, metaclass=_AgeMeta):
+    """
+    Filter for file age in days (since last modification).
+
+    Allows declarative queries on file age using operator overloads:
+        AgeDays < 10
+        AgeDays >= 365
+
+    Args:
+        op (callable, optional): Operator function (e.g., operator.lt, operator.ge).
+        value (float, optional): Value to compare file age (in days) against.
+    """
     def __init__(self, op=None, value=None):
+        """
+        Initialize an AgeDays filter.
+
+        Args:
+            op (callable, optional): Operator function (e.g., operator.lt, operator.ge).
+            value (float, optional): Value to compare file age (in days) against.
+        """
         self.op = op
         self.value = value
 
@@ -39,7 +57,25 @@ class AgeDays(Filter, metaclass=_AgeMeta):
 
 
 class AgeYears(Filter, metaclass=_AgeMeta):
+    """
+    Filter for file age in years (since last modification).
+
+    Allows declarative queries on file age using operator overloads:
+        AgeYears < 1
+        AgeYears >= 5
+
+    Args:
+        op (callable, optional): Operator function (e.g., operator.lt, operator.ge).
+        value (float, optional): Value to compare file age (in years) against.
+    """
     def __init__(self, op=None, value=None):
+        """
+        Initialize an AgeYears filter.
+
+        Args:
+            op (callable, optional): Operator function (e.g., operator.lt, operator.ge).
+            value (float, optional): Value to compare file age (in years) against.
+        """
         self.op = op
         self.value = value
 

@@ -5,11 +5,32 @@ from .base import Filter
 
 
 class Stem(Filter):
-    """Filter for matching the stem (filename without extension), mimics pathlib.Path.stem.
-    Accepts a list of patterns or a string (which is turned into a list with a single string).
-    Optionally, set ignore_case=False for case-sensitive matching.
+    """
+    Filter for matching the stem (filename without extension) of a file.
+
+    This filter mimics the behavior of `pathlib.Path.stem` and allows you to match filenames (without extension)
+    against one or more string or regex patterns. Useful for declarative filesystem queries.
+
+    Example usage:
+        Stem("foo")              # matches files with stem 'foo'
+        Stem(["foo", "bar"])    # matches files with stem 'foo' or 'bar'
+        Stem(r"^img_\\d+$")      # matches stems like 'img_123'
+        Stem("foo", ignore_case=False)  # case-sensitive match
+
+    Args:
+        patterns (str | list[str]): One or more string or regex patterns to match against the stem.
+        ignore_case (bool): If True (default), matching is case-insensitive.
     """
     def __init__(self, patterns, ignore_case=True):
+        """
+        Initialize a Stem filter.
+
+        Args:
+            patterns (str | list[str]): One or more string or regex patterns to match against the stem.
+                If a string is provided, it is treated as a single pattern.
+            ignore_case (bool, optional): If True (default), matching is case-insensitive.
+                Set to False for case-sensitive matching.
+        """
         if isinstance(patterns, str):
             self.patterns = [patterns]
         else:
