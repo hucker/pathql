@@ -24,11 +24,12 @@ def test_stem_string(cls):
     assert cls("foo").match(f)
     assert not cls("bar").match(f)
 
+
 @pytest.mark.parametrize("cls", [Stem, Name])
-def test_stem_regex(cls):
+def test_stem_wildcard(cls):
     f = pathlib.Path("foo123.txt")
-    assert cls(r"foo.*").match(f)
-    assert not cls(r"bar.*").match(f)
+    assert cls("foo*").match(f)
+    assert not cls("bar*").match(f)
 
 @pytest.mark.parametrize("cls", [Stem, Name])
 def test_name_alias(cls):
@@ -36,21 +37,22 @@ def test_name_alias(cls):
     assert cls("foo").match(f)
     assert not cls("bar").match(f)
 
-@pytest.mark.parametrize("cls", [Stem, Name])
-def test_stem_regex_patterns(cls):
-    # Match any stem starting with 'foo'
-    assert cls(r"foo.*").match(pathlib.Path("foo123.txt"))
-    assert cls(r"foo.*").match(pathlib.Path("foo.txt"))
-    assert not cls(r"foo.*").match(pathlib.Path("barfoo.txt"))
 
-    # Match any stem ending with digits
-    assert cls(r".*\d$").match(pathlib.Path("file1.txt"))
-    assert not cls(r".*\d$").match(pathlib.Path("fileA.txt"))
+@pytest.mark.parametrize("cls", [Stem, Name])
+def test_stem_fnmatch_patterns(cls):
+    # Match any stem starting with 'foo'
+    assert cls("foo*").match(pathlib.Path("foo123.txt"))
+    assert cls("foo*").match(pathlib.Path("foo.txt"))
+    assert not cls("foo*").match(pathlib.Path("barfoo.txt"))
+
+    # Match any stem ending with digits (single digit)
+    assert cls("*1").match(pathlib.Path("file1.txt"))
+    assert not cls("*1").match(pathlib.Path("fileA.txt"))
 
     # Match exact stem
-    assert cls(r"^bar$").match(pathlib.Path("bar.txt"))
-    assert not cls(r"^bar$").match(pathlib.Path("foobar.txt"))
+    assert cls("bar").match(pathlib.Path("bar.txt"))
+    assert not cls("bar").match(pathlib.Path("foobar.txt"))
 
     # Match stems with only lowercase letters (case-sensitive)
-    assert cls(r"^[a-z]+$", ignore_case=False).match(pathlib.Path("abc.txt"))
-    assert not cls(r"^[a-z]+$", ignore_case=False).match(pathlib.Path("Abc.txt"))
+    assert cls("[a-z][a-z][a-z]", ignore_case=False).match(pathlib.Path("abc.txt"))
+    assert not cls("[a-z][a-z][a-z]", ignore_case=False).match(pathlib.Path("Abc.txt"))

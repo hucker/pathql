@@ -34,11 +34,7 @@ def test_query_or_and(mini_fs):
     names = sorted(f.name for f in files)
     assert names == ["bar.md", "qux.txt"]
 
-def test_query_stem_regex(mini_fs):
-    q = Query(Stem(r"^b.*"))
-    files = list(q.files(mini_fs, recursive=True, files=True))
-    names = sorted(f.name for f in files)
-    assert names == ["bar.md", "baz.txt"]
+
 
 def test_query_in_operator(mini_fs):
     q = Query((Suffix == "txt") & (Size > 50))

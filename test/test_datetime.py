@@ -7,6 +7,30 @@ import pytest
 from pathql.filters import Modified, Created, Year, Month, Day, Hour, Minute, Second
 import datetime as dtmod
 
+
+@pytest.mark.parametrize("month_value,should_match", [
+    (1, True),
+    ("jan", True),
+    ("JAN", True),
+    ("January", True),
+    ("january", True),
+    ("Feb", False),
+    (2, False),
+    ("Mar", False),
+])
+def test_month_lookup_eq(tmp_path, month_value, should_match):
+    dt = dtmod.datetime(2022, 1, 15, 12, 0, 0)
+    file = make_file_with_mtime(tmp_path, dt)
+    assert Modified(Month == month_value).match(file) is should_match
+
+def test_month_lookup_isin(tmp_path):
+    dt = dtmod.datetime(2022, 3, 15, 12, 0, 0)
+    file = make_file_with_mtime(tmp_path, dt)
+    # Should match for 3, 'mar', 'March', 'MAR', and not for others
+    assert Modified(Month.isin([3, "mar", "March", "MAR"])) .match(file)
+    assert not Modified(Month.isin([1, "jan", "feb"])) .match(file)
+
+
 def set_file_times(path, mtime=None, ctime=None):
     if mtime is not None:
         os.utime(path, (mtime, mtime))

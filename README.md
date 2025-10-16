@@ -33,12 +33,12 @@ Filters are composable objects that match files based on attributes such as size
 #### Example Filters
 - `Size <= 1_000_000` — files up to 1MB
 - `Suffix({".png", ".jpg"})` — files with .png or .jpg extension
-- `Stem("^report_.*")` — files whose stem matches a regex
+- `Stem("report_*")` — files whose stem matches a glob pattern (e.g., starts with "report_")
 - `Type("file")` — regular files
 - `AgeMinutes < 10` — modified in the last 10 minutes
 
 ### Query
-A `Query` object recursively walks a directory and yields files matching the filter expression. Stat results are cached and passed to all filters for efficiency.
+A `Query` object recursively walks a directory and lazily yields files matching the filter expression, one at a time as they are found. Stat results are cached and passed to all filters for efficiency.
 
 ## Usage Examples
 
@@ -57,7 +57,7 @@ for path in Query("/some/dir", query):
 from pathql.filters import Stem, Type
 from pathql.query import Query
 
-query = Stem("^report_.*") & Type("file")
+query = Stem("report_*") & Type("file")
 for path in Query("/data/reports", query):
    print(path)
 ```
@@ -130,3 +130,49 @@ MIT License
 ---
 
 For more examples and advanced usage, see the tests in `test/`.
+
+### 5. Find files by modification or creation date/time
+
+You can filter files by their modification or creation time using the `Modified` and `Created` filters, with expressive, compositional syntax:
+
+#### Match files modified in 2025
+```python
+from pathql.filters.datetimes_ import Modified, Year
+from pathql.query import Query
+
+query = Modified(Year == 2025)
+for path in Query("/data", query):
+   print(path)
+```
+
+#### Match files created in January
+```python
+from pathql.filters.datetimes_ import Created, Month
+from pathql.query import Query
+
+query = Created(Month == 1)
+for path in Query("/data", query):
+   print(path)
+```
+
+#### Match files modified on a specific date
+```python
+import datetime
+from pathql.filters.datetimes_ import Modified, Day
+from pathql.query import Query
+
+query = Modified(Day == datetime.date(2025, 10, 16))
+for path in Query("/data", query):
+   print(path)
+```
+
+#### Advanced: Use a custom extractor, operator, and value
+```python
+import operator
+from pathql.filters.datetimes_ import Modified, Created
+
+# Files modified in December
+mod_dec = Modified(lambda dt: dt.month, operator.eq, 12)
+# Files created in the first three hours of the day
+created_early = Created(lambda dt: dt.hour, operator.in_, [0, 1, 2])
+```

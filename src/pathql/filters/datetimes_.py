@@ -1,8 +1,25 @@
-
 import datetime as dt
 import pathlib
 from .base import Filter
 import operator
+
+# Month name mapping (case-insensitive, 3-letter and full names)
+_MONTH_NAME_TO_NUM = {
+	'jan': 1, 'january': 1,
+	'feb': 2, 'february': 2,
+	'mar': 3, 'march': 3,
+	'apr': 4, 'april': 4,
+	'may': 5,
+	'jun': 6, 'june': 6,
+	'jul': 7, 'july': 7,
+	'aug': 8, 'august': 8,
+	'sep': 9, 'sept': 9, 'september': 9,
+	'oct': 10, 'october': 10,
+	'nov': 11, 'november': 11,
+	'dec': 12, 'december': 12,
+	1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, 10: 10, 11: 11, 12: 12,
+}
+
 
 class DateTimeFilter(Filter):
 	"""
@@ -60,6 +77,18 @@ class _DateTimePart(Filter):
 class _DateTimePart:
 	def __init__(self, part):
 		self.part = part
+	def _normalize_month(self, v):
+		if isinstance(v, str):
+			v_lc = v.strip().lower()
+			if v_lc in _MONTH_NAME_TO_NUM:
+				return _MONTH_NAME_TO_NUM[v_lc]
+			raise ValueError(f"Unknown month name: {v}")
+		if isinstance(v, int):
+			if v in _MONTH_NAME_TO_NUM:
+				return _MONTH_NAME_TO_NUM[v]
+			raise ValueError(f"Unknown month number: {v}")
+		return v
+
 	def _filter(self, op, value):
 		class _PartFilter(Filter):
 			def match(_, path, now=None, stat_result=None):
@@ -68,6 +97,14 @@ class _DateTimePart:
 				ts = getattr(stat_result, 'st_mtime')
 				dt_obj = dt.datetime.fromtimestamp(ts)
 				part_value = getattr(dt_obj, self.part)
+				# Special handling for month: allow string names
+				if self.part == 'month':
+					val = value
+					if isinstance(val, (list, tuple, set)):
+						val = [self._normalize_month(v) for v in val]
+					else:
+						val = self._normalize_month(val)
+					return op(part_value, val)
 				return op(part_value, value)
 		return _PartFilter()
 	def __eq__(self, other):
@@ -122,6 +159,9 @@ class _DateTimePart:
 						else:
 							return (dt_obj.year == other.year and dt_obj.month == other.month and dt_obj.day == other.day)
 				return _SecondFilter()
+		# Special handling for month: allow string names
+		if self.part == 'month':
+			return self._filter(operator.eq, self._normalize_month(other))
 		return self._filter(operator.eq, other)
 	def __ne__(self, other):
 		return self._filter(operator.ne, other)
@@ -160,6 +200,9 @@ class Modified(Filter):
 				- If a single Filter is provided, it will be used directly.
 				- If three arguments are provided, they are (extractor, op, value).
 		"""
+		# _is_wrapped indicates whether this filter wraps another Filter (e.g., Year == 2024)
+		# or is a direct DateTimeFilter (with extractor/op/value). If True, all matching is delegated
+		# to the wrapped filter. If False, uses a DateTimeFilter instance.
 		if len(args) == 1 and isinstance(args[0], Filter):
 			self._filter = args[0]
 			self._is_wrapped = True
@@ -194,6 +237,9 @@ class Created(Filter):
 				- If a single Filter is provided, it will be used directly.
 				- If three arguments are provided, they are (extractor, op, value).
 		"""
+		# _is_wrapped indicates whether this filter wraps another Filter (e.g., Year == 2024)
+		# or is a direct DateTimeFilter (with extractor/op/value). If True, all matching is delegated
+		# to the wrapped filter. If False, uses a DateTimeFilter instance.
 		if len(args) == 1 and isinstance(args[0], Filter):
 			self._filter = args[0]
 			self._is_wrapped = True

@@ -23,23 +23,37 @@ class Suffix(Filter, metaclass=SuffixMeta):
         patterns (str | list[str] | None): Extensions to match (without dot).
         nosplit (bool): If True, do not split string patterns on whitespace.
     """
-    def __init__(self, patterns=None, nosplit=False):
+    def __init__(self, patterns=None, nosplit=False, ignore_case=True):
         """
-        Initialize a Suffix filter.
+        Initialize a Suffix filter using fnmatch for shell-style wildcard matching.
 
         Args:
             patterns (str | list[str] | None): Extensions to match (without dot).
                 If a string and nosplit=False, splits on whitespace.
+                If a string contains curly braces (e.g., {img,bmp,jpg}), expands to multiple patterns.
             nosplit (bool, optional): If True, do not split string patterns on whitespace.
+            ignore_case (bool, optional): If True (default), matching is case-insensitive.
         """
+        import fnmatch
+        self.ignore_case = ignore_case
+        pats = set()
         if isinstance(patterns, str) and not nosplit:
-            self.patterns = set(patterns.split())
+            # Expand curly-brace sets: foo.{img,bmp,jpg} -> foo.img, foo.bmp, foo.jpg
+            import re
+            brace = re.search(r"\{([^}]+)\}", patterns)
+            if brace:
+                base = patterns[:brace.start()]
+                exts = [e.strip() for e in brace.group(1).split(",")]
+                for ext in exts:
+                    pats.add(base + ext)
+            else:
+                pats.update(patterns.split())
         elif isinstance(patterns, str):
-            self.patterns = {patterns}
+            pats.add(patterns)
         elif patterns:
-            self.patterns = set(patterns)
-        else:
-            self.patterns = set()
+            pats.update(patterns)
+        self.patterns = list(pats)
+        self._fnmatch = fnmatch
 
 
 
@@ -47,8 +61,13 @@ class Suffix(Filter, metaclass=SuffixMeta):
         if not self.patterns:
             raise ValueError("No file extension patterns specified.")
         # path.suffix includes the dot, so strip it
-        ext = path.suffix[1:].lower() if path.suffix.startswith('.') else path.suffix.lower()
-        return any(ext == pat.lower() for pat in self.patterns)
+        ext = path.suffix[1:] if path.suffix.startswith('.') else path.suffix
+        if self.ignore_case:
+            ext = ext.lower()
+            pats = [p.lower() for p in self.patterns]
+        else:
+            pats = self.patterns
+        return any(self._fnmatch.fnmatchcase(ext, pat) for pat in pats)
 
     def __contains__(self, item):
         return item in self.patterns
