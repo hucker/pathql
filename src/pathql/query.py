@@ -14,11 +14,20 @@ class Query(Filter):
         for p in path.rglob("*" if recursive else "*"):
             if files and not p.is_file():
                 continue
-            if self.filter_expr.match(p, now=now):
+            try:
+                stat_result = p.stat()
+            except Exception:
+                stat_result = None
+            if self.filter_expr.match(p, now=now, stat_result=stat_result):
                 yield p
 
-    def match(self, path: 'pathlib.Path', now=None) -> bool:
+    def match(self, path: 'pathlib.Path', now=None, stat_result=None) -> bool:
         if now is None:
             import time
             now = time.time()
-        return self.filter_expr.match(path, now=now)
+        if stat_result is None:
+            try:
+                stat_result = path.stat()
+            except Exception:
+                stat_result = None
+        return self.filter_expr.match(path, now=now, stat_result=stat_result)

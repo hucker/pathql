@@ -18,3 +18,6 @@ dev = [
 	"pytest-cov"
 ]
 
+[tool.pytest.ini_options]
+addopts = "--cov=src/pathql --cov-report=xml:coverage.xml"
+

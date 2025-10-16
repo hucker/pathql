@@ -49,11 +49,12 @@ class Size(Filter, metaclass=FilterMeta):
     def __ne__(cls, other):
         return cls(lambda x, y: x != y, other)
 
-    def match(self, path: 'pathlib.Path', now=None) -> bool:
+    def match(self, path: 'pathlib.Path', now=None, stat_result=None) -> bool:
         if self.op is None or self.value is None:
             raise ValueError("Size filter not fully specified.")
         try:
-            size = path.stat().st_size
+            st = stat_result if stat_result is not None else path.stat()
+            size = st.st_size
             return self.op(size, self.value)
         except Exception:
             return False

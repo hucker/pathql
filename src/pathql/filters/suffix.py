@@ -26,7 +26,7 @@ class Suffix(Filter, metaclass=SuffixMeta):
         else:
             self.patterns = set()
 
-    def match(self, path: 'pathlib.Path', now=None) -> bool:
+    def match(self, path: 'pathlib.Path', now=None, stat_result=None) -> bool:
         if not self.patterns:
             raise ValueError("No file extension patterns specified.")
         # path.suffix includes the dot, so strip it

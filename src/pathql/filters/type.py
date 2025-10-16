@@ -47,12 +47,13 @@ class Type(Filter, metaclass=_TypeMeta):
         else:
             self.type_names: set[str] = set()
 
-    def match(self, path: 'pathlib.Path', now: float | None = None) -> bool:
+    def match(self, path: 'pathlib.Path', now: float | None = None, stat_result=None) -> bool:
         """
         Check if the path matches any of the specified types.
         Args:
             path: The pathlib.Path to check.
             now: Ignored (for interface compatibility).
+            stat_result: Optional stat result to reuse.
         Returns:
             True if the path matches one of the types, else False.
         """
@@ -60,7 +61,7 @@ class Type(Filter, metaclass=_TypeMeta):
         try:
             if not path.exists():
                 return Type.UNKNOWN in self.type_names
-            st = path.lstat()
+            st = stat_result if stat_result is not None else path.lstat()
             mode = st.st_mode
             type_map = {
                 Type.FILE: stat.S_ISREG(mode),

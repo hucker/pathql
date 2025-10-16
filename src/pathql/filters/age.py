@@ -24,14 +24,15 @@ class AgeDays(Filter, metaclass=_AgeMeta):
         self.op = op
         self.value = value
 
-    def match(self, path: 'pathlib.Path', now=None) -> bool:
+    def match(self, path: 'pathlib.Path', now=None, stat_result=None) -> bool:
         if self.op is None or self.value is None:
             raise ValueError("AgeDays filter not fully specified.")
         try:
             import time
             if now is None:
                 now = time.time()
-            age_d = (now - path.stat().st_mtime) / (60 * 60 * 24)
+            st = stat_result if stat_result is not None else path.stat()
+            age_d = (now - st.st_mtime) / (60 * 60 * 24)
             return self.op(age_d, self.value)
         except Exception:
             return False
@@ -42,14 +43,15 @@ class AgeYears(Filter, metaclass=_AgeMeta):
         self.op = op
         self.value = value
 
-    def match(self, path: 'pathlib.Path', now=None) -> bool:
+    def match(self, path: 'pathlib.Path', now=None, stat_result=None) -> bool:
         if self.op is None or self.value is None:
             raise ValueError("AgeYears filter not fully specified.")
         try:
             import time
             if now is None:
                 now = time.time()
-            age_y = (now - path.stat().st_mtime) / (60 * 60 * 24 * 365.25)
+            st = stat_result if stat_result is not None else path.stat()
+            age_y = (now - st.st_mtime) / (60 * 60 * 24 * 365.25)
             return self.op(age_y, self.value)
         except Exception:
             return False
@@ -61,14 +63,15 @@ class AgeMinutes(Filter, metaclass=_AgeMeta):
         self.op = op
         self.value = value
 
-    def match(self, path: 'pathlib.Path', now=None) -> bool:
+    def match(self, path: 'pathlib.Path', now=None, stat_result=None) -> bool:
         if self.op is None or self.value is None:
             raise ValueError("AgeMinutes filter not fully specified.")
         try:
             import time
             if now is None:
                 now = time.time()
-            age_m = (now - path.stat().st_mtime) / 60
+            st = stat_result if stat_result is not None else path.stat()
+            age_m = (now - st.st_mtime) / 60
             return self.op(age_m, self.value)
         except Exception:
             return False

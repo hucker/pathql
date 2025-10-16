@@ -17,8 +17,8 @@ class Stem(Filter):
         flags = re.IGNORECASE if ignore_case else 0
         self._regexes = [re.compile(p, flags) for p in self.patterns]
 
-    def match(self, path: 'pathlib.Path', now=None) -> bool:
+    def match(self, path: 'pathlib.Path', now=None, stat_result=None) -> bool:
         return any(regex.match(path.stem) for regex in self._regexes)
 
-Name = Stem
+# Alias for pathlib-like naming
 Name = Stem
