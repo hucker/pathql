@@ -30,7 +30,7 @@ class Suffix(Filter, metaclass=SuffixMeta):
         patterns (str | list[str] | None): Extensions to match (without dot).
         nosplit (bool): If True, do not split string patterns on whitespace.
     """
-    def __init__(self, patterns=None, nosplit=False, ignore_case=True):
+    def __init__(self, patterns: str | list[str] | None = None, nosplit: bool = False, ignore_case: bool = True):
         """
         Initialize a Suffix filter using fnmatch for shell-style wildcard matching.
 
@@ -64,7 +64,7 @@ class Suffix(Filter, metaclass=SuffixMeta):
 
 
 
-    def match(self, path: pathlib.Path, now=None, stat_result=None) -> bool:
+    def match(self, path: pathlib.Path, now: float | None = None, stat_result: object = None) -> bool:
         """
         Check if the given path's suffix matches any of the filter's extension patterns.
         Args:
@@ -85,11 +85,11 @@ class Suffix(Filter, metaclass=SuffixMeta):
             pats = self.patterns
         return any(self._fnmatch.fnmatchcase(ext, pat) for pat in pats)
 
-    def __contains__(self, item):
+    def __contains__(self, item: str) -> bool:
         """Check if an extension pattern is in the filter's pattern list."""
         return item in self.patterns
 
-    def __call__(self, *patterns):
+    def __call__(self, *patterns: str) -> 'Suffix':
         """Allow Suffix(...) to create a new Suffix filter with given patterns."""
         # Flatten if a single list/tuple is passed
         if len(patterns) == 1 and isinstance(patterns[0], (list, tuple)):
@@ -97,62 +97,62 @@ class Suffix(Filter, metaclass=SuffixMeta):
         return Suffix(patterns)
 
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         """Check equality with another Suffix filter (pattern list equality)."""
         if not isinstance(other, Suffix):
             return NotImplemented
         return self.patterns == other.patterns
 
-    def __ne__(self, other):
+    def __ne__(self, other: object) -> bool:
         """Check inequality with another Suffix filter (pattern list inequality)."""
         if not isinstance(other, Suffix):
             return NotImplemented
         return self.patterns != other.patterns
 
-    def __ror__(self, other):
+    def __ror__(self, other: str | list[str]) -> 'Suffix':
         """Support set union: value | Suffix."""
         return Suffix(other)
 
-    def __rmul__(self, other):
+    def __rmul__(self, other: str | list[str]) -> 'Suffix':
         """Support multiplication operator: value * Suffix (not meaningful, for completeness)."""
         return Suffix(other)
 
     @classmethod
-    def __class_getitem__(cls, item):
+    def __class_getitem__(cls, item: str | tuple) -> 'Suffix':
         """Support Suffix[...] syntax to create a Suffix filter with given patterns."""
         if isinstance(item, tuple):
             return Suffix(item)
         return Suffix([item])
 
-    def __matmul__(self, other):
+    def __matmul__(self, other: str | list[str]) -> 'Suffix':
         """Support matrix multiplication operator: value @ Suffix (not meaningful, for completeness)."""
         return Suffix(other)
 
-    def __gt__(self, other):
+    def __gt__(self, other: str | list[str]) -> 'Suffix':
         """Support greater-than operator: value > Suffix (not meaningful, for completeness)."""
         return Suffix(other)
 
-    def __lt__(self, other):
+    def __lt__(self, other: str | list[str]) -> 'Suffix':
         """Support less-than operator: value < Suffix (not meaningful, for completeness)."""
         return Suffix(other)
 
-    def __rshift__(self, other):
+    def __rshift__(self, other: str | list[str]) -> 'Suffix':
         """Support right-shift operator: value >> Suffix (not meaningful, for completeness)."""
         return Suffix(other)
 
-    def __rrshift__(self, other):
+    def __rrshift__(self, other: str | list[str]) -> 'Suffix':
         """Support reverse right-shift operator: value >> Suffix (not meaningful, for completeness)."""
         return Suffix(other)
 
-    def __rmod__(self, other):
+    def __rmod__(self, other: str | list[str]) -> 'Suffix':
         """Support reverse modulo operator: value % Suffix (not meaningful, for completeness)."""
         return Suffix(other)
 
-    def __mod__(self, other):
+    def __mod__(self, other: str | list[str]) -> 'Suffix':
         """Support modulo operator: value % Suffix (not meaningful, for completeness)."""
         return Suffix(other)
 
-    def __rtruediv__(self, other):
+    def __rtruediv__(self, other: str | list[str]) -> 'Suffix':
         """Support reverse true division operator: value / Suffix (not meaningful, for completeness)."""
         return Suffix(other)
 

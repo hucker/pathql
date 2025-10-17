@@ -25,7 +25,7 @@ class Stem(Filter):
             Use shell-style wildcards (e.g., "foo*", "bar?").
         ignore_case (bool): If True (default), matching is case-insensitive.
     """
-    def __init__(self, patterns, ignore_case=True):
+    def __init__(self, patterns: str | list[str], ignore_case: bool = True):
         """
         Initialize a Stem filter using fnmatch for shell-style wildcard matching.
 
@@ -43,7 +43,7 @@ class Stem(Filter):
         self.ignore_case = ignore_case
         self._fnmatch = fnmatch
 
-    def match(self, path: pathlib.Path, now=None, stat_result=None) -> bool:
+    def match(self, path: pathlib.Path, now: float | None = None, stat_result: object = None) -> bool:
         """
         Check if the given path's stem matches any of the filter's glob patterns.
         Args:

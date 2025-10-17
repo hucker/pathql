@@ -29,7 +29,7 @@ class Size(Filter, metaclass=FilterMeta):
         op (callable, optional): Operator function (e.g., operator.le, operator.gt).
         value (int, optional): Value to compare file size against.
     """
-    def __init__(self, op=None, value=None):
+    def __init__(self, op: callable = None, value: int | None = None):
         """
         Initialize a Size filter.
 
@@ -68,7 +68,7 @@ class Size(Filter, metaclass=FilterMeta):
     def __ne__(cls, other):
         return cls(lambda x, y: x != y, other)
 
-    def match(self, path: 'pathlib.Path', now=None, stat_result=None) -> bool:
+    def match(self, path: pathlib.Path, now: float | None = None, stat_result: object = None) -> bool:
         if self.op is None or self.value is None:
             raise ValueError("Size filter not fully specified.")
         try:
@@ -78,15 +78,15 @@ class Size(Filter, metaclass=FilterMeta):
         except Exception:
             return False
 
-    def __le__(self, other):
+    def __le__(self, other: int) -> 'Size':
         return Size.__new__(Size, lambda x, y: x <= y, other)
-    def __lt__(self, other):
+    def __lt__(self, other: int) -> 'Size':
         return Size.__new__(Size, lambda x, y: x < y, other)
-    def __ge__(self, other):
+    def __ge__(self, other: int) -> 'Size':
         return Size.__new__(Size, lambda x, y: x >= y, other)
-    def __gt__(self, other):
+    def __gt__(self, other: int) -> 'Size':
         return Size.__new__(Size, lambda x, y: x > y, other)
-    def __eq__(self, other):
+    def __eq__(self, other: int) -> 'Size':
         return Size.__new__(Size, lambda x, y: x == y, other)
-    def __ne__(self, other):
+    def __ne__(self, other: int) -> 'Size':
         return Size.__new__(Size, lambda x, y: x != y, other)

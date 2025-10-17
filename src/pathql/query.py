@@ -33,7 +33,7 @@ class Query(Filter):
         self.filter_expr = filter_expr
 
 
-    def match(self, path: 'pathlib.Path', now=None, stat_result=None) -> bool:
+    def match(self, path: pathlib.Path, now: float | None = None, stat_result: object = None) -> bool:
         """
         Check if a single path matches the filter expression.
 
@@ -55,7 +55,7 @@ class Query(Filter):
         return self.filter_expr.match(path, now=now, stat_result=stat_result)
 
 
-    def _unthreaded_files(self, path: 'pathlib.Path', recursive=True, files=True, now=None) -> Iterator['pathlib.Path']:
+    def _unthreaded_files(self, path: pathlib.Path, recursive: bool = True, files: bool = True, now: float | None = None) -> Iterator[pathlib.Path]:
         """
         Yield files matching the filter expression using a single-threaded approach (no queue/thread).
 
@@ -83,7 +83,7 @@ class Query(Filter):
 
 
 
-    def _threaded_files(self, path: 'pathlib.Path', recursive=True, files=True, now=None) -> Iterator['pathlib.Path']:
+    def _threaded_files(self, path: pathlib.Path, recursive: bool = True, files: bool = True, now: float | None = None) -> Iterator[pathlib.Path]:
         """
         Yield files matching the filter expression using a threaded producer-consumer model.
 
@@ -123,7 +123,7 @@ class Query(Filter):
                 yield p
         t.join()
 
-    def files(self, path: 'pathlib.Path', recursive=True, files=True, now=None, threaded=False) -> Iterator['pathlib.Path']:
+    def files(self, path: pathlib.Path, recursive: bool = True, files: bool = True, now: float | None = None, threaded: bool = False) -> Iterator[pathlib.Path]:
         """
         Yield files matching the filter expression using either threaded or non-threaded mode.
 
