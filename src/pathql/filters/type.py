@@ -55,6 +55,8 @@ class Type(Filter, metaclass=_TypeMeta):
         else:
             self.type_names: set[str] = set()
 
+
+    # WARNING: Symlink and broken symlink handling is platform-dependent and not well tested across all OSes and edge cases.
     def match(self, path: 'pathlib.Path', now: float | None = None, stat_result=None) -> bool:
         """
         Check if the path matches any of the specified types.
@@ -67,6 +69,12 @@ class Type(Filter, metaclass=_TypeMeta):
         """
         import stat
         try:
+            # Check for symlink first, even if broken
+            if path.is_symlink():
+                if Type.LINK in self.type_names:
+                    return True
+                if Type.UNKNOWN in self.type_names and len(self.type_names) == 1:
+                    return False
             if not path.exists():
                 return Type.UNKNOWN in self.type_names
             st = stat_result if stat_result is not None else path.lstat()

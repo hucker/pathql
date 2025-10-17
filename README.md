@@ -1,26 +1,23 @@
-## Threaded and Non-Threaded Crawling
 
-PathQL supports both threaded and non-threaded filesystem crawling. Threaded crawling can provide performance gains on systems with slow disks (HDD), as it overlaps I/O operations. However, on modern hardware with SSDs, the overhead of thread management and task switching is often comparable to the cost of stat calls, so performance gains may be limited or even negative. For SSDs, non-threaded crawling may be just as fast or faster.
-## Threaded and Non-Threaded Query Engines
+# PathQL Declarative SQL Globbing
 
-PathQL provides both threaded and non-threaded (single-threaded) query engines for filesystem traversal and filtering. The threaded engine uses a producer-consumer model to parallelize file system stat calls and filtering, while the non-threaded engine processes files sequentially.
+## WARNING: Symlink and broken symlink handling is platform-dependent and not well tested across all OSes and edge cases. Results may vary depending on your operating system and filesystem. Use caution when relying on symlink detection in PathQL filters and queries.
 
-### Why Threading?
+---
 
-Threading is used to help isolate and potentially speed up the operating system stat calls (which are often the main bottleneck when querying large filesystems, especially on traditional spinning hard drives). By overlapping I/O-bound operations, the threaded engine can provide significant speedups when disk access is slow.
+## Table of Contents
+1. [Features](#features)
+2. [Basic Concepts](#basic-concepts)
+3. [Usage Examples](#usage-examples)
+4. [Threading](#threading)
+5. [Advanced Features](#advanced-features)
+6. [Testing & Coverage](#testing--coverage)
+7. [Extending PathQL](#extending-pathql)
+8. [Project Structure](#project-structure)
+9. [License](#license)
+10. [Date/Time Filtering Examples](#5-find-files-by-modification-or-creation-datetime)
 
-### SSD vs HDD Performance
-
-On modern machines with SSDs, the cost of stat calls and file access is extremely low. In these environments, the overhead of threading (context switching, queueing, etc.) can actually make the threaded engine slightly slower than the non-threaded version. On older machines or systems with spinning hard drives (HDDs), the threaded engine can provide substantial performance improvements by overlapping slow I/O operations.
-
-### Usage
-
-- Use `Query.files(...)` for the threaded engine (default).
-- Use `Query.unthreaded_files(...)` for the non-threaded, sequential engine.
-
-Both methods yield the same results, but performance characteristics will depend on your hardware and workload.
-
-# PathQL: Declarative Filesystem Query Language for Python
+## PathQL: Declarative Filesystem Query Language for Python
 
 PathQL is a declarative, composable, and efficient query language for filesystem operations in Python. It enables expressive, readable, and powerful queries over files and directories, inspired by `pathlib` and modern query languages. PathQL is designed for performance (stat caching), extensibility, and testability, with robust operator overloading and a familiar, Pythonic API.
 
@@ -30,19 +27,10 @@ PathQL is a declarative, composable, and efficient query language for filesystem
 - **Pathlib-like Naming**: Filters and queries mimic `pathlib` conventions (e.g., `Stem`, `Suffix`, `Type`)
 - **Stat Caching**: Each file is stat-ed only once per query for efficiency
 - **Threaded Filesystem Search**: Query engine uses a producer-consumer model with a dedicated thread for filesystem crawling and a main thread for filtering, improving responsiveness and throughput for large directory trees.
-- **Short-circuiting Boolean Logic**: AND/OR/NOT combinators short-circuit as expected
 - **Extensible Filters**: Easily add new filters for custom logic
 - **Comprehensive Testing**: Robust, parameterized pytest suite with coverage
 
-## Installation
 
-PathQL is a pure Python package. To use in your project:
-
-```powershell
-pip install -e .
-```
-
-Or simply copy the `src/pathql` directory into your project.
 
 ## Basic Concepts
 
@@ -131,10 +119,31 @@ for path in Query("/home/alice", query):
    print(path)
 ```
 
+# Threading
+
+PathQL supports both threaded and non-threaded filesystem crawling. Threaded crawling can provide performance gains on systems with slow disks (HDD), as it overlaps I/O operations. However, on modern hardware with SSDs, the overhead of thread management and task switching is often comparable to the cost of stat calls, so performance gains may be limited or even negative. For SSDs, non-threaded crawling may be just as fast or faster.
+
+## Threaded and Non-Threaded Query Engines
+
+PathQL provides both threaded and non-threaded (single-threaded) query engines for filesystem traversal and filtering. The threaded engine uses a producer-consumer model to parallelize file system stat calls and filtering, while the non-threaded engine processes files sequentially.
+
+### Why Threading?
+
+Threading is used to help isolate and potentially speed up the operating system stat calls (which are often the main bottleneck when querying large filesystems, especially on traditional spinning hard drives). By overlapping I/O-bound operations, the threaded engine can provide significant speedups when disk access is slow.
+
+### SSD vs HDD Performance
+
+On modern machines with SSDs, the cost of stat calls and file access is extremely low. In these environments, the overhead of threading (context switching, queueing, etc.) can actually make the threaded engine slightly slower than the non-threaded version. On older machines or systems with spinning hard drives (HDDs), the threaded engine can provide substantial performance improvements by overlapping slow I/O operations.
+
+### Usage
+
+- Use `Query.files(...)` for the threaded engine (default).
+- Use `Query.unthreaded_files(...)` for the non-threaded, sequential engine.
+
+
 ## Advanced Features
 
 - **Stat Caching**: Each file is stat-ed once, and the result is passed to all filters, avoiding redundant system calls.
-- **Short-circuiting**: Boolean combinators (`&`, `|`, `~`) short-circuit as in native Python logic.
 - **Operator Overloading**: Filters can be combined at the class or instance level, e.g., `Size <= 1024` or `Suffix({".txt"}) | Suffix({".md"})`.
 - **Pathlib-like Aliases**: Many filters have aliases for idiomatic usage (e.g., `Name = Stem`).
 

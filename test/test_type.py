@@ -17,7 +17,10 @@ def test_type_directory(tmp_path):
     assert (Type == Type.DIRECTORY).match(d)
 
 def test_type_link(tmp_path):
-    """Test that Type.LINK matches a symlink and not file or directory."""
+    """
+    Test that Type.LINK matches a symlink and not file or directory.
+    WARNING: Symlink handling is platform-dependent and not well tested across all OSes and edge cases.
+    """
     if sys.platform.startswith("win"):
         pytest.skip("Symlink tests are skipped on Windows.")
     f = tmp_path / "foo.txt"
@@ -71,7 +74,10 @@ def test_type_or_and_ror():
     assert t3.type_names == t4.type_names
 
 def test_type_error_handling(monkeypatch, tmp_path):
-    """Test error handling and UNKNOWN logic in Type filter."""
+    """
+    Test error handling and UNKNOWN logic in Type filter.
+    WARNING: Symlink and broken symlink handling is platform-dependent and not well tested across all OSes and edge cases.
+    """
     f = tmp_path / "err.txt"
     f.write_text("E")
     class BadPath(type(f)):
