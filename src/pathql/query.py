@@ -53,7 +53,7 @@ class Query(Filter):
             except Exception:
                 stat_result = None
         return self.filter_expr.match(path, now=now, stat_result=stat_result)
-    
+
 
     def _unthreaded_files(self, path: 'pathlib.Path', recursive=True, files=True, now=None) -> Iterator['pathlib.Path']:
         """
