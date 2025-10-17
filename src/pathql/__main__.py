@@ -1,7 +1,8 @@
 import argparse
 import pathlib
-from pathql.filters.stem import Stem
+from pathql import File
 from pathql.query import Query
+from pathql import __version__
 
 def main():
     parser = argparse.ArgumentParser(
@@ -28,7 +29,8 @@ Use --recursive to search subdirectories.
     )
     args = parser.parse_args()
 
-    query = Query(Stem(args.pattern))
+    print(f"PathQL v{__version__}")
+    query = Query(File(args.pattern))
     for f in query.files(path=pathlib.Path("."), recursive=args.recursive, files=True):
         print(f)
 

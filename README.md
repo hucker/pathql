@@ -1,4 +1,3 @@
-
 # PathQL Declarative SQL Globbing
 
 ## WARNING: Symlink and broken symlink handling is platform-dependent and not well tested across all OSes and edge cases. Results may vary depending on your operating system and filesystem. Use caution when relying on symlink detection in PathQL filters and queries.
@@ -119,7 +118,7 @@ for path in Query("/home/alice", query):
    print(path)
 ```
 
-# Threading
+## Threading
 
 PathQL supports both threaded and non-threaded filesystem crawling. Threaded crawling can provide performance gains on systems with slow disks (HDD), as it overlaps I/O operations. However, on modern hardware with SSDs, the overhead of thread management and task switching is often comparable to the cost of stat calls, so performance gains may be limited or even negative. For SSDs, non-threaded crawling may be just as fast or faster.
 
@@ -224,3 +223,30 @@ mod_dec = Modified(lambda dt: dt.month, operator.eq, 12)
 # Files created in the first three hours of the day
 created_early = Created(lambda dt: dt.hour, operator.in_, [0, 1, 2])
 ```
+
+## REPL Feature
+
+PathQL includes a simple interactive REPL (Read-Eval-Print Loop) for exploring queries and filters from the command line. You can launch the REPL by running:
+
+```bash
+python -m pathql
+```
+
+When started without arguments, PathQL will enter an interactive mode where you can type queries, patterns, and see matching files in real time. This is useful for experimenting with filter combinations and quickly inspecting filesystem results.
+
+- Type a file pattern (e.g. `*.py`, `foo*`, `*.md`) and press Enter to see matches in the current directory.
+- Use the `-r` flag for recursive search.
+- The REPL prints the package name and version before showing results.
+
+Example session:
+```
+$ python -m pathql
+PathQL vX.Y.Z
+> *.py
+main.py
+query.py
+filters/base.py
+...
+```
+
+See the CLI and test suite for more details on REPL usage and output.
