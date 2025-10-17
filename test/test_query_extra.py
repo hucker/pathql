@@ -24,7 +24,7 @@ def test_query_files_nonrecursive(tmp_path):
     f1 = make_file(tmp_path, "foo.txt")
     f2 = make_file(tmp_path, "bar.txt")
     q = Query(AlwaysTrue())
-    files = list(q.files(tmp_path, recursive=False, files=True))
+    files = list(q.files(tmp_path, recursive=False, files=True, threaded=False))
     names = sorted(f.name for f in files)
     assert set(names) >= {"foo.txt", "bar.txt"}
 
@@ -34,7 +34,7 @@ def test_query_files_dirs(tmp_path):
     f = make_file(d, "foo.txt")
     q = Query(AlwaysTrue())
     # files=False yields directories
-    dirs = list(q.files(tmp_path, recursive=True, files=False))
+    dirs = list(q.files(tmp_path, recursive=True, files=False, threaded=False))
     assert any(x.is_dir() for x in dirs)
 
 def test_query_files_stat_error(tmp_path):

@@ -55,7 +55,7 @@ class Query(Filter):
         return self.filter_expr.match(path, now=now, stat_result=stat_result)
     
 
-    def unthreaded_files(self, path: 'pathlib.Path', recursive=True, files=True, now=None) -> Iterator['pathlib.Path']:
+    def _unthreaded_files(self, path: 'pathlib.Path', recursive=True, files=True, now=None) -> Iterator['pathlib.Path']:
         """
         Yield files matching the filter expression using a single-threaded approach (no queue/thread).
 
@@ -83,7 +83,7 @@ class Query(Filter):
 
 
 
-    def files(self, path: 'pathlib.Path', recursive=True, files=True, now=None) -> Iterator['pathlib.Path']:
+    def _threaded_files(self, path: 'pathlib.Path', recursive=True, files=True, now=None) -> Iterator['pathlib.Path']:
         """
         Yield files matching the filter expression using a threaded producer-consumer model.
 
@@ -101,11 +101,6 @@ class Query(Filter):
         q = queue.Queue(maxsize=10)
 
         def producer():
-            """
-            Producer thread: walks the filesystem and enqueues (path, stat_result) tuples.
-
-            Uses rglob for recursive search, glob for non-recursive.
-            """
             iterator = path.rglob("*") if recursive else path.glob("*")
             for p in iterator:
                 if files and not p.is_file():
@@ -127,5 +122,24 @@ class Query(Filter):
             if self.filter_expr.match(p, now=now, stat_result=stat_result):
                 yield p
         t.join()
+
+    def files(self, path: 'pathlib.Path', recursive=True, files=True, now=None, threaded=False) -> Iterator['pathlib.Path']:
+        """
+        Yield files matching the filter expression using either threaded or non-threaded mode.
+
+        Args:
+            path (pathlib.Path): Root directory to search.
+            recursive (bool): If True, search recursively. If False, only top-level files.
+            files (bool): If True, yield only files (not directories).
+            now (float, optional): Reference time for filters. Defaults to current time.
+            threaded (bool): If True, use threaded producer-consumer model. If False, use single-threaded.
+
+        Yields:
+            pathlib.Path: Files matching the filter expression.
+        """
+        if threaded:
+            yield from self._threaded_files(path, recursive=recursive, files=files, now=now)
+        else:
+            yield from self._unthreaded_files(path, recursive=recursive, files=files, now=now)
 
 

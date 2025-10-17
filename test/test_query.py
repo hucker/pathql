@@ -44,13 +44,13 @@ def mini_fs(tmp_path):
 
 def test_query_size_and_suffix(mini_fs):
     q = Query((Size >= 100) & (Suffix == "txt"))
-    files = list(q.files(mini_fs, recursive=True, files=True))
+    files = list(q.files(mini_fs, recursive=True, files=True, threaded=False))
     names = sorted(f.name for f in files)
     assert names == ["foo.txt", "qux.txt"]
 
 def test_query_or_and(mini_fs):
     q = Query(((Size > 250) & (Suffix == "txt")) | (Suffix == "md"))
-    files = list(q.files(mini_fs, recursive=True, files=True))
+    files = list(q.files(mini_fs, recursive=True, files=True, threaded=False))
     names = sorted(f.name for f in files)
     assert names == ["bar.md", "qux.txt"]
 
@@ -58,7 +58,7 @@ def test_query_or_and(mini_fs):
 
 def test_query_in_operator(mini_fs):
     q = Query((Suffix == "txt") & (Size > 50))
-    files = list(q.files(mini_fs, recursive=True, files=True))
+    files = list(q.files(mini_fs, recursive=True, files=True, threaded=False))
     # Test 'in' operator for Suffix
     for f in files:
         assert "txt" in Suffix(["txt"])
@@ -67,15 +67,15 @@ def test_query_in_operator(mini_fs):
 def test_query_type_file_and_dir(mini_fs):
     q_files = Query(Type == Type.FILE)
     q_dirs = Query(Type == Type.DIRECTORY)
-    files = list(q_files.files(mini_fs, recursive=True, files=True))
-    dirs = list(q_dirs.files(mini_fs, recursive=True, files=False))
+    files = list(q_files.files(mini_fs, recursive=True, files=True, threaded=False))
+    dirs = list(q_dirs.files(mini_fs, recursive=True, files=False, threaded=False))
     assert all(f.is_file() for f in files)
     assert all(d.is_dir() for d in dirs)
 
 def test_query_complex(mini_fs):
     # .txt files with size > 50 or .md files with size < 300
     q = Query(((Suffix == "txt") & (Size > 50)) | ((Suffix == "md") & (Size < 300)))
-    files = list(q.files(mini_fs, recursive=True, files=True))
+    files = list(q.files(mini_fs, recursive=True, files=True, threaded=False))
     names = sorted(f.name for f in files)
     assert names == ["bar.md", "foo.txt", "qux.txt"]
 
@@ -85,8 +85,8 @@ def test_threaded_vs_unthreaded_equivalence_hundred(hundred_files):
     Verify that threaded and unthreaded Query methods yield the same results on 100 files.
     """
     q = Query(Suffix == "txt")
-    threaded = set(f.name for f in q.files(hundred_files, recursive=True, files=True))
-    unthreaded = set(f.name for f in q.unthreaded_files(hundred_files, recursive=True, files=True))
+    threaded = set(f.name for f in q.files(hundred_files, recursive=True, files=True, threaded=True))
+    unthreaded = set(f.name for f in q.files(hundred_files, recursive=True, files=True, threaded=False))
     assert threaded == unthreaded
     assert len(threaded) == 100
 
