@@ -1,3 +1,4 @@
+import os
 import pathlib
 import time
 from .base import Filter
@@ -31,7 +32,7 @@ class AgeDays(Filter, metaclass=_AgeMeta):
         op (callable, optional): Operator function (e.g., operator.lt, operator.ge).
         value (float, optional): Value to compare file age (in days) against.
     """
-    def __init__(self, op=None, value=None):
+    def __init__(self, op=None, value:int|float|None=None):
         """
         Initialize an AgeDays filter.
 
@@ -42,11 +43,10 @@ class AgeDays(Filter, metaclass=_AgeMeta):
         self.op = op
         self.value = value
 
-    def match(self, path: 'pathlib.Path', now=None, stat_result=None) -> bool:
+    def match(self, path: pathlib.Path, now:float|int|None=None, stat_result=None) -> bool:
         if self.op is None or self.value is None:
             raise ValueError("AgeDays filter not fully specified.")
         try:
-            import time
             if now is None:
                 now = time.time()
             st = stat_result if stat_result is not None else path.stat()
@@ -68,7 +68,7 @@ class AgeYears(Filter, metaclass=_AgeMeta):
         op (callable, optional): Operator function (e.g., operator.lt, operator.ge).
         value (float, optional): Value to compare file age (in years) against.
     """
-    def __init__(self, op=None, value=None):
+    def __init__(self, op=None, value:int|float|None=None):
         """
         Initialize an AgeYears filter.
 
@@ -79,11 +79,10 @@ class AgeYears(Filter, metaclass=_AgeMeta):
         self.op = op
         self.value = value
 
-    def match(self, path: 'pathlib.Path', now=None, stat_result=None) -> bool:
+    def match(self, path: pathlib.Path, now:float|None=None, stat_result:os.stat_result|None=None) -> bool:
         if self.op is None or self.value is None:
             raise ValueError("AgeYears filter not fully specified.")
         try:
-            import time
             if now is None:
                 now = time.time()
             st = stat_result if stat_result is not None else path.stat()
@@ -95,15 +94,14 @@ class AgeYears(Filter, metaclass=_AgeMeta):
 
 
 class AgeMinutes(Filter, metaclass=_AgeMeta):
-    def __init__(self, op=None, value=None):
+    def __init__(self, op=None, value:int|float|None=None):
         self.op = op
         self.value = value
 
-    def match(self, path: 'pathlib.Path', now=None, stat_result=None) -> bool:
+    def match(self, path: pathlib.Path, now:float|None=None, stat_result:os.stat_result|None=None) -> bool:
         if self.op is None or self.value is None:
             raise ValueError("AgeMinutes filter not fully specified.")
         try:
-            import time
             if now is None:
                 now = time.time()
             st = stat_result if stat_result is not None else path.stat()

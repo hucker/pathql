@@ -8,6 +8,7 @@
   import datetime as dt
   ```
 
+- Always be PEP8 compliant (e.g., spaces not tabs, new line at end of file, first line has code etc)
 - Never use `import datetime` without aliasing, and never use `datetime` as a variable or argument name.
 - import pathlib instead of "from datetime import datetime"
 - All references to datetime classes and functions (e.g., `datetime.datetime`, `datetime.date`, `datetime.timedelta`) should be updated to use the `dt` prefix (e.g., `dt.datetime`, `dt.date`, `dt.timedelta`).

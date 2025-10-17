@@ -4,10 +4,9 @@ Base filter classes for PathQL.
 Defines the abstract Filter class and logical combinators (AndFilter, OrFilter, NotFilter) for building composable filesystem queries.
 """
 
-import datetime as dt
 import os
 import pathlib
-from typing import Any, Callable
+
 
 class Filter:
     """
@@ -28,10 +27,7 @@ class Filter:
         """Return a filter that matches if this filter does not match."""
         return NotFilter(self)
 
-    def match(self,
-              path: 'pathlib.Path',
-              now: float | None = None,
-              stat_result: os.stat_result | None = None) -> bool:
+    def match(self, path:pathlib.Path, now:dt.datetime|None=None, stat_result:os.stat_result|None=None)->bool:
         """
         Determine if the given path matches the filter criteria.
 
@@ -52,7 +48,12 @@ class AndFilter(Filter):
         """Initialize with two filters to combine with logical AND."""
         self.left = left
         self.right = right
-    def match(self, path: 'pathlib.Path', now: float | None = None, stat_result: os.stat_result | None = None) -> bool:
+    def match(
+        self,
+        path: pathlib.Path,
+        now: float | None = None,
+        stat_result: os.stat_result | None = None
+    ) -> bool:
         """Return True if both filters match the path."""
         return self.left.match(path, now=now, stat_result=stat_result) and self.right.match(path, now=now, stat_result=stat_result)
 
@@ -64,7 +65,12 @@ class OrFilter(Filter):
         """Initialize with two filters to combine with logical OR."""
         self.left = left
         self.right = right
-    def match(self, path: 'pathlib.Path', now: float | None = None, stat_result: os.stat_result | None = None) -> bool:
+    def match(
+        self,
+        path: pathlib.Path,
+        now: float | None = None,
+        stat_result: os.stat_result | None = None
+    ) -> bool:
         """Return True if either filter matches the path."""
         return self.left.match(path, now=now, stat_result=stat_result) or self.right.match(path, now=now, stat_result=stat_result)
 
@@ -75,6 +81,11 @@ class NotFilter(Filter):
     def __init__(self, operand: Filter):
         """Initialize with a filter to negate."""
         self.operand = operand
-    def match(self, path: 'pathlib.Path', now: float | None = None, stat_result: os.stat_result | None = None) -> bool:
+    def match(
+        self,
+        path: pathlib.Path,
+        now: float | None = None,
+        stat_result: os.stat_result | None = None
+    ) -> bool:
         """Return True if the operand filter does not match the path."""
         return not self.operand.match(path, now=now, stat_result=stat_result)

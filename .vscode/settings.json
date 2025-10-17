@@ -20,4 +20,8 @@
         "capsys",
         "pathql"
     ]
+    ,
+    "python.analysis.extraPaths": [
+        "src"
+    ]
 }

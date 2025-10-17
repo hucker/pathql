@@ -2,28 +2,36 @@
 import datetime as dt
 import pathlib
 import operator
+import os
 from .base import Filter
+
 
 # Top-level filter classes for exact datetime matches
 class _DayFilter(Filter):
 	"""Filter for exact year, month, and day match."""
-	def __init__(self, other):
+	def __init__(self, other:Filter, attr: str = 'st_mtime'):
 		self.other = other
-	def match(self, path, now=None, stat_result=None):
+		self.attr = attr
+
+	def match(self, path:pathlib.Path, now:dt.datetime|None=None, stat_result:os.stat_result|None=None)->bool:
 		if stat_result is None:
 			stat_result = path.stat()
-		ts = getattr(stat_result, 'st_mtime')
+		ts = getattr(stat_result, self.attr)
 		dt_obj = dt.datetime.fromtimestamp(ts)
 		return (dt_obj.year == self.other.year and dt_obj.month == self.other.month and dt_obj.day == self.other.day)
 
 class _HourFilter(Filter):
 	"""Filter for exact year, month, day, and hour match."""
-	def __init__(self, other):
+	def match(self, path:pathlib.Path, now:dt.datetime|None=None, stat_result:os.stat_result|None=None)->bool:
+
 		self.other = other
-	def match(self, path, now=None, stat_result=None):
+		self.attr = attr
+
+	def match(self, path:pathlib.Path, now:dt.datetime|None=None, stat_result:os.stat_result|None=None)->bool:
+
 		if stat_result is None:
 			stat_result = path.stat()
-		ts = getattr(stat_result, 'st_mtime')
+		ts = getattr(stat_result, self.attr)
 		dt_obj = dt.datetime.fromtimestamp(ts)
 		if isinstance(self.other, dt.datetime):
 			return (dt_obj.year == self.other.year and dt_obj.month == self.other.month and dt_obj.day == self.other.day and dt_obj.hour == self.other.hour)
@@ -34,7 +42,9 @@ class _MinuteFilter(Filter):
 	"""Filter for exact year, month, day, hour, and minute match."""
 	def __init__(self, other):
 		self.other = other
-	def match(self, path, now=None, stat_result=None):
+		
+	def match(self, path:pathlib.Path, now:dt.datetime|None=None, stat_result:os.stat_result|None=None)->bool:
+
 		if stat_result is None:
 			stat_result = path.stat()
 		ts = getattr(stat_result, 'st_mtime')
@@ -144,12 +154,12 @@ class _DateTimePart:
 			raise ValueError(f"Unknown month number: {v}")
 		return v
 
-	def _filter(self, op, value):
+	def _filter(self, op, value, attr: str = 'st_mtime'):
 		class _PartFilter(Filter):
 			def match(_, path, now=None, stat_result=None):
 				if stat_result is None:
 					stat_result = path.stat()
-				ts = getattr(stat_result, 'st_mtime')
+				ts = getattr(stat_result, attr)
 				dt_obj = dt.datetime.fromtimestamp(ts)
 				part_value = getattr(dt_obj, self.part)
 				# Special handling for month: allow string names
@@ -162,24 +172,35 @@ class _DateTimePart:
 					return op(part_value, val)
 				return op(part_value, value)
 		return _PartFilter()
-	def __eq__(self, other):
+
+	def __eq__(self, other, attr: str = 'st_mtime'):
 		if isinstance(other, (dt.datetime, dt.date)):
 			if self.part == 'year':
-				return self._filter(operator.eq, other.year)
+				return self._filter(operator.eq, other.year, attr=attr)
 			if self.part == 'month':
-				return self._filter(operator.eq, other.month)
+				return self._filter(operator.eq, other.month, attr=attr)
 			if self.part == 'day':
-				return _DayFilter(other)
+				return _DayFilter(other, attr=attr)
 			if self.part == 'hour':
-				return _HourFilter(other)
+				return _HourFilter(other, attr=attr)
 			if self.part == 'minute':
 				return _MinuteFilter(other)
 			if self.part == 'second':
 				return _SecondFilter(other)
 		# Special handling for month: allow string names
 		if self.part == 'month':
-			return self._filter(operator.eq, self._normalize_month(other))
-		return self._filter(operator.eq, other)
+			return self._filter(operator.eq, self._normalize_month(other), attr=attr)
+		return self._filter(operator.eq, other, attr=attr)
+
+	def __ne__(self, other):
+		return self._filter(operator.ne, other)
+
+	def isin(self, items):
+		return self._filter(lambda part, values: part in values, items)
+
+	def __call__(self, *args, **kwargs):
+		raise TypeError("Do not call Year, Month, etc. Use them as singletons: Year == 2022")
+
 	def __ne__(self, other):
 		return self._filter(operator.ne, other)
 	def isin(self, items):
@@ -217,10 +238,11 @@ class Modified(Filter):
 				- If a single Filter is provided, it will be used directly.
 				- If three arguments are provided, they are (extractor, op, value).
 		"""
-		# _is_wrapped indicates whether this filter wraps another Filter (e.g., Year == 2024)
-		# or is a direct DateTimeFilter (with extractor/op/value). If True, all matching is delegated
-		# to the wrapped filter. If False, uses a DateTimeFilter instance.
-		if len(args) == 1 and isinstance(args[0], Filter):
+		if len(args) == 1 and isinstance(args[0], _DateTimePart):
+			# Pass attr explicitly for Modified
+			self._filter = args[0].__eq__(args[0], attr='st_mtime')
+			self._is_wrapped = True
+		elif len(args) == 1 and isinstance(args[0], Filter):
 			self._filter = args[0]
 			self._is_wrapped = True
 		elif len(args) == 3:
@@ -249,19 +271,31 @@ class Created(Filter):
 		"""
 		Initialize a Created filter.
 
+		On macOS and platforms that support it, this filter uses st_birthtime (true creation time).
+		On other platforms, it falls back to st_ctime (inode change time), which may not be true creation time.
+		This is the most cross-platform way to represent file creation time in Python.
+
 		Args:
 			*args: Either a single Filter (e.g., Year == 2024), or (extractor, op, value).
 				- If a single Filter is provided, it will be used directly.
 				- If three arguments are provided, they are (extractor, op, value).
 		"""
-		# _is_wrapped indicates whether this filter wraps another Filter (e.g., Year == 2024)
-		# or is a direct DateTimeFilter (with extractor/op/value). If True, all matching is delegated
-		# to the wrapped filter. If False, uses a DateTimeFilter instance.
-		if len(args) == 1 and isinstance(args[0], Filter):
+		# Determine which stat attribute to use for creation time
+		import sys
+		if sys.platform == "darwin":
+			# On macOS, st_birthtime is available
+			attr = 'st_birthtime'
+		else:
+			# On other platforms, use st_ctime
+			attr = 'st_ctime'
+		if len(args) == 1 and isinstance(args[0], _DateTimePart):
+			self._filter = args[0].__eq__(args[0], attr=attr)
+			self._is_wrapped = True
+		elif len(args) == 1 and isinstance(args[0], Filter):
 			self._filter = args[0]
 			self._is_wrapped = True
 		elif len(args) == 3:
-			self.base = DateTimeFilter('st_ctime', *args)
+			self.base = DateTimeFilter(attr, *args)
 			self._is_wrapped = False
 		else:
 			raise TypeError("Created expects either (extractor, op, value) or a single Filter (e.g., Created(Year == 2022))")
