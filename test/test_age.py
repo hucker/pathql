@@ -1,29 +1,39 @@
+"""
+Tests for Age filters (AgeMinutes, AgeDays, AgeYears) in PathQL.
 
+Includes helpers to set file modification times and exhaustive parametric tests for all age filters and comparison operators.
+"""
 import os
 import time
-import pytest
 import operator
-from pathql.filters.age import AgeDays, AgeMinutes, AgeYears
+import pathlib
+import pytest
 
-def set_mtime_minutes_ago(path, minutes, now=None):
+from src.pathql.filters.age import AgeDays, AgeMinutes, AgeYears
+
+def set_mtime_minutes_ago(path: pathlib.Path, minutes: float, now: float | None = None) -> None:
+    """Set file mtime to N minutes ago."""
     if now is None:
         now = time.time()
     ago = now - (minutes * 60)
     os.utime(path, (ago, ago))
 
-def set_mtime_hours_ago(path, hours, now=None):
+def set_mtime_hours_ago(path: pathlib.Path, hours: float, now: float | None = None) -> None:
+    """Set file mtime to N hours ago."""
     if now is None:
         now = time.time()
     ago = now - (hours * 3600)
     os.utime(path, (ago, ago))
 
-def set_mtime_days_ago(path, days, now=None):
+def set_mtime_days_ago(path: pathlib.Path, days: float, now: float | None = None) -> None:
+    """Set file mtime to N days ago."""
     if now is None:
         now = time.time()
     ago = now - (days * 86400)
     os.utime(path, (ago, ago))
 
-def set_mtime_years_ago(path, years, now=None):
+def set_mtime_years_ago(path: pathlib.Path, years: float, now: float | None = None) -> None:
+    """Set file mtime to N years ago."""
     if now is None:
         now = time.time()
     ago = now - (years * 365.25 * 86400)
@@ -52,7 +62,14 @@ def set_mtime_years_ago(path, years, now=None):
         (operator.ne, True, False, True),
     ]
 )
-def test_age_thresholds(tmp_path, filter_cls, setter, unit, op, expected_below, expected_exact, expected_above):
+def test_age_thresholds(tmp_path:pathlib.Path,
+                        filter_cls,
+                        setter,
+                        unit,
+                        op,
+                        expected_below:bool,
+                         expected_exact:bool,
+                         expected_above:bool):
     """
     Exhaustive parametric test for all age filters (minutes, days, years) and all comparison operators.
 

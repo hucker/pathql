@@ -1,4 +1,6 @@
 
+import datetime as dt
+import os
 import pathlib
 from .base import Filter
 from .stem import Stem
@@ -7,16 +9,16 @@ from .suffix import Suffix
 class File(Filter):
     """
     Filter for matching a file's full name by composing Stem and Suffix filters.
-    
+
     This filter splits the given pattern (a filename or Path) into its stem and suffix parts,
     and matches both using the Stem and Suffix filters. All pattern logic (wildcards, regex, etc.)
     is delegated to those filters. This class is purely compositional and does not implement
     any matching logic itself.
     """
-    def __init__(self, pattern, ignore_case=True):
+    def __init__(self, pattern:str, ignore_case:bool=True):
         """
         Initialize a File filter by splitting the pattern into stem and suffix.
-        
+
         Args:
             pattern (str | Path): The file name or Path to match. Can be a string or a Path object.
             ignore_case (bool): Whether to ignore case when matching the stem. Default: True.
@@ -32,10 +34,10 @@ class File(Filter):
         self.stem_filter = Stem(stem, ignore_case=ignore_case)
         self.suffix_filter = Suffix(suffix) if suffix else None
 
-    def match(self, path: 'pathlib.Path', now=None, stat_result=None):
+    def match(self, path: 'pathlib.Path', now:dt.datetime|None=None, stat_result:os.stat_result|None=None):
         """
         Return True if the given path matches both the stem and suffix filters.
-        
+
         Args:
             path (Path): The file path to test.
             now, stat_result: Passed through to underlying filters (for compatibility).
@@ -54,7 +56,6 @@ class File(Filter):
 
         This is useful for introspection or for composing with other filters.
         """
-        import fnmatch
         # Check for wildcards in the original pattern string
         pat = str(self.pattern)
         if any(c in pat for c in '*?[]{}'):

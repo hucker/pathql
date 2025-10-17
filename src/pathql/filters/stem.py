@@ -2,7 +2,9 @@
 Stem filter for matching file stems (filename without extension) using glob patterns.
 Provides declarative, pathlib-like queries for filesystem filtering.
 """
+import fnmatch
 import pathlib
+
 from .base import Filter
 
 
@@ -32,16 +34,14 @@ class Stem(Filter):
         Args:
             patterns (str | list[str]): One or more glob patterns to match against the stem.
                 If a string is provided, it is treated as a single pattern.
-            ignore_case (bool, optional): If True (default), matching is case-insensitive.
+            ignore_case (bool, otional): If True (default), matching is case-insensitive.
                 Set to False for case-sensitive matching.
         """
-        import fnmatch
         if isinstance(patterns, str):
             self.patterns = [patterns]
         else:
             self.patterns = list(patterns)
         self.ignore_case = ignore_case
-        self._fnmatch = fnmatch
 
     def match(self, path: pathlib.Path, now: float | None = None, stat_result: object = None) -> bool:
         """
@@ -59,7 +59,7 @@ class Stem(Filter):
             pats = [p.lower() for p in self.patterns]
         else:
             pats = self.patterns
-        return any(self._fnmatch.fnmatchcase(stem, pat) for pat in pats)
+        return any(fnmatch.fnmatchcase(stem, pat) for pat in pats)
 
 # Alias for pathlib-like naming
 Name = Stem

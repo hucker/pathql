@@ -1,8 +1,16 @@
+"""
+PathQL CLI entry point.
+
+Provides a command-line interface for querying files in the filesystem using shell-style patterns.
+Prints the PathQL version and lists matching files.
+"""
+
 import argparse
 import pathlib
 from pathql import File
-from pathql.query import Query
+from pathql import Query
 from pathql import __version__
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -13,26 +21,26 @@ Examples:
   python -m pathql 'foo*'
 
 This will print all files matching the given stem pattern in the current directory.
+
 Use --recursive to search subdirectories.
         """,
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
         "pattern",
         type=str,
-        help="File stem pattern (e.g. 'foo*' or '*.txt'). Uses shell-style wildcards."
+        help="File stem pattern (e.g. 'foo*' or '*.txt'). Uses shell-style wildcards.",
     )
     parser.add_argument(
-        "-r", "--recursive",
-        action="store_true",
-        help="Search directories recursively."
+        "-r", "--recursive", action="store_true", help="Search directories recursively."
     )
     args = parser.parse_args()
 
-    print(f"PathQL v{__version__}")
     query = Query(File(args.pattern))
+    print("PathQL v" + __version__)
     for f in query.files(path=pathlib.Path("."), recursive=args.recursive, files=True):
         print(f)
+
 
 if __name__ == "__main__":
     main()

@@ -224,29 +224,33 @@ mod_dec = Modified(lambda dt: dt.month, operator.eq, 12)
 created_early = Created(lambda dt: dt.hour, operator.in_, [0, 1, 2])
 ```
 
-## REPL Feature
+## CLI Usage
 
-PathQL includes a simple interactive REPL (Read-Eval-Print Loop) for exploring queries and filters from the command line. You can launch the REPL by running:
+PathQL's CLI provides pattern-based file matching and recursive search, similar to an enhanced `ls` with globbing. It does not currently support interactive filter composition or a true REPL for advanced PathQL expressions.
+
+### Basic Usage
+
+Run PathQL from the command line to match files by pattern:
 
 ```bash
-python -m pathql
+python -m pathql '*.py' -r
 ```
 
-When started without arguments, PathQL will enter an interactive mode where you can type queries, patterns, and see matching files in real time. This is useful for experimenting with filter combinations and quickly inspecting filesystem results.
+- The first argument is a glob pattern (e.g., `*.py`, `foo*`, `*.md`).
+- Use the `-r` flag for recursive search in subdirectories.
+- The CLI prints the package name and version before showing results.
 
-- Type a file pattern (e.g. `*.py`, `foo*`, `*.md`) and press Enter to see matches in the current directory.
-- Use the `-r` flag for recursive search.
-- The REPL prints the package name and version before showing results.
-
-Example session:
+Example output:
 ```
-$ python -m pathql
+$ python -m pathql '*.py' -r
 PathQL vX.Y.Z
-> *.py
 main.py
 query.py
 filters/base.py
 ...
 ```
 
-See the CLI and test suite for more details on REPL usage and output.
+### Limitations
+- The CLI does **not** provide a true interactive REPL for composing complex PathQL filter expressions.
+- Only pattern matching and recursive search are supported from the command line.
+- For advanced queries, use PathQL as a Python library in your own scripts.

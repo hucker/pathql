@@ -1,19 +1,19 @@
-
 import pathlib
 from .base import Filter
+from typing import Callable, Type, Any
 
 class FilterMeta(type):
-    def __le__(cls, other):
+    def __le__(cls: Type['Size'], other: int) -> 'Size':
         return cls(lambda x, y: x <= y, other)
-    def __lt__(cls, other):
+    def __lt__(cls: Type['Size'], other: int) -> 'Size':
         return cls(lambda x, y: x < y, other)
-    def __ge__(cls, other):
+    def __ge__(cls: Type['Size'], other: int) -> 'Size':
         return cls(lambda x, y: x >= y, other)
-    def __gt__(cls, other):
+    def __gt__(cls: Type['Size'], other: int) -> 'Size':
         return cls(lambda x, y: x > y, other)
-    def __eq__(cls, other):
+    def __eq__(cls: Type['Size'], other: int) -> 'Size':
         return cls(lambda x, y: x == y, other)
-    def __ne__(cls, other):
+    def __ne__(cls: Type['Size'], other: int) -> 'Size':
         return cls(lambda x, y: x != y, other)
 
 class Size(Filter, metaclass=FilterMeta):
@@ -29,7 +29,7 @@ class Size(Filter, metaclass=FilterMeta):
         op (callable, optional): Operator function (e.g., operator.le, operator.gt).
         value (int, optional): Value to compare file size against.
     """
-    def __init__(self, op: callable = None, value: int | None = None):
+    def __init__(self, op: Callable[[Any, Any], bool] = None, value: int | None = None) -> None:
         """
         Initialize a Size filter.
 
@@ -37,35 +37,35 @@ class Size(Filter, metaclass=FilterMeta):
             op (callable, optional): Operator function (e.g., operator.le, operator.gt).
             value (int, optional): Value to compare file size against.
         """
-        self.op = op
-        self.value = value
+        self.op: Callable[[Any, Any], bool] | None = op
+        self.value: int | None = value
 
     # Class-level operator overloads for declarative syntax
-    def __class_getitem__(cls, item):
+    def __class_getitem__(cls: Type['Size'], item: int) -> 'Size':
         return cls(lambda x, y: x == y, item)
 
     @classmethod
-    def __le__(cls, other):
+    def __le__(cls: Type['Size'], other: int) -> 'Size':
         return cls(lambda x, y: x <= y, other)
 
     @classmethod
-    def __lt__(cls, other):
+    def __lt__(cls: Type['Size'], other: int) -> 'Size':
         return cls(lambda x, y: x < y, other)
 
     @classmethod
-    def __ge__(cls, other):
+    def __ge__(cls: Type['Size'], other: int) -> 'Size':
         return cls(lambda x, y: x >= y, other)
 
     @classmethod
-    def __gt__(cls, other):
+    def __gt__(cls: Type['Size'], other: int) -> 'Size':
         return cls(lambda x, y: x > y, other)
 
     @classmethod
-    def __eq__(cls, other):
+    def __eq__(cls: Type['Size'], other: int) -> 'Size':
         return cls(lambda x, y: x == y, other)
 
     @classmethod
-    def __ne__(cls, other):
+    def __ne__(cls: Type['Size'], other: int) -> 'Size':
         return cls(lambda x, y: x != y, other)
 
     def match(self, path: pathlib.Path, now: float | None = None, stat_result: object = None) -> bool:
@@ -73,7 +73,7 @@ class Size(Filter, metaclass=FilterMeta):
             raise ValueError("Size filter not fully specified.")
         try:
             st = stat_result if stat_result is not None else path.stat()
-            size = st.st_size
+            size: int = st.st_size
             return self.op(size, self.value)
         except Exception:
             return False

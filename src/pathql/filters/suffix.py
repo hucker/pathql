@@ -158,5 +158,5 @@ class Suffix(Filter, metaclass=SuffixMeta):
 
 # Alias for pathlib-like naming
 Ext = Suffix
-Ext.__doc__ = "Alias for Suffix. See Suffix for usage."
-Ext = Suffix
+Ext.__doc__ = "Alias for Suffix. See Suffix for usage.\n\n" + (Suffix.__doc__ or "")
+

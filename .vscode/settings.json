@@ -17,6 +17,7 @@
     "ruff.format.enable": true,
     "python.formatting.provider": "ruff",
     "cSpell.words": [
-        "capsys"
+        "capsys",
+        "pathql"
     ]
 }
