@@ -42,7 +42,7 @@ class _MinuteFilter(Filter):
 	"""Filter for exact year, month, day, hour, and minute match."""
 	def __init__(self, other):
 		self.other = other
-		
+
 	def match(self, path:pathlib.Path, now:dt.datetime|None=None, stat_result:os.stat_result|None=None)->bool:
 
 		if stat_result is None:
