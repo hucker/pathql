@@ -10,7 +10,6 @@ import datetime as dt
 import pytest
 from pathql.presets.dates import  modified_this_minute,modified_this_hour, modified_today, modified_this_month, modified_this_year
 
-)
 from pathql.filters.base import Filter
 
 BASE_TIME = dt.datetime(2025, 1, 1, 0, 0, 0)

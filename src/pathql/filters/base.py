@@ -48,6 +48,16 @@ class AndFilter(Filter):
         """Initialize with two filters to combine with logical AND."""
         self.left = left
         self.right = right
+
+    def __and__(self, other):
+        # Allow chaining: (Read & Write) & Execute and ((Read & Write) & (Execute & Write))
+        if isinstance(other, type) and issubclass(other, Filter):
+            return AndFilter(self, other())
+        if isinstance(other, Filter):
+            return AndFilter(self, other)
+        if isinstance(other, AndFilter):
+            return AndFilter(self, other)
+        return NotImplemented
     def match(
         self,
         path: pathlib.Path,
@@ -58,6 +68,13 @@ class AndFilter(Filter):
         return self.left.match(path, now=now, stat_result=stat_result) and self.right.match(path, now=now, stat_result=stat_result)
 
 class OrFilter(Filter):
+    def __or__(self, other):
+        # Allow chaining: (Read | Write) | Execute
+        if isinstance(other, type) and issubclass(other, Filter):
+            return OrFilter(self, other())
+        if isinstance(other, Filter):
+            return OrFilter(self, other)
+        return NotImplemented
     """
     Filter that matches if either left or right filter matches.
     """

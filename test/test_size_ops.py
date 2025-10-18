@@ -1,6 +1,5 @@
 """Operator-based tests for Size filter, covering ==, !=, <, >, <=, >= cases."""
 
-from conftest_size import size_test_folder
 import pathlib
 from pathql.filters.size import Size
 

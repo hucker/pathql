@@ -56,7 +56,7 @@ def set_file_times(path, mtime=None, ctime=None):
         os.utime(path, (mtime, mtime))
     # ctime cannot be set directly on all platforms, so we only test mtime-based filters reliably
 
-def make_file_with_mtime(tmp_path:pathlib.path, dt):
+def make_file_with_mtime(tmp_path:pathlib.Path, dt):
     """
     Create a file at tmp_path with a specific modification time (mtime) set to the given datetime.
     Returns the file path.

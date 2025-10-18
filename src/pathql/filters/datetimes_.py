@@ -22,51 +22,81 @@ class _DayFilter(Filter):
 
 class _HourFilter(Filter):
 	"""Filter for exact year, month, day, and hour match."""
-	def match(self, path:pathlib.Path, now:dt.datetime|None=None, stat_result:os.stat_result|None=None)->bool:
-
+	def __init__(self, other, attr: str = 'st_mtime'):
 		self.other = other
 		self.attr = attr
 
-	def match(self, path:pathlib.Path, now:dt.datetime|None=None, stat_result:os.stat_result|None=None)->bool:
-
+	def match(self, path: pathlib.Path, now: dt.datetime | None = None, stat_result: os.stat_result | None = None) -> bool:
 		if stat_result is None:
 			stat_result = path.stat()
 		ts = getattr(stat_result, self.attr)
 		dt_obj = dt.datetime.fromtimestamp(ts)
 		if isinstance(self.other, dt.datetime):
-			return (dt_obj.year == self.other.year and dt_obj.month == self.other.month and dt_obj.day == self.other.day and dt_obj.hour == self.other.hour)
+			return (
+				dt_obj.year == self.other.year and
+				dt_obj.month == self.other.month and
+				dt_obj.day == self.other.day and
+				dt_obj.hour == self.other.hour
+			)
 		else:
-			return (dt_obj.year == self.other.year and dt_obj.month == self.other.month and dt_obj.day == self.other.day)
+			return (
+				dt_obj.year == self.other.year and
+				dt_obj.month == self.other.month and
+				dt_obj.day == self.other.day
+			)
 
 class _MinuteFilter(Filter):
 	"""Filter for exact year, month, day, hour, and minute match."""
-	def __init__(self, other):
+	def __init__(self, other, attr: str = 'st_mtime'):
 		self.other = other
+		self.attr = attr
 
-	def match(self, path:pathlib.Path, now:dt.datetime|None=None, stat_result:os.stat_result|None=None)->bool:
-
+	def match(self, path: pathlib.Path, now: dt.datetime | None = None, stat_result: os.stat_result | None = None) -> bool:
 		if stat_result is None:
 			stat_result = path.stat()
-		ts = getattr(stat_result, 'st_mtime')
+		ts = getattr(stat_result, self.attr)
 		dt_obj = dt.datetime.fromtimestamp(ts)
 		if isinstance(self.other, dt.datetime):
-			return (dt_obj.year == self.other.year and dt_obj.month == self.other.month and dt_obj.day == self.other.day and dt_obj.hour == self.other.hour and dt_obj.minute == self.other.minute)
+			return (
+				dt_obj.year == self.other.year and
+				dt_obj.month == self.other.month and
+				dt_obj.day == self.other.day and
+				dt_obj.hour == self.other.hour and
+				dt_obj.minute == self.other.minute
+			)
 		else:
-			return (dt_obj.year == self.other.year and dt_obj.month == self.other.month and dt_obj.day == self.other.day)
+			return (
+				dt_obj.year == self.other.year and
+				dt_obj.month == self.other.month and
+				dt_obj.day == self.other.day
+			)
 
 class _SecondFilter(Filter):
 	"""Filter for exact year, month, day, hour, minute, and second match."""
-	def __init__(self, other):
+	def __init__(self, other, attr: str = 'st_mtime'):
 		self.other = other
-	def match(self, path, now=None, stat_result=None):
+		self.attr = attr
+
+	def match(self, path: pathlib.Path, now: dt.datetime | None = None, stat_result: os.stat_result | None = None) -> bool:
 		if stat_result is None:
 			stat_result = path.stat()
-		ts = getattr(stat_result, 'st_mtime')
+		ts = getattr(stat_result, self.attr)
 		dt_obj = dt.datetime.fromtimestamp(ts)
 		if isinstance(self.other, dt.datetime):
-			return (dt_obj.year == self.other.year and dt_obj.month == self.other.month and dt_obj.day == self.other.day and dt_obj.hour == self.other.hour and dt_obj.minute == self.other.minute and dt_obj.second == self.other.second)
+			return (
+				dt_obj.year == self.other.year and
+				dt_obj.month == self.other.month and
+				dt_obj.day == self.other.day and
+				dt_obj.hour == self.other.hour and
+				dt_obj.minute == self.other.minute and
+				dt_obj.second == self.other.second
+			)
 		else:
-			return (dt_obj.year == self.other.year and dt_obj.month == self.other.month and dt_obj.day == self.other.day)
+			return (
+				dt_obj.year == self.other.year and
+				dt_obj.month == self.other.month and
+				dt_obj.day == self.other.day
+			)
 
 # Month name mapping (case-insensitive, 3-letter and full names)
 _MONTH_NAME_TO_NUM = {
