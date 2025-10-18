@@ -21,21 +21,19 @@ def test_size_error(tmp_path: pathlib.Path):
     bad_file = BadPath()
     # Should return False if stat fails
     assert Size(lambda x, y: x < y, 1).match(bad_file) is False
-    # Should raise TypeError if Size is constructed without required arguments
+    # Should raise TypeError if match() is called on unconfigured Size
     with pytest.raises(TypeError):
-        Size()
+        Size().match(pathlib.Path("afile.txt"))
 
 def test_size_operator_overloads(tmp_path: pathlib.Path):
     file = make_file(tmp_path, 50)
-    # Class-level operator overloads
-    assert Size <= 100
-    assert Size < 1000
-    assert Size >= 10
-    assert Size > 1
-    assert Size == 50
-    assert Size != 51
-    # __class_getitem__
-    assert Size[50].match(file)
+    # Instance-level operator overloads
+    assert Size() <= 100
+    assert Size() < 1000
+    assert Size() >= 10
+    assert Size() > 1
+    assert Size() == 50
+    assert Size() != 51
     # Instance-level
     assert Size(lambda x, y: x == y, 50).match(file)
     # TODO: Not all operator overloads are meaningful, but these lines exercise them

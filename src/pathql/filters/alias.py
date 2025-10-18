@@ -13,3 +13,4 @@ FloatOrNone: TypeAlias = float | None
 DatetimeOrNone: TypeAlias = dt.datetime | None
 PathOrNone: TypeAlias = pathlib.Path | None
 IntOrFloatOrNone: TypeAlias = int | float | None
+IntOrFloat: TypeAlias = int | float

@@ -1,7 +1,5 @@
 # PathQL Declarative SQL Globbing
 
-## WARNING: Symlink and broken symlink handling is platform-dependent and not well tested across all OSes and edge cases. Results may vary depending on your operating system and filesystem. Use caution when relying on symlink detection in PathQL filters and queries.
-
 ---
 
 ## Table of Contents
@@ -47,12 +45,12 @@ Equality (`==`) and inequality (`!=`) comparisons are not supported and will rai
 
 #### Example Filters
 
-- `Size <= 1_000_000` — files up to 1MB
+- `Size() <= 1_000_000` — files up to 1MB
 - `Suffix({".png", ".jpg"})` — files with .png or .jpg extension
 - `Stem("report_*")` — files whose stem matches a glob pattern (e.g., starts with "report_")
 - `Type("file")` — regular files
 - `AgeMinutes < 10` — modified in the last 10 minutes
-- `Between(Size, 1000, 2000)` — files with size >= 1000 and < 2000 bytes (inclusive lower, exclusive upper)
+- `Between(Size(), 1000, 2000)` — files with size >= 1000 and < 2000 bytes (inclusive lower, exclusive upper)
 
 ### Using the `Between` Filter
 
@@ -65,7 +63,7 @@ The `Between` filter matches files whose attribute (such as size or age) falls w
 from pathql.filters import Between, Size
 from pathql.query import Query
 
-for path in Query("/some/dir", Between(Size, 1000, 2000)):
+for path in Query("/some/dir", Between(Size(), 1000, 2000)):
    print(path)
 else:
    print("No files were found")
@@ -92,7 +90,7 @@ This design improves responsiveness and performance, especially for large or slo
 from pathql.filters import Suffix, Size, AgeMinutes
 from pathql.query import Query
 
-query = (Suffix({".png", ".bmp"}) & (Size <= 1_000_000) & (AgeMinutes < 10))
+query = (Suffix({".png", ".bmp"}) & (Size() <= 1_000_000) & (AgeMinutes < 10))
 for path in Query("/some/dir", query):
    print(path)
 ```
@@ -294,3 +292,5 @@ filters/base.py
 - The CLI does **not** provide a true interactive REPL for composing complex PathQL filter expressions.
 - Only pattern matching and recursive search are supported from the command line.
 - For advanced queries, use PathQL as a Python library in your own scripts.
+
+## WARNING: Symlink and broken symlink handling is platform-dependent and not well tested across all OSes and edge cases. Results may vary depending on your operating system and filesystem. Use caution when relying on symlink detection in PathQL filters and queries.

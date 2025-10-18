@@ -43,13 +43,13 @@ def mini_fs(tmp_path):
     return tmp_path
 
 def test_query_size_and_suffix(mini_fs):
-    q = Query((Size >= 100) & (Suffix == "txt"))
+    q = Query((Size() >= 100) & (Suffix == "txt"))
     files = list(q.files(mini_fs, recursive=True, files=True, threaded=False))
     names = sorted(f.name for f in files)
     assert names == ["foo.txt", "qux.txt"]
 
 def test_query_or_and(mini_fs):
-    q = Query(((Size > 250) & (Suffix == "txt")) | (Suffix == "md"))
+    q = Query(((Size() > 250) & (Suffix == "txt")) | (Suffix == "md"))
     files = list(q.files(mini_fs, recursive=True, files=True, threaded=False))
     names = sorted(f.name for f in files)
     assert names == ["bar.md", "qux.txt"]
@@ -57,7 +57,7 @@ def test_query_or_and(mini_fs):
 
 
 def test_query_in_operator(mini_fs):
-    q = Query((Suffix == "txt") & (Size > 50))
+    q = Query((Suffix == "txt") & (Size() > 50))
     files = list(q.files(mini_fs, recursive=True, files=True, threaded=False))
     # Test 'in' operator for Suffix
     for f in files:
@@ -74,7 +74,7 @@ def test_query_type_file_and_dir(mini_fs):
 
 def test_query_complex(mini_fs):
     # .txt files with size > 50 or .md files with size < 300
-    q = Query(((Suffix == "txt") & (Size > 50)) | ((Suffix == "md") & (Size < 300)))
+    q = Query(((Suffix == "txt") & (Size() > 50)) | ((Suffix == "md") & (Size() < 300)))
     files = list(q.files(mini_fs, recursive=True, files=True, threaded=False))
     names = sorted(f.name for f in files)
     assert names == ["bar.md", "foo.txt", "qux.txt"]

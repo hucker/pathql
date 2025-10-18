@@ -28,27 +28,16 @@ Windows than on Unix-like systems.
 import datetime as dt
 import pathlib
 from typing import Callable
+import operator
 
 from .base import Filter
-from .alias import DatetimeOrNone, StatResultOrNone,IntOrFloatOrNone
+from .alias import DatetimeOrNone, StatResultOrNone,IntOrFloat,IntOrFloatOrNone
 
 
 # Metaclass for class-level operator overloading
-class _AgeMeta(type):
-    def __le__(cls, other):
-        return cls(lambda x, y: x <= y, other)
-    def __lt__(cls, other):
-        return cls(lambda x, y: x < y, other)
-    def __ge__(cls, other):
-        return cls(lambda x, y: x >= y, other)
-    def __gt__(cls, other):
-        return cls(lambda x, y: x > y, other)
-    def __eq__(cls, other):
-        return cls(lambda x, y: x == y, other)
-    def __ne__(cls, other):
-        return cls(lambda x, y: x != y, other)
 
-class AgeDays(Filter, metaclass=_AgeMeta):
+
+class AgeDays(Filter):
     """
     Filter for file age in days (since last modification).
 
@@ -61,7 +50,7 @@ class AgeDays(Filter, metaclass=_AgeMeta):
         value (float, optional): Value to compare file age (in days) against.
     """
 
-    def __init__(self, op: Callable[[float, float], bool], value: IntOrFloatOrNone = None) -> None:
+    def __init__(self, op: Callable[[float, float], bool] = None, value: IntOrFloatOrNone = None) -> None:
         """
         Initialize an AgeDays filter.
 
@@ -73,19 +62,41 @@ class AgeDays(Filter, metaclass=_AgeMeta):
         == and != are not supported and will raise TypeError.
         This should be documented in the README.
         """
-        import operator
-        if not op:
-            raise ValueError("AgeDays filter not fully specified.")
         if op in (operator.eq, operator.ne):
-            raise TypeError("== and != are not supported for AgeDays filter. Use < or > (inclusive) only.")
-        # Treat > and >= as >=, < and <= as <=
-        if op in (operator.gt, operator.ge):
-            self.op = operator.ge
-        elif op in (operator.lt, operator.le):
-            self.op = operator.le
-        else:
-            self.op = op
-        self.value: float = float(value) if value else 1.0
+            raise TypeError("== and != not supported for AgeDays filter. Use < or > (inclusive) only.")
+        self.op = op
+        self.value: float | None = float(value) if value is not None else None
+    def match(self, path: pathlib.Path, now: DatetimeOrNone = None, stat_result: StatResultOrNone = None) -> bool:
+        if self.op is None or self.value is None:
+            raise TypeError("AgeDays filter not fully specified.")
+        if self.op in (operator.eq, operator.ne):
+            raise TypeError("== and != not supported for AgeDays filter. Use < or > (inclusive) only.")
+        try:
+            if now is None:
+                now = dt.datetime.now()
+            st = stat_result if stat_result is not None else path.stat()
+            mtime_dt = dt.datetime.fromtimestamp(st.st_mtime)
+            age_d = (now - mtime_dt).total_seconds() / (60 * 60 * 24)
+            return self.op(age_d, self.value)
+        except Exception:
+            return False
+    def __le__(self, other:IntOrFloat):
+        return AgeDays(operator.le, other)
+
+    def __lt__(self, other:IntOrFloat):
+        return AgeDays(operator.lt, other)
+
+    def __ge__(self, other:IntOrFloat):
+        return AgeDays(operator.ge, other)
+
+    def __gt__(self, other:IntOrFloat):
+        return AgeDays(operator.gt, other)
+
+    def __eq__(self, other:IntOrFloat):
+        raise TypeError("== not supported for AgeDays filter. Use < or > (inclusive) only.")
+
+    def __ne__(self, other:IntOrFloat):
+        raise TypeError("!= not supported for AgeDays filter. Use < or > (inclusive) only.")
 
     def match(self, path: pathlib.Path, now: DatetimeOrNone = None, stat_result: StatResultOrNone = None) -> bool:
         """
@@ -100,6 +111,8 @@ class AgeDays(Filter, metaclass=_AgeMeta):
             bool: True if the file matches the age filter, False otherwise.
         """
 
+        if self.op is None or self.value is None:
+            raise TypeError("AgeDays filter not fully specified.")
         try:
             if now is None:
                 now = dt.datetime.now()
@@ -111,7 +124,7 @@ class AgeDays(Filter, metaclass=_AgeMeta):
             return False
 
 
-class AgeYears(Filter, metaclass=_AgeMeta):
+class AgeYears(Filter):
     """
     Filter for file age in years (since last modification).
 
@@ -123,7 +136,7 @@ class AgeYears(Filter, metaclass=_AgeMeta):
         op (callable, optional): Operator function (e.g., operator.lt, operator.ge).
         value (float, optional): Value to compare file age (in years) against.
     """
-    def __init__(self, op: Callable[[float, float], bool], value: IntOrFloatOrNone = None) -> None:
+    def __init__(self, op: Callable[[float, float], bool] = None, value: IntOrFloatOrNone = None) -> None:
         """
         Initialize an AgeYears filter.
 
@@ -135,18 +148,41 @@ class AgeYears(Filter, metaclass=_AgeMeta):
         == and != are not supported and will raise TypeError.
         This should be documented in the README.
         """
-        import operator
-        if not op:
-            raise ValueError("AgeYears filter not fully specified.")
         if op in (operator.eq, operator.ne):
-            raise TypeError("== and != are not supported for AgeYears filter. Use < or > (inclusive) only.")
-        if op in (operator.gt, operator.ge):
-            self.op = operator.ge
-        elif op in (operator.lt, operator.le):
-            self.op = operator.le
-        else:
-            self.op = op
-        self.value: float = float(value) if value else 1.0
+            raise TypeError("== and != not supported for AgeYears filter. Use < or > (inclusive) only.")
+        self.op = op
+        self.value: float | None = float(value) if value is not None else None
+    def match(self, path: pathlib.Path, now: DatetimeOrNone = None, stat_result: StatResultOrNone = None) -> bool:
+        if self.op is None or self.value is None:
+            raise TypeError("AgeYears filter not fully specified.")
+        if self.op in (operator.eq, operator.ne):
+            raise TypeError("== and != not supported for AgeYears filter. Use < or > (inclusive) only.")
+        try:
+            if now is None:
+                now = dt.datetime.now()
+            st = stat_result if stat_result is not None else path.stat()
+            mtime_dt = dt.datetime.fromtimestamp(st.st_mtime)
+            age_y = (now - mtime_dt).total_seconds() / (60 * 60 * 24 * 365.25)
+            return self.op(age_y, self.value)
+        except Exception:
+            return False
+    def __le__(self, other):
+        return AgeYears(operator.le, other)
+
+    def __lt__(self, other):
+        return AgeYears(operator.lt, other)
+
+    def __ge__(self, other):
+        return AgeYears(operator.ge, other)
+
+    def __gt__(self, other):
+        return AgeYears(operator.gt, other)
+
+    def __eq__(self, other):
+        raise TypeError("== not supported for AgeYears filter. Use < or > (inclusive) only.")
+
+    def __ne__(self, other):
+        raise TypeError("!= not supported for AgeYears filter. Use < or > (inclusive) only.")
 
     def match(self, path: pathlib.Path, now: DatetimeOrNone = None, stat_result: StatResultOrNone = None) -> bool:
         """
@@ -160,8 +196,8 @@ class AgeYears(Filter, metaclass=_AgeMeta):
         Returns:
             bool: True if the file matches the age filter, False otherwise.
         """
-        if self.op is None:
-            raise ValueError("AgeYears filter not fully specified.")
+        if self.op is None or self.value is None:
+            raise TypeError("AgeYears filter not fully specified.")
         try:
             if now is None:
                 now = dt.datetime.now()
@@ -174,7 +210,7 @@ class AgeYears(Filter, metaclass=_AgeMeta):
 
 
 
-class AgeMinutes(Filter, metaclass=_AgeMeta):
+class AgeMinutes(Filter):
     """
     Filter for file age in minutes (since last modification).
 
@@ -186,7 +222,7 @@ class AgeMinutes(Filter, metaclass=_AgeMeta):
         op (callable, optional): Operator function (e.g., operator.lt, operator.ge).
         value (float, optional): Value to compare file age (in minutes) against.
     """
-    def __init__(self, op: Callable[[float, float], bool], value: IntOrFloatOrNone = None) -> None:
+    def __init__(self, op: Callable[[float, float], bool] = None, value: IntOrFloatOrNone = None) -> None:
         """
         Initialize an AgeMinutes filter.
 
@@ -198,18 +234,43 @@ class AgeMinutes(Filter, metaclass=_AgeMeta):
         == and != are not supported and will raise TypeError.
         This should be documented in the README.
         """
-        import operator
-        if not op:
-            raise ValueError("AgeMinutes filter not fully specified.")
         if op in (operator.eq, operator.ne):
-            raise TypeError("== and != are not supported for AgeMinutes filter. Use < or > (inclusive) only.")
-        if op in (operator.gt, operator.ge):
-            self.op = operator.ge
-        elif op in (operator.lt, operator.le):
-            self.op = operator.le
-        else:
-            self.op = op
-        self.value: float = float(value) if value else 1.0
+            raise TypeError("== and != not supported for AgeMinutes filter. Use < or > (inclusive) only.")
+        self.op = op
+        self.value: float | None = float(value) if value is not None else None
+
+    def match(self, path: pathlib.Path, now: DatetimeOrNone = None, stat_result: StatResultOrNone = None) -> bool:
+        if self.op is None or self.value is None:
+            raise TypeError("AgeMinutes filter not fully specified.")
+        if self.op in (operator.eq, operator.ne):
+            raise TypeError("== and != not supported for AgeMinutes filter. Use < or > (inclusive) only.")
+        try:
+            if now is None:
+                now = dt.datetime.now()
+            st = stat_result if stat_result is not None else path.stat()
+            mtime_dt = dt.datetime.fromtimestamp(st.st_mtime)
+            age_m = (now - mtime_dt).total_seconds() / 60
+            return self.op(age_m, self.value)
+        except Exception:
+            return False
+
+    def __le__(self, other):
+        return AgeMinutes(operator.le, other)
+
+    def __lt__(self, other):
+        return AgeMinutes(operator.lt, other)
+
+    def __ge__(self, other):
+        return AgeMinutes(operator.ge, other)
+
+    def __gt__(self, other):
+        return AgeMinutes(operator.gt, other)
+
+    def __eq__(self, other):
+        raise TypeError("== not supported for AgeMinutes filter. Use < or > (inclusive) only.")
+
+    def __ne__(self, other):
+        raise TypeError("!= not supported for AgeMinutes filter. Use < or > (inclusive) only.")
 
     def match(self, path: pathlib.Path, now: DatetimeOrNone = None, stat_result: StatResultOrNone = None) -> bool:
         """
@@ -223,8 +284,8 @@ class AgeMinutes(Filter, metaclass=_AgeMeta):
         Returns:
             bool: True if the file matches the age filter, False otherwise.
         """
-        if self.op is None:
-            raise ValueError("AgeMinutes filter not fully specified.")
+        if self.op is None or self.value is None:
+            raise TypeError("AgeMinutes filter not fully specified.")
         try:
             if now is None:
                 now = dt.datetime.now()
@@ -236,7 +297,7 @@ class AgeMinutes(Filter, metaclass=_AgeMeta):
             return False
 
 
-class AgeHours(Filter, metaclass=_AgeMeta):
+class AgeHours(Filter):
     """
     Filter for file age in hours (since last modification).
 
@@ -248,7 +309,7 @@ class AgeHours(Filter, metaclass=_AgeMeta):
         op (callable, optional): Operator function (e.g., operator.lt, operator.ge).
         value (float, optional): Value to compare file age (in hours) against.
     """
-    def __init__(self, op: Callable[[float, float], bool], value: IntOrFloatOrNone = None) -> None:
+    def __init__(self, op: Callable[[float, float], bool] = None, value: IntOrFloatOrNone = None) -> None:
         """
         Initialize an AgeHours filter.
 
@@ -260,18 +321,41 @@ class AgeHours(Filter, metaclass=_AgeMeta):
         == and != are not supported and will raise TypeError.
         This should be documented in the README.
         """
-        import operator
-        if not op:
-            raise ValueError("AgeHours filter not fully specified.")
         if op in (operator.eq, operator.ne):
-            raise TypeError("== and != are not supported for AgeHours filter. Use < or > (inclusive) only.")
-        if op in (operator.gt, operator.ge):
-            self.op = operator.ge
-        elif op in (operator.lt, operator.le):
-            self.op = operator.le
-        else:
-            self.op = op
-        self.value: float = float(value) if value else 1.0
+            raise TypeError("== and != not supported for AgeHours filter. Use < or > (inclusive) only.")
+        self.op = op
+        self.value: float | None = float(value) if value is not None else None
+    def match(self, path: pathlib.Path, now: DatetimeOrNone = None, stat_result: StatResultOrNone = None) -> bool:
+        if self.op is None or self.value is None:
+            raise TypeError("AgeHours filter not fully specified.")
+        if self.op in (operator.eq, operator.ne):
+            raise TypeError("== and != not supported for AgeHours filter. Use < or > (inclusive) only.")
+        try:
+            if now is None:
+                now = dt.datetime.now()
+            st = stat_result if stat_result is not None else path.stat()
+            mtime_dt = dt.datetime.fromtimestamp(st.st_mtime)
+            age_h = (now - mtime_dt).total_seconds() / 3600
+            return self.op(age_h, self.value)
+        except Exception:
+            return False
+    def __le__(self, other):
+        return AgeHours(operator.le, other)
+
+    def __lt__(self, other):
+        return AgeHours(operator.lt, other)
+
+    def __ge__(self, other):
+        return AgeHours(operator.ge, other)
+
+    def __gt__(self, other):
+        return AgeHours(operator.gt, other)
+
+    def __eq__(self, other):
+        raise TypeError("== not supported for AgeHours filter. Use < or > (inclusive) only.")
+
+    def __ne__(self, other):
+        raise TypeError("!= not supported for AgeHours filter. Use < or > (inclusive) only.")
 
     def match(self, path: pathlib.Path, now: DatetimeOrNone = None, stat_result: StatResultOrNone = None) -> bool:
         """
@@ -285,8 +369,8 @@ class AgeHours(Filter, metaclass=_AgeMeta):
         Returns:
             bool: True if the file matches the age filter, False otherwise.
         """
-        if self.op is None:
-            raise ValueError("AgeHours filter not fully specified.")
+        if self.op is None or self.value is None:
+            raise TypeError("AgeHours filter not fully specified.")
         try:
             if now is None:
                 now = dt.datetime.now()

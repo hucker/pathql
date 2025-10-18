@@ -13,7 +13,7 @@ from pathql.filters.type import Type
 
 def test_all_files_bigger_than_50(rich_filesystem):
     root, now = rich_filesystem
-    q = Query(Size > 50)
+    q = Query(Size() > 50)
     files = list(q.files(root, recursive=True, files=True, now=now))
     # All files with size > 50
     assert all(f.stat().st_size > 50 for f in files)
@@ -24,7 +24,7 @@ def test_all_files_bigger_than_50(rich_filesystem):
 
 def test_txt_files_older_than_20_seconds(rich_filesystem):
     root, now = rich_filesystem
-    q = Query((Suffix == "txt") & (AgeMinutes > (20/60)))
+    q = Query((Suffix == "txt") & (AgeMinutes() > (20/60)))
     files = list(q.files(root, recursive=True, files=True, now=now))
     for f in files:
         assert f.suffix == ".txt"
@@ -34,7 +34,7 @@ def test_txt_files_older_than_20_seconds(rich_filesystem):
 
 def test_bmp_files_size_and_age(rich_filesystem):
     root, now = rich_filesystem
-    q = Query((Suffix == "bmp") & (Size > 30) & (AgeMinutes > 0.01))
+    q = Query((Suffix == "bmp") & (Size() > 30) & (AgeMinutes() > 0.01))
     files = list(q.files(root, recursive=True, files=True, now=now))
     for f in files:
         assert f.suffix == ".bmp"
@@ -55,7 +55,7 @@ def test_stem_pattern_and_type(rich_filesystem):
 def test_complex_combination(rich_filesystem):
     root, now = rich_filesystem
     # .txt files, size > 20, older than 10 seconds, stem contains 'd'
-    q = Query((Suffix == "txt") & (Size > 20) & (AgeMinutes > (10/60)) & Stem(r"d"))
+    q = Query((Suffix == "txt") & (Size() > 20) & (AgeMinutes() > (10/60)) & Stem(r"d"))
     files = list(q.files(root, recursive=True, files=True, now=now))
     for f in files:
         assert f.suffix == ".txt"

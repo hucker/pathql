@@ -17,7 +17,11 @@
 ## Doc Strings
 
 - Please always create docstiings for all functions, methods, classes and files.
-- Function docstrings can be short 1 or 2 line descriptions.
+- Function docstrings can be short 1 or 2 line descriptions in tests.
+
+## Readme Files
+
+-
 
 ## Rationale
 

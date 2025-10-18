@@ -63,10 +63,8 @@ def set_mtime_years_ago(path: pathlib.Path, years: float, now: dt.datetime | Non
     [
         (operator.lt, True, False, False),
         (operator.le, True, True, False),
-        (operator.eq, False, True, False),
         (operator.ge, False, True, True),
         (operator.gt, False, False, True),
-        (operator.ne, True, False, True),
     ]
 )
 def test_age_thresholds(tmp_path:pathlib.Path,
@@ -98,12 +96,33 @@ def test_age_thresholds(tmp_path:pathlib.Path,
 
     # Just below threshold
     setter(f, unit - 0.0001, now)
-    assert op(filter_cls, unit).match(f, now=now) is expected_below
+    assert op(filter_cls(), unit).match(f, now=now) is expected_below
 
     # Exactly at threshold
     setter(f, unit, now)
-    assert op(filter_cls, unit).match(f, now=now) is expected_exact
+    assert op(filter_cls(), unit).match(f, now=now) is expected_exact
 
     # Just above threshold
     setter(f, unit + 0.0001, now)
-    assert op(filter_cls, unit).match(f, now=now) is expected_above
+    assert op(filter_cls(), unit).match(f, now=now) is expected_above
+
+
+# Test that == and != raise TypeError for age filters
+import pytest
+@pytest.mark.parametrize(
+    "filter_cls,setter,unit",
+    [
+        (AgeMinutes, set_mtime_minutes_ago, 1),
+        (AgeHours, set_mtime_hours_ago, 1),
+        (AgeDays, set_mtime_days_ago, 1),
+        (AgeYears, set_mtime_years_ago, 1),
+    ]
+)
+@pytest.mark.parametrize("op", [operator.eq, operator.ne])
+def test_age_filter_eq_ne_typeerror(tmp_path, filter_cls, setter, unit, op):
+    f = tmp_path / "test.txt"
+    f.write_text("X")
+    now = dt.datetime.now()
+    setter(f, unit, now)
+    with pytest.raises(TypeError):
+        op(filter_cls(), unit).match(f, now=now)
