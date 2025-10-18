@@ -18,6 +18,7 @@
     "python.formatting.provider": "ruff",
     "cSpell.words": [
         "capsys",
+        "nosplit",
         "pathql"
     ]
     ,

@@ -13,7 +13,6 @@
 6. [Testing & Coverage](#testing--coverage)
 7. [Extending PathQL](#extending-pathql)
 8. [Project Structure](#project-structure)
-9. [License](#license)
 10. [Date/Time Filtering Examples](#5-find-files-by-modification-or-creation-datetime)
 
 ## PathQL: Declarative Filesystem Query Language for Python
@@ -37,9 +36,14 @@ PathQL is a declarative, composable, and efficient query language for filesystem
 
 Filters are composable objects that match files based on attributes such as size, age, suffix, stem, or type. Each filter can be combined using boolean operators:
 
+**Note on Age Filters:**
+Age filters (`AgeDays`, `AgeYears`, `AgeHours`, `AgeMinutes`) only support `>=` and `<=` comparisons. The `<` and `>` operators are treated as inclusive (`<=` and `>=`).
+Equality (`==`) and inequality (`!=`) comparisons are not supported and will raise an error.
+
 - `&` (AND)
 - `|` (OR)
 - `~` (NOT)
+
 
 #### Example Filters
 
@@ -48,6 +52,24 @@ Filters are composable objects that match files based on attributes such as size
 - `Stem("report_*")` — files whose stem matches a glob pattern (e.g., starts with "report_")
 - `Type("file")` — regular files
 - `AgeMinutes < 10` — modified in the last 10 minutes
+- `Between(Size, 1000, 2000)` — files with size >= 1000 and < 2000 bytes (inclusive lower, exclusive upper)
+
+### Using the `Between` Filter
+
+
+The `Between` filter matches files whose attribute (such as size or age) falls within a specified range: inclusive on the lower bound, exclusive on the upper bound.
+
+**Example:** Find files with size >= 1KB and < 2KB:
+
+```python
+from pathql.filters import Between, Size
+from pathql.query import Query
+
+for path in Query("/some/dir", Between(Size, 1000, 2000)):
+   print(path)
+else:
+   print("No files were found")
+```
 
 ### Query
 
@@ -120,24 +142,13 @@ for path in Query("/home/alice", query):
 
 ## Threading
 
-PathQL supports both threaded and non-threaded filesystem crawling. Threaded crawling can provide performance gains on systems with slow disks (HDD), as it overlaps I/O operations. However, on modern hardware with SSDs, the overhead of thread management and task switching is often comparable to the cost of stat calls, so performance gains may be limited or even negative. For SSDs, non-threaded crawling may be just as fast or faster.
 
-## Threaded and Non-Threaded Query Engines
+PathQL supports both threaded and non-threaded filesystem crawling:
 
-PathQL provides both threaded and non-threaded (single-threaded) query engines for filesystem traversal and filtering. The threaded engine uses a producer-consumer model to parallelize file system stat calls and filtering, while the non-threaded engine processes files sequentially.
+- **Threaded crawling** (default) uses a producer-consumer model to overlap I/O operations, which can speed up queries on slow disks (HDDs).
+- **Non-threaded crawling** processes files sequentially and may be just as fast or faster on modern SSDs, where disk access is already very fast.
 
-### Why Threading?
-
-Threading is used to help isolate and potentially speed up the operating system stat calls (which are often the main bottleneck when querying large filesystems, especially on traditional spinning hard drives). By overlapping I/O-bound operations, the threaded engine can provide significant speedups when disk access is slow.
-
-### SSD vs HDD Performance
-
-On modern machines with SSDs, the cost of stat calls and file access is extremely low. In these environments, the overhead of threading (context switching, queueing, etc.) can actually make the threaded engine slightly slower than the non-threaded version. On older machines or systems with spinning hard drives (HDDs), the threaded engine can provide substantial performance improvements by overlapping slow I/O operations.
-
-### Usage
-
-- Use `Query.files(...)` for the threaded engine (default).
-- Use `Query.unthreaded_files(...)` for the non-threaded, sequential engine.
+Use `Query.files(...)` for threaded crawling (default), or `Query.unthreaded_files(...)` for non-threaded crawling.
 
 
 ## Advanced Features
@@ -171,8 +182,37 @@ To add a new filter:
 - `test/`: Pytest-based tests
 - `pyproject.toml`: Project and coverage configuration
 
-## License
-MIT License
+
+## Presets
+
+PathQL provides convenient preset filters for common date-based queries. These presets simplify matching files by modification or creation time (e.g., today, this hour, this year).
+
+### Available Presets
+
+| Preset Function              | Description                       |
+|------------------------------|-----------------------------------|
+| `modified_this_minute`       | Files modified this minute         |
+| `modified_this_hour`         | Files modified this hour           |
+| `modified_today`             | Files modified today               |
+| `modified_yesterday`         | Files modified yesterday           |
+| `modified_this_month`        | Files modified this month          |
+| `modified_this_year`         | Files modified this year           |
+| `created_this_minute`        | Files created this minute          |
+| `created_this_hour`          | Files created this hour            |
+| `created_today`              | Files created today                |
+| `created_yesterday`          | Files created yesterday            |
+| `created_this_month`         | Files created this month           |
+| `created_this_year`          | Files created this year            |
+
+### Usage Example
+
+```python
+from pathql.presets.dates import modified_today
+from pathql.query import Query
+
+for path in Query("/some/dir", modified_today()):
+   print(path)
+```
 
 ---
 

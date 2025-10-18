@@ -8,9 +8,11 @@ import pathlib
 import threading
 import queue
 import time
+import datetime as dt
 from typing import Iterator
 
 from .filters.base import Filter
+from .filters.alias import FloatOrNone, StatResultOrNone, DatetimeOrNone,PathOrNone
 
 class Query(Filter):
     """
@@ -34,8 +36,8 @@ class Query(Filter):
     def match(
         self,
         path: pathlib.Path,
-        now: float | None = None,
-        stat_result: os.stat_result | None = None
+        now: DatetimeOrNone = None,
+        stat_result: StatResultOrNone = None
     ) -> bool:
         """
         Check if a single path matches the filter expression.
@@ -49,7 +51,7 @@ class Query(Filter):
             bool: True if the path matches the filter, False otherwise.
         """
         if now is None:
-            now = time.time()
+            now = dt.datetime.now()
         if stat_result is None:
             try:
                 stat_result = path.stat()
@@ -94,7 +96,7 @@ class Query(Filter):
         path: pathlib.Path,
         recursive: bool = True,
         files: bool = True,
-        now: float | None = None,
+        now: DatetimeOrNone = None,
     ) -> Iterator[pathlib.Path]:
         """
         Yield files matching the filter expression using a threaded producer-consumer model.
@@ -109,7 +111,7 @@ class Query(Filter):
             pathlib.Path: Files matching the filter expression.
         """
         if now is None:
-            now = time.time()
+            now = dt.datetime.now()
         q: queue.Queue[tuple[pathlib.Path, object | None]] = queue.Queue(maxsize=10)
 
         def producer():

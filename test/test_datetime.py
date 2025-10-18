@@ -11,6 +11,7 @@ This module covers:
 
 import os
 import datetime as dt
+import pathlib
 import pytest
 from pathql.filters import Modified, Created, Year, Month, Day, Hour, Minute, Second
 
@@ -26,7 +27,7 @@ from pathql.filters import Modified, Created, Year, Month, Day, Hour, Minute, Se
     (2, False),
     ("Mar", False),
 ])
-def test_month_lookup_eq(tmp_path, month_value, should_match):
+def test_month_lookup_eq(tmp_path:pathlib.Path, month_value:str|int, should_match:bool):
     """
     Test Month extractor with various numeric and string values.
     Ensures Month == value works for both numbers and normalized month names.
@@ -35,7 +36,7 @@ def test_month_lookup_eq(tmp_path, month_value, should_match):
     file = make_file_with_mtime(tmp_path, dt_)
     assert Modified(Month == month_value).match(file) is should_match, f"Month == {month_value} should be {should_match}"
 
-def test_month_lookup_isin(tmp_path):
+def test_month_lookup_isin(tmp_path:pathlib.Path):
     """
     Test Month.isin() for matching multiple month representations.
     Checks that .isin works for numbers and string names.
@@ -55,7 +56,7 @@ def set_file_times(path, mtime=None, ctime=None):
         os.utime(path, (mtime, mtime))
     # ctime cannot be set directly on all platforms, so we only test mtime-based filters reliably
 
-def make_file_with_mtime(tmp_path, dt):
+def make_file_with_mtime(tmp_path:pathlib.path, dt):
     """
     Create a file at tmp_path with a specific modification time (mtime) set to the given datetime.
     Returns the file path.
@@ -82,7 +83,7 @@ def test_modified_year_month_day(tmp_path):
     assert Modified(Day == dt.date(2022, 12, 25)).match(file), "Day == date(2022, 12, 25) should match"
     assert not Modified(Day == dt.date(2022, 12, 24)).match(file), "Day == date(2022, 12, 24) should not match"
 
-def test_modified_hour_minute_second(tmp_path):
+def test_modified_hour_minute_second(tmp_path:pathlib.Path):
     """
     Test Modified filter with Hour, Minute, and Second extractors.
     Checks both integer and datetime object support for each part.
@@ -101,7 +102,7 @@ def test_modified_hour_minute_second(tmp_path):
     assert Modified(Second == dt.datetime(2023, 1, 2, 3, 4, 5)).match(file), "Second == datetime(2023, 1, 2, 3, 4, 5) should match"
     assert not Modified(Second == dt.datetime(2023, 1, 2, 3, 4, 6)).match(file), "Second == datetime(2023, 1, 2, 3, 4, 6) should not match"
 
-def test_modified_in_operators(tmp_path):
+def test_modified_in_operators(tmp_path:pathlib.PurePosixPath):
     """
     Test .isin() operator for Month extractor in Modified filter.
     """
@@ -112,7 +113,7 @@ def test_modified_in_operators(tmp_path):
 
 # Example using the provided extractor classes
 
-def test_modified_with_extractor_classes(tmp_path):
+def test_modified_with_extractor_classes(tmp_path:pathlib.Path):
     """
     Test Modified filter with all extractor classes and various input types.
     Covers Year, Month, Day, Hour, Minute, Second with both int and datetime/date objects.
@@ -136,7 +137,7 @@ def test_modified_with_extractor_classes(tmp_path):
 
 # Created filter is not reliably testable on all platforms, but we can check it runs
 
-def test_created_runs(tmp_path):
+def test_created_runs(tmp_path:pathlib.Path):
     """
     Smoke test for Created filter to ensure it runs without error.
     """

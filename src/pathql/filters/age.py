@@ -1,8 +1,36 @@
-import os
-import pathlib
-import time
-from .base import Filter
+"""
+age.py
 
+Provides filter classes for querying files based on their age (time since last modification)
+in minutes, hours, days, or years. These filters support declarative operator overloads,
+allowing expressive queries such as `AgeDays < 10` or `AgeYears >= 1`.
+
+Classes:
+    AgeMinutes  -- Filter for file age in minutes.
+    AgeHours    -- Filter for file age in hours.
+    AgeDays     -- Filter for file age in days.
+    AgeYears    -- Filter for file age in years.
+
+Each filter uses a comparison operator and a threshold value, and can be used to match
+files whose modification time meets the specified age criteria.
+
+NOTE: We specificaly use modification time (mtime) for age calculations, as it is widely supported
+across different operating systems and file systems. Creation time (ctime) is not consistently available
+or consistant across platforms (surprisingly), so we avoid using it for age-based filters. If you must
+have creation time based filtering you can build one using something like
+
+Created < some_datetime
+
+This will use the created time stamp and will often be correct, surprisingly working better on
+Windows than on Unix-like systems.
+"""
+
+import datetime as dt
+import pathlib
+from typing import Callable
+
+from .base import Filter
+from .alias import DatetimeOrNone, StatResultOrNone,IntOrFloatOrNone
 
 
 # Metaclass for class-level operator overloading
@@ -32,25 +60,52 @@ class AgeDays(Filter, metaclass=_AgeMeta):
         op (callable, optional): Operator function (e.g., operator.lt, operator.ge).
         value (float, optional): Value to compare file age (in days) against.
     """
-    def __init__(self, op=None, value:int|float|None=None):
+
+    def __init__(self, op: Callable[[float, float], bool], value: IntOrFloatOrNone = None) -> None:
         """
         Initialize an AgeDays filter.
 
         Args:
-            op (callable, optional): Operator function (e.g., operator.lt, operator.ge).
+            op (Callable[[float, float], bool], optional): Operator function (e.g., operator.lt, operator.ge).
             value (float, optional): Value to compare file age (in days) against.
-        """
-        self.op = op
-        self.value = value
 
-    def match(self, path: pathlib.Path, now:float|int|None=None, stat_result=None) -> bool:
-        if self.op is None or self.value is None:
+        Note: Only < and > operators are supported, and both are treated as inclusive (<= and >=).
+        == and != are not supported and will raise TypeError.
+        This should be documented in the README.
+        """
+        import operator
+        if not op:
             raise ValueError("AgeDays filter not fully specified.")
+        if op in (operator.eq, operator.ne):
+            raise TypeError("== and != are not supported for AgeDays filter. Use < or > (inclusive) only.")
+        # Treat > and >= as >=, < and <= as <=
+        if op in (operator.gt, operator.ge):
+            self.op = operator.ge
+        elif op in (operator.lt, operator.le):
+            self.op = operator.le
+        else:
+            self.op = op
+        self.value: float = float(value) if value else 1.0
+
+    def match(self, path: pathlib.Path, now: DatetimeOrNone = None, stat_result: StatResultOrNone = None) -> bool:
+        """
+        Determine if the file's age in days matches the filter criteria.
+
+        Args:
+            path: The pathlib.Path to check.
+            now: Reference datetime for age calculation.
+            stat_result: Optional os.stat_result for file metadata.
+
+        Returns:
+            bool: True if the file matches the age filter, False otherwise.
+        """
+
         try:
             if now is None:
-                now = time.time()
+                now = dt.datetime.now()
             st = stat_result if stat_result is not None else path.stat()
-            age_d = (now - st.st_mtime) / (60 * 60 * 24)
+            mtime_dt = dt.datetime.fromtimestamp(st.st_mtime)
+            age_d = (now - mtime_dt).total_seconds() / (60 * 60 * 24)
             return self.op(age_d, self.value)
         except Exception:
             return False
@@ -68,25 +123,51 @@ class AgeYears(Filter, metaclass=_AgeMeta):
         op (callable, optional): Operator function (e.g., operator.lt, operator.ge).
         value (float, optional): Value to compare file age (in years) against.
     """
-    def __init__(self, op=None, value:int|float|None=None):
+    def __init__(self, op: Callable[[float, float], bool], value: IntOrFloatOrNone = None) -> None:
         """
         Initialize an AgeYears filter.
 
         Args:
-            op (callable, optional): Operator function (e.g., operator.lt, operator.ge).
+            op (Callable[[float, float], bool], optional): Operator function (e.g., operator.lt, operator.ge).
             value (float, optional): Value to compare file age (in years) against.
-        """
-        self.op = op
-        self.value = value
 
-    def match(self, path: pathlib.Path, now:float|None=None, stat_result:os.stat_result|None=None) -> bool:
-        if self.op is None or self.value is None:
+        Note: Only < and > operators are supported, and both are treated as inclusive (<= and >=).
+        == and != are not supported and will raise TypeError.
+        This should be documented in the README.
+        """
+        import operator
+        if not op:
+            raise ValueError("AgeYears filter not fully specified.")
+        if op in (operator.eq, operator.ne):
+            raise TypeError("== and != are not supported for AgeYears filter. Use < or > (inclusive) only.")
+        if op in (operator.gt, operator.ge):
+            self.op = operator.ge
+        elif op in (operator.lt, operator.le):
+            self.op = operator.le
+        else:
+            self.op = op
+        self.value: float = float(value) if value else 1.0
+
+    def match(self, path: pathlib.Path, now: DatetimeOrNone = None, stat_result: StatResultOrNone = None) -> bool:
+        """
+        Determine if the file's age in years matches the filter criteria.
+
+        Args:
+            path: The pathlib.Path to check.
+            now: Reference datetime for age calculation.
+            stat_result: Optional os.stat_result for file metadata.
+
+        Returns:
+            bool: True if the file matches the age filter, False otherwise.
+        """
+        if self.op is None:
             raise ValueError("AgeYears filter not fully specified.")
         try:
             if now is None:
-                now = time.time()
+                now = dt.datetime.now()
             st = stat_result if stat_result is not None else path.stat()
-            age_y = (now - st.st_mtime) / (60 * 60 * 24 * 365.25)
+            mtime_dt = dt.datetime.fromtimestamp(st.st_mtime)
+            age_y = (now - mtime_dt).total_seconds() / (60 * 60 * 24 * 365.25)
             return self.op(age_y, self.value)
         except Exception:
             return False
@@ -94,18 +175,124 @@ class AgeYears(Filter, metaclass=_AgeMeta):
 
 
 class AgeMinutes(Filter, metaclass=_AgeMeta):
-    def __init__(self, op=None, value:int|float|None=None):
-        self.op = op
-        self.value = value
+    """
+    Filter for file age in minutes (since last modification).
 
-    def match(self, path: pathlib.Path, now:float|None=None, stat_result:os.stat_result|None=None) -> bool:
-        if self.op is None or self.value is None:
+    Allows declarative queries on file age using operator overloads:
+        AgeMinutes < 60
+        AgeMinutes >= 120
+
+    Args:
+        op (callable, optional): Operator function (e.g., operator.lt, operator.ge).
+        value (float, optional): Value to compare file age (in minutes) against.
+    """
+    def __init__(self, op: Callable[[float, float], bool], value: IntOrFloatOrNone = None) -> None:
+        """
+        Initialize an AgeMinutes filter.
+
+        Args:
+            op (Callable[[float, float], bool], optional): Operator function (e.g., operator.lt, operator.ge).
+            value (float, optional): Value to compare file age (in minutes) against.
+
+        Note: Only < and > operators are supported, and both are treated as inclusive (<= and >=).
+        == and != are not supported and will raise TypeError.
+        This should be documented in the README.
+        """
+        import operator
+        if not op:
+            raise ValueError("AgeMinutes filter not fully specified.")
+        if op in (operator.eq, operator.ne):
+            raise TypeError("== and != are not supported for AgeMinutes filter. Use < or > (inclusive) only.")
+        if op in (operator.gt, operator.ge):
+            self.op = operator.ge
+        elif op in (operator.lt, operator.le):
+            self.op = operator.le
+        else:
+            self.op = op
+        self.value: float = float(value) if value else 1.0
+
+    def match(self, path: pathlib.Path, now: DatetimeOrNone = None, stat_result: StatResultOrNone = None) -> bool:
+        """
+        Determine if the file's age in minutes matches the filter criteria.
+
+        Args:
+            path: The pathlib.Path to check.
+            now: Reference datetime for age calculation.
+            stat_result: Optional os.stat_result for file metadata.
+
+        Returns:
+            bool: True if the file matches the age filter, False otherwise.
+        """
+        if self.op is None:
             raise ValueError("AgeMinutes filter not fully specified.")
         try:
             if now is None:
-                now = time.time()
+                now = dt.datetime.now()
             st = stat_result if stat_result is not None else path.stat()
-            age_m = (now - st.st_mtime) / 60
+            mtime_dt = dt.datetime.fromtimestamp(st.st_mtime)
+            age_m = (now - mtime_dt).total_seconds() / 60
             return self.op(age_m, self.value)
+        except Exception:
+            return False
+
+
+class AgeHours(Filter, metaclass=_AgeMeta):
+    """
+    Filter for file age in hours (since last modification).
+
+    Allows declarative queries on file age using operator overloads:
+        AgeHours < 24
+        AgeHours >= 48
+
+    Args:
+        op (callable, optional): Operator function (e.g., operator.lt, operator.ge).
+        value (float, optional): Value to compare file age (in hours) against.
+    """
+    def __init__(self, op: Callable[[float, float], bool], value: IntOrFloatOrNone = None) -> None:
+        """
+        Initialize an AgeHours filter.
+
+        Args:
+            op (Callable[[float, float], bool], optional): Operator function (e.g., operator.lt, operator.ge).
+            value (float, optional): Value to compare file age (in hours) against.
+
+        Note: Only < and > operators are supported, and both are treated as inclusive (<= and >=).
+        == and != are not supported and will raise TypeError.
+        This should be documented in the README.
+        """
+        import operator
+        if not op:
+            raise ValueError("AgeHours filter not fully specified.")
+        if op in (operator.eq, operator.ne):
+            raise TypeError("== and != are not supported for AgeHours filter. Use < or > (inclusive) only.")
+        if op in (operator.gt, operator.ge):
+            self.op = operator.ge
+        elif op in (operator.lt, operator.le):
+            self.op = operator.le
+        else:
+            self.op = op
+        self.value: float = float(value) if value else 1.0
+
+    def match(self, path: pathlib.Path, now: DatetimeOrNone = None, stat_result: StatResultOrNone = None) -> bool:
+        """
+        Determine if the file's age in hours matches the filter criteria.
+
+        Args:
+            path: The pathlib.Path to check.
+            now: Reference datetime for age calculation.
+            stat_result: Optional os.stat_result for file metadata.
+
+        Returns:
+            bool: True if the file matches the age filter, False otherwise.
+        """
+        if self.op is None:
+            raise ValueError("AgeHours filter not fully specified.")
+        try:
+            if now is None:
+                now = dt.datetime.now()
+            st = stat_result if stat_result is not None else path.stat()
+            mtime_dt = dt.datetime.fromtimestamp(st.st_mtime)
+            age_h = (now - mtime_dt).total_seconds() / 3600
+            return self.op(age_h, self.value)
         except Exception:
             return False

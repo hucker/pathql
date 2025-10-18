@@ -1,8 +1,22 @@
 import pathlib
-from .base import Filter
 from typing import Callable, Type, Any
 
+from .alias import StatResultOrNone, IntOrNone
+from .base import Filter
+
+
 class FilterMeta(type):
+    """
+    Metaclass for filter classes that enables declarative operator overloads.
+
+    This allows expressions like `Size <= 1024` to return a new filter instance
+    that matches files with size less than or equal to 1024 bytes, instead of
+    returning a boolean. Each operator method constructs a filter with the
+    appropriate comparison logic.
+
+    Returns:
+        A new filter instance (e.g., Size) configured with the specified operator and value.
+    """
     def __le__(cls: Type['Size'], other: int) -> 'Size':
         return cls(lambda x, y: x <= y, other)
     def __lt__(cls: Type['Size'], other: int) -> 'Size':
@@ -29,7 +43,7 @@ class Size(Filter, metaclass=FilterMeta):
         op (callable, optional): Operator function (e.g., operator.le, operator.gt).
         value (int, optional): Value to compare file size against.
     """
-    def __init__(self, op: Callable[[Any, Any], bool] = None, value: int | None = None) -> None:
+    def __init__(self, op: Callable[[Any, Any], bool], value: IntOrNone = None) -> None:
         """
         Initialize a Size filter.
 
@@ -37,7 +51,7 @@ class Size(Filter, metaclass=FilterMeta):
             op (callable, optional): Operator function (e.g., operator.le, operator.gt).
             value (int, optional): Value to compare file size against.
         """
-        self.op: Callable[[Any, Any], bool] | None = op
+        self.op: Callable[[Any, Any], bool]  = op
         self.value: int | None = value
 
     # Class-level operator overloads for declarative syntax
@@ -68,7 +82,18 @@ class Size(Filter, metaclass=FilterMeta):
     def __ne__(cls: Type['Size'], other: int) -> 'Size':
         return cls(lambda x, y: x != y, other)
 
-    def match(self, path: pathlib.Path, now: float | None = None, stat_result: object = None) -> bool:
+    def match(self, path: pathlib.Path, now=None, stat_result: StatResultOrNone = None) -> bool:
+        """
+        Determine if the file's size matches the filter criteria.
+
+        Args:
+            path: The pathlib.Path to check.
+            now: (Unused, for API compatibility)
+            stat_result: Optional os.stat_result for file metadata.
+
+        Returns:
+            bool: True if the file matches the size filter, False otherwise.
+        """
         if self.op is None or self.value is None:
             raise ValueError("Size filter not fully specified.")
         try:
@@ -76,6 +101,7 @@ class Size(Filter, metaclass=FilterMeta):
             size: int = st.st_size
             return self.op(size, self.value)
         except Exception:
+            return False
             return False
 
     def __le__(self, other: int) -> 'Size':

@@ -1,29 +1,31 @@
 """Extra tests for Size filter, including error handling and custom file creation."""
-
+import pathlib
 import pytest
 from pathql.filters.size import Size
 
-def make_file(tmp_path, size=1):
+def make_file(tmp_path: pathlib.Path, size: int = 1) -> pathlib.Path:
     file = tmp_path / "afile.txt"
     file.write_bytes(b"x" * size)
     return file
 
-def test_size_basic(tmp_path):
+def test_size_basic(tmp_path: pathlib.Path):
     file = make_file(tmp_path, 100)
     assert Size(lambda x, y: x == y, 100).match(file)
     assert Size(lambda x, y: x < y, 200).match(file)
     assert not Size(lambda x, y: x > y, 200).match(file)
 
-def test_size_error(tmp_path):
+def test_size_error(tmp_path: pathlib.Path):
     class BadPath:
         def stat(self):
             raise OSError("fail")
     bad_file = BadPath()
+    # Should return False if stat fails
     assert Size(lambda x, y: x < y, 1).match(bad_file) is False
-    with pytest.raises(ValueError):
-        Size().match(make_file(tmp_path, 1))
+    # Should raise TypeError if Size is constructed without required arguments
+    with pytest.raises(TypeError):
+        Size()
 
-def test_size_operator_overloads(tmp_path):
+def test_size_operator_overloads(tmp_path: pathlib.Path):
     file = make_file(tmp_path, 50)
     # Class-level operator overloads
     assert Size <= 100

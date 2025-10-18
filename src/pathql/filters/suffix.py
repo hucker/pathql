@@ -5,6 +5,7 @@ Includes operator overloads and curly-brace expansion for extension sets.
 """
 import pathlib
 from .base import Filter
+from .alias import DatetimeOrNone, StatResultOrNone
 import fnmatch
 
 
@@ -64,7 +65,7 @@ class Suffix(Filter, metaclass=SuffixMeta):
 
 
 
-    def match(self, path: pathlib.Path, now: float | None = None, stat_result: object = None) -> bool:
+    def match(self, path: pathlib.Path, now: DatetimeOrNone = None, stat_result: StatResultOrNone = None) -> bool:
         """
         Check if the given path's suffix matches any of the filter's extension patterns.
         Args:

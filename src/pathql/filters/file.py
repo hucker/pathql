@@ -5,6 +5,7 @@ import pathlib
 from .base import Filter
 from .stem import Stem
 from .suffix import Suffix
+from .alias import DatetimeOrNone, StatResultOrNone 
 
 class File(Filter):
     """
@@ -34,7 +35,7 @@ class File(Filter):
         self.stem_filter = Stem(stem, ignore_case=ignore_case)
         self.suffix_filter = Suffix(suffix) if suffix else None
 
-    def match(self, path: 'pathlib.Path', now:dt.datetime|None=None, stat_result:os.stat_result|None=None):
+    def match(self, path: pathlib.Path, now: DatetimeOrNone = None, stat_result: StatResultOrNone = None):
         """
         Return True if the given path matches both the stem and suffix filters.
 

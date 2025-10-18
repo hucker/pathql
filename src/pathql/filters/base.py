@@ -4,8 +4,8 @@ Base filter classes for PathQL.
 Defines the abstract Filter class and logical combinators (AndFilter, OrFilter, NotFilter) for building composable filesystem queries.
 """
 
-import os
 import pathlib
+from .alias import DatetimeOrNone, StatResultOrNone
 
 
 class Filter:
@@ -27,7 +27,7 @@ class Filter:
         """Return a filter that matches if this filter does not match."""
         return NotFilter(self)
 
-    def match(self, path:pathlib.Path, now:dt.datetime|None=None, stat_result:os.stat_result|None=None)->bool:
+    def match(self, path:pathlib.Path, now:DatetimeOrNone=None, stat_result:StatResultOrNone=None)->bool:
         """
         Determine if the given path matches the filter criteria.
 
@@ -51,8 +51,8 @@ class AndFilter(Filter):
     def match(
         self,
         path: pathlib.Path,
-        now: float | None = None,
-        stat_result: os.stat_result | None = None
+        now: DatetimeOrNone = None,
+        stat_result: StatResultOrNone = None
     ) -> bool:
         """Return True if both filters match the path."""
         return self.left.match(path, now=now, stat_result=stat_result) and self.right.match(path, now=now, stat_result=stat_result)
@@ -68,8 +68,8 @@ class OrFilter(Filter):
     def match(
         self,
         path: pathlib.Path,
-        now: float | None = None,
-        stat_result: os.stat_result | None = None
+        now: DatetimeOrNone = None,
+        stat_result:StatResultOrNone = None
     ) -> bool:
         """Return True if either filter matches the path."""
         return self.left.match(path, now=now, stat_result=stat_result) or self.right.match(path, now=now, stat_result=stat_result)
@@ -84,8 +84,8 @@ class NotFilter(Filter):
     def match(
         self,
         path: pathlib.Path,
-        now: float | None = None,
-        stat_result: os.stat_result | None = None
+        now: DatetimeOrNone = None,
+        stat_result: StatResultOrNone = None
     ) -> bool:
         """Return True if the operand filter does not match the path."""
         return not self.operand.match(path, now=now, stat_result=stat_result)

@@ -6,7 +6,7 @@ import fnmatch
 import pathlib
 
 from .base import Filter
-
+from .alias import DatetimeOrNone, StatResultOrNone
 
 
 class Stem(Filter):
@@ -43,7 +43,7 @@ class Stem(Filter):
             self.patterns = list(patterns)
         self.ignore_case = ignore_case
 
-    def match(self, path: pathlib.Path, now: float | None = None, stat_result: object = None) -> bool:
+    def match(self, path: pathlib.Path, now: DatetimeOrNone = None, stat_result: StatResultOrNone = None) -> bool:
         """
         Check if the given path's stem matches any of the filter's glob patterns.
         Args:
