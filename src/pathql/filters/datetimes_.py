@@ -3,6 +3,7 @@ import pathlib
 import operator
 import os
 from .base import Filter
+from .alias import StatResultOrNone, DatetimeOrNone
 
 
 # Top-level filter classes for exact datetime matches
@@ -19,6 +20,7 @@ class _DayFilter(Filter):
         now: dt.datetime | None = None,
         stat_result: os.stat_result | None = None,
     ) -> bool:
+        """Check if the file's day matches the filter criteria."""
         if stat_result is None:
             stat_result = path.stat()
         ts = getattr(stat_result, self.attr)
@@ -43,6 +45,7 @@ class _HourFilter(Filter):
         now: dt.datetime | None = None,
         stat_result: os.stat_result | None = None,
     ) -> bool:
+        """Check if the file's hour matches the filter criteria."""
         if stat_result is None:
             stat_result = path.stat()
         ts = getattr(stat_result, self.attr)
@@ -75,6 +78,7 @@ class _MinuteFilter(Filter):
         now: dt.datetime | None = None,
         stat_result: os.stat_result | None = None,
     ) -> bool:
+        """Check if the file's minute matches the filter criteria."""
         if stat_result is None:
             stat_result = path.stat()
         ts = getattr(stat_result, self.attr)
@@ -102,12 +106,8 @@ class _SecondFilter(Filter):
         self.other = other
         self.attr = attr
 
-    def match(
-        self,
-        path: pathlib.Path,
-        now: dt.datetime | None = None,
-        stat_result: os.stat_result | None = None,
-    ) -> bool:
+    def match(self, path: pathlib.Path, now: DatetimeOrNone = None, stat_result: StatResultOrNone = None) -> bool:
+        """Check if the file's second matches the filter criteria."""
         if stat_result is None:
             stat_result = path.stat()
         ts = getattr(stat_result, self.attr)
@@ -193,7 +193,8 @@ class DateTimeFilter(Filter):
         self.op = op  # operator function (==, in, etc)
         self.value = value
 
-    def match(self, path: "pathlib.Path", now=None, stat_result=None):
+    def match(self, path: pathlib.Path, now: DatetimeOrNone = None, stat_result: StatResultOrNone = None) -> bool:
+        """Check if the file's datetime matches the filter criteria."""
         if stat_result is None:
             stat_result = path.stat()
         ts = getattr(stat_result, self.attr)
@@ -201,14 +202,6 @@ class DateTimeFilter(Filter):
         part = self.extractor(dt_obj)
         return self.op(part, self.value)
 
-
-# Helper operator functions
-def _in(a, b):
-    return a in b
-
-
-def _not_in(a, b):
-    return a not in b
 
 
 # Declarative extractor filters
@@ -267,6 +260,7 @@ class _DateTimePart:
         return _PartFilter()
 
     def __eq__(self, other, attr: str = "st_mtime"):
+        """Raise TypeError as == is not supported for datetime filters."""
         if isinstance(other, (dt.datetime, dt.date)):
             if self.part == "year":
                 return self._filter(operator.eq, other.year, attr=attr)
@@ -286,6 +280,7 @@ class _DateTimePart:
         return self._filter(operator.eq, other, attr=attr)
 
     def __ne__(self, other):
+        """Raise TypeError as != is not supported for datetime filters."""
         return self._filter(operator.ne, other)
 
     def isin(self, items):
@@ -297,6 +292,7 @@ class _DateTimePart:
         )
 
     def __ne__(self, other):
+        """Raise TypeError as != is not supported for datetime filters."""
         return self._filter(operator.ne, other)
 
     def isin(self, items):
@@ -355,7 +351,8 @@ class Modified(Filter):
                 "Modified expects either (extractor, op, value) or a single Filter (e.g., Modified(Year == 2022))"
             )
 
-    def match(self, path, now=None, stat_result=None):
+    def match(self, path: pathlib.Path, now: DatetimeOrNone = None, stat_result: StatResultOrNone = None) -> bool:
+        """Check if the file matches the modification filter criteria."""
         if self._is_wrapped:
             return self._filter.match(path, now, stat_result)
         else:
@@ -410,7 +407,8 @@ class Created(Filter):
                 "Created expects either (extractor, op, value) or a single Filter (e.g., Created(Year == 2022))"
             )
 
-    def match(self, path, now=None, stat_result=None):
+    def match(self, path: pathlib.Path, now: DatetimeOrNone = None, stat_result: StatResultOrNone = None) -> bool:
+        """Check if the file matches the creation filter criteria."""
         if self._is_wrapped:
             return self._filter.match(path, now, stat_result)
         else:

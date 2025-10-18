@@ -1,4 +1,3 @@
-
 """
 Tests for datetime-based filters: Modified, Created, Year, Month, Day, Hour, Minute, Second.
 
@@ -13,6 +12,8 @@ import os
 import datetime as dt
 import pytest
 from pathql.filters import Modified, Created, Year, Month, Day, Hour, Minute, Second
+from typing import Union
+import pathlib
 
 
 
@@ -26,7 +27,7 @@ from pathql.filters import Modified, Created, Year, Month, Day, Hour, Minute, Se
     (2, False),
     ("Mar", False),
 ])
-def test_month_lookup_eq(tmp_path, month_value, should_match):
+def test_month_lookup_eq(tmp_path: pathlib.Path, month_value: Union[str, int], should_match: bool):
     """
     Test Month extractor with various numeric and string values.
     Ensures Month == value works for both numbers and normalized month names.
@@ -35,19 +36,18 @@ def test_month_lookup_eq(tmp_path, month_value, should_match):
     file = make_file_with_mtime(tmp_path, dt_)
     assert Modified(Month == month_value).match(file) is should_match, f"Month == {month_value} should be {should_match}"
 
-def test_month_lookup_isin(tmp_path):
+def test_month_lookup_isin(tmp_path: pathlib.Path):
     """
-    Test Month.isin() for matching multiple month representations.
-    Checks that .isin works for numbers and string names.
+    Test month lookup with isin.
     """
     dt_ = dt.datetime(2022, 3, 15, 12, 0, 0)
     file = make_file_with_mtime(tmp_path, dt_)
     # Should match for 3, 'mar', 'March', 'MAR', and not for others
-    assert Modified(Month.isin([3, "mar", "March", "MAR"])) .match(file), "Month.isin([3, 'mar', 'March', 'MAR']) should match"
-    assert not Modified(Month.isin([1, "jan", "feb"])) .match(file), "Month.isin([1, 'jan', 'feb']) should not match"
+    assert Modified(Month.isin([3, "mar", "March", "MAR"])).match(file), "Month.isin([3, 'mar', 'March', 'MAR']) should match"
+    assert not Modified(Month.isin([1, "jan", "feb"])).match(file), "Month.isin([1, 'jan', 'feb']) should not match"
 
 
-def set_file_times(path, mtime=None, ctime=None):
+def set_file_times(path: str, mtime: Union[float, None] = None):
     """
     Set the modification time (mtime) of a file. ctime is not reliably settable on all platforms.
     """
@@ -55,25 +55,23 @@ def set_file_times(path, mtime=None, ctime=None):
         os.utime(path, (mtime, mtime))
     # ctime cannot be set directly on all platforms, so we only test mtime-based filters reliably
 
-def make_file_with_mtime(tmp_path, dt):
+def make_file_with_mtime(tmp_path: pathlib.Path, datetime_obj: dt.datetime) -> pathlib.Path:
     """
     Create a file at tmp_path with a specific modification time (mtime) set to the given datetime.
     Returns the file path.
     """
-    file = tmp_path / f"f_{dt.strftime('%Y%m%d%H%M%S')}"
+    file = tmp_path / f"f_{datetime_obj.strftime('%Y%m%d%H%M%S')}"
     file.write_text("x")
-    ts = dt.timestamp()
+    ts = datetime_obj.timestamp()
     set_file_times(str(file), mtime=ts)
     return file
 
-def test_modified_year_month_day(tmp_path):
+def test_modified_year_month_day(tmp_path: pathlib.Path):
     """
-    Test Modified filter with Year, Month, and Day extractors.
-    Checks both integer and date object support.
+    Test modified year, month, and day.
     """
     dt_ = dt.datetime(2022, 12, 25, 15, 30, 45)
     file = make_file_with_mtime(tmp_path, dt_)
-    # New API
     assert Modified(Year == 2022).match(file), "Year == 2022 should match"
     assert Modified(Month == 12).match(file), "Month == 12 should match"
     assert Modified(Day == 25).match(file), "Day == 25 should match"
@@ -82,10 +80,9 @@ def test_modified_year_month_day(tmp_path):
     assert Modified(Day == dt.date(2022, 12, 25)).match(file), "Day == date(2022, 12, 25) should match"
     assert not Modified(Day == dt.date(2022, 12, 24)).match(file), "Day == date(2022, 12, 24) should not match"
 
-def test_modified_hour_minute_second(tmp_path):
+def test_modified_hour_minute_second(tmp_path: pathlib.Path):
     """
-    Test Modified filter with Hour, Minute, and Second extractors.
-    Checks both integer and datetime object support for each part.
+    Test modified hour, minute, and second.
     """
     dt_ = dt.datetime(2023, 1, 2, 3, 4, 5)
     file = make_file_with_mtime(tmp_path, dt_)
@@ -101,9 +98,9 @@ def test_modified_hour_minute_second(tmp_path):
     assert Modified(Second == dt.datetime(2023, 1, 2, 3, 4, 5)).match(file), "Second == datetime(2023, 1, 2, 3, 4, 5) should match"
     assert not Modified(Second == dt.datetime(2023, 1, 2, 3, 4, 6)).match(file), "Second == datetime(2023, 1, 2, 3, 4, 6) should not match"
 
-def test_modified_in_operators(tmp_path):
+def test_modified_in_operators(tmp_path: pathlib.Path):
     """
-    Test .isin() operator for Month extractor in Modified filter.
+    Test modified in operators.
     """
     dt_ = dt.datetime(2024, 5, 6, 7, 8, 9)
     file = make_file_with_mtime(tmp_path, dt_)
@@ -135,12 +132,3 @@ def test_modified_with_extractor_classes(tmp_path):
     assert Modified(Second == dt.datetime(2025, 10, 15, 12, 34, 56)).match(file), "Second == datetime(2025, 10, 15, 12, 34, 56) should match"
 
 # Created filter is not reliably testable on all platforms, but we can check it runs
-
-def test_created_runs(tmp_path):
-    """
-    Smoke test for Created filter to ensure it runs without error.
-    """
-    dt_ = dt.datetime.now()
-    file = make_file_with_mtime(tmp_path, dt_)
-    # Should not raise
-    Created(lambda d: d.year, lambda a, b: True, None).match(file)

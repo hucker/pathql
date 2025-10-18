@@ -12,7 +12,8 @@ import datetime as dt
 from typing import Iterator
 
 from .filters.base import Filter
-from .filters.alias import FloatOrNone, StatResultOrNone, DatetimeOrNone,PathOrNone
+from .filters.alias import  StatResultOrNone, DatetimeOrNone
+from .result_set import ResultSet
 
 class Query(Filter):
     """
@@ -64,7 +65,7 @@ class Query(Filter):
         path: pathlib.Path,
         recursive: bool = True,
         files: bool = True,
-        now: float | None = None,
+        now: DatetimeOrNone = None,
     ) -> Iterator[pathlib.Path]:
         """
         Yield files matching the filter expression using a single-threaded approach (no queue/thread).
@@ -79,7 +80,7 @@ class Query(Filter):
             pathlib.Path: Files matching the filter expression.
         """
         if now is None:
-            now = time.time()
+            now = dt.datetime.now()
         iterator = path.rglob("*") if recursive else path.glob("*")
         for p in iterator:
             if files and not p.is_file():
@@ -129,7 +130,7 @@ class Query(Filter):
         t = threading.Thread(target=producer, daemon=True)
         t.start()
         while True:
-            item = q.get()
+            item:tuple[pathlib.Path,os.stat_result] = q.get()
             if item is None:
                 break
             p, stat_result = item
@@ -166,3 +167,25 @@ class Query(Filter):
             yield from self._unthreaded_files(
                 path, recursive=recursive, files=files, now=now
             )
+
+    def select(
+        self,
+        path: pathlib.Path,
+        recursive: bool = True,
+        files: bool = True,
+        now: float | None = None,
+        threaded: bool = False,
+    )->ResultSet:
+        """
+        Select files into a ResultSet list of files matching the filter expression. This list
+        is eagerly generated to support most aggregations.
+
+        Args:
+            path (pathlib.Path): Root directory to search.
+            recursive (bool): If True, search recursively. If False, only top-level files.
+            files (bool): If True, yield only files (not directories).
+            now (float, optional): Reference time for filters. Defaults to current time.
+            threaded (bool): If True, use threaded producer-consumer model. If False, use single-threaded.
+        """
+        return ResultSet(self.files(path, recursive, files, now, threaded))
+

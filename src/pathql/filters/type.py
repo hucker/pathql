@@ -1,6 +1,9 @@
 
 import pathlib
+import stat
 from .base import Filter
+from .alias import StatResultOrNone, DatetimeOrNone
+
 
 class _TypeMeta(type):
     def __eq__(cls, other):
@@ -57,7 +60,7 @@ class Type(Filter, metaclass=_TypeMeta):
 
 
     # WARNING: Symlink and broken symlink handling is platform-dependent and not well tested across all OSes and edge cases.
-    def match(self, path: 'pathlib.Path', now: float | None = None, stat_result=None) -> bool:
+    def match(self, path: pathlib.Path, now: DatetimeOrNone = None, stat_result: StatResultOrNone = None) -> bool:
         """
         Check if the path matches any of the specified types.
         Args:
@@ -67,7 +70,7 @@ class Type(Filter, metaclass=_TypeMeta):
         Returns:
             True if the path matches one of the types, else False.
         """
-        import stat
+
         try:
             # Check for symlink first, even if broken
             if path.is_symlink():
