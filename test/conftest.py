@@ -191,6 +191,8 @@ def test_result_folder(tmp_path: pathlib.Path) -> pathlib.Path:
         "z_last.txt": 250,
         "middle.txt": 175,
     }
+    # Ensure all files have the .txt suffix
+    files = {f"{name}.txt" if not name.endswith(".txt") else name: size for name, size in files.items()}
     _create_test_files(tmp_path, files)
     return tmp_path
 

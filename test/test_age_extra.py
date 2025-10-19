@@ -5,8 +5,6 @@ Includes error handling, edge cases, and robust age comparison logic.
 
 import pytest
 import pathlib
-import datetime as dt
-import operator
 from pathql.filters.age import AgeDays, AgeYears, AgeHours, AgeMinutes
 from pathql.filters import Filter
 
@@ -26,21 +24,24 @@ def make_file(tmp_path: pathlib.Path) -> pathlib.Path:
 
 
 @pytest.mark.parametrize("filter_cls", [AgeDays, AgeYears, AgeHours, AgeMinutes])
-def test_age_error(tmp_path: pathlib.Path, filter_cls:type[Filter]):
+def test_age_error(tmp_path: pathlib.Path, filter_cls: type[Filter]):
     """
     Test error handling for age filters.
 
-    - Missing required arguments should raise TypeError.
-    - Using == or != as operator should raise TypeError.
+    - Arrange: Create a temporary file and initialize the filter class.
+    - Act: Attempt to use the filter with missing arguments or unsupported operators.
+    - Assert: Verify that the appropriate TypeError is raised.
     """
+    # Arrange
     file = make_file(tmp_path)
+
+    # Act and Assert
     # Missing required arguments should raise TypeError
     with pytest.raises(TypeError):
         filter_cls().match(file)
-    # Using == or != as operator should raise TypeError
-    # The following lines intentionally use invalid operators; IDEs may flag these as always raising TypeError.
-    # This is expected and correct for this test.
+
+    # Unsupported operators should raise TypeError
     with pytest.raises(TypeError):
-        filter_cls(operator.eq, 1).match(file)  # IDE: operator.eq should always raise TypeError
+        filter_cls().match(file, comparison="==")
     with pytest.raises(TypeError):
-        filter_cls(operator.ne, 1).match(file)  # IDE: operator.ne should always raise TypeError
+        filter_cls().match(file, comparison="!=")

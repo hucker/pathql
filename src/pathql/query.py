@@ -1,13 +1,13 @@
 """
 Query engine for pathql: threaded producer-consumer file search and filtering.
 
-This module defines the Query class, which uses a producer thread to walk the filesystem and a consumer (main thread) to filter files using pathql filters.
+This module defines the Query class, which uses a producer thread to walk the filesystem
+and a consumer (main thread) to filter files using pathql filters.
 """
 import os
 import pathlib
 import threading
 import queue
-import time
 import datetime as dt
 from typing import Iterator
 
@@ -188,4 +188,3 @@ class Query(Filter):
             threaded (bool): If True, use threaded producer-consumer model. If False, use single-threaded.
         """
         return ResultSet(self.files(path, recursive, files, now, threaded))
-

@@ -4,13 +4,26 @@ import pytest
 import pathlib
 from pathql.filters.suffix import Suffix, Ext
 
-def make_file(tmp_path, name):
+def make_file(tmp_path: pathlib.Path, name: str) -> pathlib.Path:
+    """
+    Helper function to create a file with the given name.
+    """
     file = tmp_path / name
     file.write_text("x")
     return file
 
-def test_suffix_basic(tmp_path):
+def test_suffix_basic(tmp_path: pathlib.Path) -> None:
+    """
+    Test basic matching for Suffix and Ext filters.
+
+    - Arrange: Create a file with a specific extension.
+    - Act: Apply various suffix filters.
+    - Assert: Verify matching results.
+    """
+    # Arrange
     file = make_file(tmp_path, "foo.txt")
+
+    # Act and Assert
     assert Suffix("txt").match(file)
     assert not Suffix("md").match(file)
     assert Suffix(["txt", "md"]).match(file)
@@ -18,26 +31,50 @@ def test_suffix_basic(tmp_path):
     assert Suffix(["TXT"]).match(file)  # case-insensitive
     assert Ext("txt").match(file)  # alias works
 
-def test_suffix_nosplit(tmp_path):
+def test_suffix_nosplit(tmp_path: pathlib.Path) -> None:
+    """
+    Test no-split matching for Suffix filter.
+
+    - Arrange: Create a file with a compound extension.
+    - Act: Apply no-split filter.
+    - Assert: Verify matching results.
+    """
+    # Arrange
     file = make_file(tmp_path, "foo.bar baz")
-    # nosplit: treat as one extension
+
+    # Act and Assert
     assert Suffix("bar baz", nosplit=True).match(file)
     assert not Suffix("bar baz").match(file)
 
-def test_suffix_empty_patterns(tmp_path):
+def test_suffix_empty_patterns(tmp_path: pathlib.Path) -> None:
+    """
+    Test empty pattern handling for Suffix filter.
+
+    - Arrange: Create a file with an extension.
+    - Act: Apply an empty suffix filter.
+    - Assert: Verify ValueError is raised.
+    """
+    # Arrange
     file = make_file(tmp_path, "foo.txt")
+
+    # Act and Assert
     with pytest.raises(ValueError):
         Suffix().match(file)
 
-def test_suffix_operator_overloads(tmp_path):
+def test_suffix_operator_overloads(tmp_path: pathlib.Path) -> None:
+    """
+    Test operator overloads for Suffix filter.
+
+    - Arrange: Create a file with a specific extension.
+    - Act: Apply various operator overloads.
+    - Assert: Verify operator behavior.
+    """
+    # Arrange
     file = make_file(tmp_path, "foo.txt")
-    # __eq__
+
+    # Act and Assert
     assert Suffix(["txt"]) == Suffix(["txt"])
-    # __contains__
     assert "txt" in Suffix("txt md")
-    # __call__
     assert Suffix("txt")(["txt"]).match(file)
-    # __class_getitem__
     assert Suffix["txt"].match(file)
     assert Suffix["txt", "md"].match(file)
-    # Only test operator overloads that are meaningful and supported by the API

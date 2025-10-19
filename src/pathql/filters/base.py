@@ -1,7 +1,8 @@
 """
 Base filter classes for PathQL.
 
-Defines the abstract Filter class and logical combinators (AndFilter, OrFilter, NotFilter) for building composable filesystem queries.
+Defines the abstract Filter class and logical combinators (AndFilter, OrFilter,
+NotFilter) for building composable filesystem queries.
 """
 
 import pathlib
@@ -12,8 +13,8 @@ class Filter:
     """
     Abstract base class for all PathQL filters.
 
-    Supports logical composition via &, |, and ~ operators.
-    Subclasses must implement the match() method.
+    Supports logical composition via &, |, and ~ operators. Subclasses must
+    implement the match() method.
     """
     def __and__(self, other: 'Filter'):
         """Return a filter that matches if both filters match."""
@@ -27,7 +28,8 @@ class Filter:
         """Return a filter that matches if this filter does not match."""
         return NotFilter(self)
 
-    def match(self, path:pathlib.Path, now:DatetimeOrNone=None, stat_result:StatResultOrNone=None)->bool:
+    def match(self, path: pathlib.Path, now: DatetimeOrNone = None,
+              stat_result: StatResultOrNone = None) -> bool:
         """
         Determine if the given path matches the filter criteria.
 
@@ -35,6 +37,7 @@ class Filter:
             path: The pathlib.Path to check.
             now: Optional reference datetime for time-based filters.
             stat_result: Optional os.stat_result for file metadata.
+
         Returns:
             bool: True if the path matches, False otherwise.
         """

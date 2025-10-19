@@ -56,7 +56,16 @@ def test_access_matrix(
 ):
     """
     For each filter, check that only the expected files are matched.
+
+    - Arrange: Use the access_matrix fixture to create files with specific permissions.
+    - Act: Apply the filter to the files in the matrix.
+    - Assert: Verify that only the expected files are matched.
     """
-    matched = {fname for fname, fpath in access_matrix.items() if filter_obj.match(fpath)}
+    # Arrange
     expected = set(expected_files)
-    assert matched == expected
+
+    # Act
+    matched = {fname for fname, fpath in access_matrix.items() if filter_obj.match(fpath)}
+
+    # Assert
+    assert matched == expected, f"Filter {filter_obj} matched {matched}, expected {expected}"

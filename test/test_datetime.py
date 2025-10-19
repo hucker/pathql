@@ -4,7 +4,7 @@ Tests for datetime-based filters: Modified, Created, Year, Month, Day, Hour, Min
 This module covers:
 - Month lookup and normalization (numeric and string)
 - Year, month, day, hour, minute, second extractors
-- Operator overloading and .isin for datetime parts
+- Operator overloading and .is_in for datetime parts
 - Modified and Created filter logic
 """
 
@@ -36,15 +36,15 @@ def test_month_lookup_eq(tmp_path: pathlib.Path, month_value: Union[str, int], s
     file = make_file_with_mtime(tmp_path, dt_)
     assert Modified(Month == month_value).match(file) is should_match, f"Month == {month_value} should be {should_match}"
 
-def test_month_lookup_isin(tmp_path: pathlib.Path):
+def test_month_lookup_is_in(tmp_path: pathlib.Path):
     """
-    Test month lookup with isin.
+    Test month lookup with is_in.
     """
     dt_ = dt.datetime(2022, 3, 15, 12, 0, 0)
     file = make_file_with_mtime(tmp_path, dt_)
     # Should match for 3, 'mar', 'March', 'MAR', and not for others
-    assert Modified(Month.isin([3, "mar", "March", "MAR"])).match(file), "Month.isin([3, 'mar', 'March', 'MAR']) should match"
-    assert not Modified(Month.isin([1, "jan", "feb"])).match(file), "Month.isin([1, 'jan', 'feb']) should not match"
+    assert Modified(Month.is_in([3, "mar", "March", "MAR"])).match(file), "Month.is_in([3, 'mar', 'March', 'MAR']) should match"
+    assert not Modified(Month.is_in([1, "jan", "feb"])).match(file), "Month.is_in([1, 'jan', 'feb']) should not match"
 
 
 def set_file_times(path: str, mtime: Union[float, None] = None):
@@ -77,8 +77,8 @@ def test_modified_year_month_day(tmp_path: pathlib.Path):
     assert Modified(Day == 25).match(file), "Day == 25 should match"
     assert not Modified(Year == 2021).match(file), "Year == 2021 should not match"
     # Date object support
-    assert Modified(Day == dt.date(2022, 12, 25)).match(file), "Day == date(2022, 12, 25) should match"
-    assert not Modified(Day == dt.date(2022, 12, 24)).match(file), "Day == date(2022, 12, 24) should not match"
+    assert Modified(Day == dt.date(2022, 12, 25)).match(file), "Day == 2022/12/25 should match"
+    assert not Modified(Day == dt.date(2022, 12, 24)).match(file), "Day == 2022/12/24) should not match"
 
 def test_modified_hour_minute_second(tmp_path: pathlib.Path):
     """
@@ -104,12 +104,12 @@ def test_modified_in_operators(tmp_path: pathlib.Path):
     """
     dt_ = dt.datetime(2024, 5, 6, 7, 8, 9)
     file = make_file_with_mtime(tmp_path, dt_)
-    assert Modified(Month.isin([5, 6, 7])).match(file), "Month.isin([5, 6, 7]) should match"
-    assert not Modified(Month.isin([1, 2, 3])).match(file), "Month.isin([1, 2, 3]) should not match"
+    assert Modified(Month.is_in([5, 6])).match(file), "Month.is_in([5, 6]) should match"
+    assert not Modified(Month.is_in([1, 2])).match(file), "Month.is_in([1, 2]) shouldn't match"
 
 # Example using the provided extractor classes
 
-def test_modified_with_extractor_classes(tmp_path):
+def test_modified_with_extractor_classes(tmp_path:pathlib.Path):
     """
     Test Modified filter with all extractor classes and various input types.
     Covers Year, Month, Day, Hour, Minute, Second with both int and datetime/date objects.
@@ -121,7 +121,7 @@ def test_modified_with_extractor_classes(tmp_path):
     # Month extractor
     assert Modified(Month == 10).match(file), "Month == 10 should match"
     # Hour in
-    assert Modified(Hour.isin([12, 13])).match(file), "Hour.isin([12, 13]) should match"
+    assert Modified(Hour.is_in([12, 13])).match(file), "Hour.is_in([12, 13]) should match"
     # Date object for day
     assert Modified(Day == dt.date(2025, 10, 15)).match(file), "Day == date(2025, 10, 15) should match"
     # Datetime object for hour
@@ -129,6 +129,6 @@ def test_modified_with_extractor_classes(tmp_path):
     # Datetime object for minute
     assert Modified(Minute == dt.datetime(2025, 10, 15, 12, 34)).match(file), "Minute == datetime(2025, 10, 15, 12, 34) should match"
     # Datetime object for second
-    assert Modified(Second == dt.datetime(2025, 10, 15, 12, 34, 56)).match(file), "Second == datetime(2025, 10, 15, 12, 34, 56) should match"
+    assert Modified(Second == dt.datetime(2025, 10, 15, 12, 34, 56)).match(file), Second == datetime(2025, 10, 15, 12, 34, 56) should match"
 
 # Created filter is not reliably testable on all platforms, but we can check it runs

@@ -1,4 +1,3 @@
-
 import pathlib
 from typing import Callable, Any
 from .alias import StatResultOrNone, IntOrNone

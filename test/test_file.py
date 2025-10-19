@@ -18,12 +18,32 @@ from pathql.filters import File
         ("foo.jpg.txt", "foo.{jpg,png,bmp}", False), # wrong extension
     ]
 )
-def test_file_curly_brace_suffix(tmp_path, filename, pattern, should_match):
+def test_file_curly_brace_suffix(tmp_path: pathlib.Path, filename: str, pattern: str, should_match: bool) -> None:
+    """
+    Test File filter with curly-brace extension patterns.
+
+    - Arrange: Create a file with the given filename.
+    - Act: Apply the File filter with the specified pattern.
+    - Assert: Verify that the filter matches the file correctly.
+    """
+    # Arrange
     f = make_file(tmp_path, filename)
+
+    # Act and Assert
     assert File(pattern).match(f) is should_match
 
 
-def make_file(tmp_path, name):
+def make_file(tmp_path: pathlib.Path, name: str) -> pathlib.Path:
+    """
+    Create a file with the given name in the temporary directory.
+
+    Args:
+        tmp_path (pathlib.Path): Temporary directory provided by pytest.
+        name (str): Name of the file to create.
+
+    Returns:
+        pathlib.Path: Path to the created file.
+    """
     file = tmp_path / name
     file.write_text("x")
     return file
@@ -57,17 +77,43 @@ def make_file(tmp_path, name):
         ("foo.db", pathlib.Path("other.db"), False),
     ]
 )
-def test_file_patterns(tmp_path, filename, pattern, should_match):
+def test_file_patterns(tmp_path: pathlib.Path, filename: str, pattern: str, should_match: bool) -> None:
+    """
+    Test File filter with various patterns.
+
+    - Arrange: Create a file with the given filename.
+    - Act: Apply the File filter with the specified pattern.
+    - Assert: Verify that the filter matches the file correctly.
+    """
+    # Arrange
     f = make_file(tmp_path, filename)
+
+    # Act and Assert
     assert File(pattern).match(f) is should_match
 
-def test_file_as_stem_and_suffix(tmp_path):
+
+def test_file_as_stem_and_suffix(tmp_path: pathlib.Path) -> None:
+    """
+    Test File filter's as_stem_and_suffix method.
+
+    - Arrange: Create a file with a specific name.
+    - Act: Apply the as_stem_and_suffix method.
+    - Assert: Verify that the method returns the correct stem and suffix matchers.
+    """
+    # Arrange
     f = make_file(tmp_path, "foo.db")
     file_filter = File("foo.db")
+
+    # Act
     result = file_filter.as_stem_and_suffix()
+
+    # Assert
     assert result is not None
-    stem, suffix = result
-    assert stem.match(f)
-    assert suffix.match(f)
+    if len(result) == 2:
+        stem, suffix = result
+        assert stem.match(f)
+        assert suffix.match(f)
+    else:
+        pytest.fail("Expected a tuple of length 2 for stem and suffix")
     # Not for wildcards
     assert File("*.db").as_stem_and_suffix() is None

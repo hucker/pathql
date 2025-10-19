@@ -39,7 +39,7 @@ def test_modified_presets(
     preset: Filter = preset_func(now)
     result = preset.match(fpath, now=now.timestamp(), stat_result=stat)
     assert result is should_match, (
-        f"Preset {preset_func.__name__} with now={now} (mtime={mtime}) expected {should_match} but got {result}"
+        f"Preset {preset_func.__name__} with {now=} {mtime=} expected {should_match} but got {result}"
     )
 
 def set_file_mtime(path: pathlib.Path, mtime: float) -> None:
@@ -49,6 +49,8 @@ def set_file_mtime(path: pathlib.Path, mtime: float) -> None:
 @pytest.fixture(scope="module")
 def file_and_times() -> typing.Generator[tuple[pathlib.Path, dt.datetime], None, None]:
     """Fixture yielding a file and its mtime for testing."""
+
+    # Arrange
     with tempfile.TemporaryDirectory() as tmpdir:
         fpath = pathlib.Path(tmpdir) / "testfile.txt"
         fpath.write_text("test")
@@ -156,6 +158,8 @@ def test_new_created_presets(
 @pytest.fixture
 def edge_case_file(tmp_path:pathlib.Path) -> pathlib.Path:
     """Fixture for edge case file, auto-deleted after test."""
+
+    # Arrange
     fpath:pathlib.Path = tmp_path / "edge_case.txt"
     fpath.write_text("edge")
     mtime = dt.datetime(2025, 1, 1, 0, 0, 0)
@@ -166,6 +170,8 @@ def edge_case_file(tmp_path:pathlib.Path) -> pathlib.Path:
 @pytest.fixture
 def edge_case_created_file(tmp_path: pathlib.Path) -> pathlib.Path:
     """Fixture for edge case file for creation time, auto-deleted after test."""
+
+    # Arrange
     fpath: pathlib.Path = tmp_path / "edge_case_created.txt"
     fpath.write_text("edge created")
     # Creation time is set by the OS; we read it from stat
@@ -204,11 +210,11 @@ def test_modified_edge_case_param(edge_case_file: pathlib.Path, now: dt.datetime
         "hour": modified_this_hour(now).match(fpath, now=now.timestamp(), stat_result=stat),
         "minute": modified_this_minute(now).match(fpath, now=now.timestamp(), stat_result=stat),
     }
-    assert results["year"] == ("not this year" not in expected), f"Year match failed for now={now}: expected {'not this year' not in expected}, got {results['year']}"
-    assert results["month"] == ("not this month" not in expected), f"Month match failed for now={now}: expected {'not this month' not in expected}, got {results['month']}"
-    assert results["today"] == ("not today" not in expected), f"Day match failed for now={now}: expected {'not today' not in expected}, got {results['today']}"
-    assert results["hour"] == ("not this hour" not in expected), f"Hour match failed for now={now}: expected {'not this hour' not in expected}, got {results['hour']}"
-    assert results["minute"] == ("not this minute" not in expected), f"Minute match failed for now={now}: expected {'not this minute' not in expected}, got {results['minute']}"
+    assert results["year"] == ("not this year" not in expected), f"Year match failed for {now=}: expected {'not this year' not in expected}, got {results['year']}"
+    assert results["month"] == ("not this month" not in expected), f"Month match failed for {now=}: expected {'not this month' not in expected}, got {results['month']}"
+    assert results["today"] == ("not today" not in expected), f"Day match failed for {now=}: expected {'not today' not in expected}, got {results['today']}"
+    assert results["hour"] == ("not this hour" not in expected), f"Hour match failed for {now=}: expected {'not this hour' not in expected}, got {results['hour']}"
+    assert results["minute"] == ("not this minute" not in expected), f"Minute match failed for {now=}: expected {'not this minute' not in expected}, got {results['minute']}"
 
 
 @pytest.mark.parametrize(

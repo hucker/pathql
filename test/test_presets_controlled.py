@@ -29,6 +29,7 @@ def mod_files(tmp_path_factory: pytest.TempPathFactory) -> Dict[str, pathlib.Pat
     Create files with strictly controlled modification times.
     Returns dict: {label: pathlib.Path}
     """
+    # Arrange
     base = tmp_path_factory.mktemp("mod_presets")
     files: Dict[str, pathlib.Path] = {}
     for i, offset in enumerate(MOD_OFFSETS):

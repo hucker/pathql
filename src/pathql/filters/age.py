@@ -1,8 +1,8 @@
 """
-Provides filter classes for querying files based on their age (time since
-last modification) in minutes, hours, days, or years. These filters support
-declarative operator overloads, allowing expressive queries such as
-`AgeDays < 10` or `AgeYears >= 1`.
+Provides filter classes for querying files based on their age (time since last
+modification) in minutes, hours, days, or years. These filters support declarative
+operator overloads, allowing expressive queries such as `AgeDays < 10` or
+`AgeYears >= 1`.
 
 Classes:
     AgeMinutes  -- Filter for file age in minutes.
@@ -10,21 +10,19 @@ Classes:
     AgeDays     -- Filter for file age in days.
     AgeYears    -- Filter for file age in years.
 
-Each filter uses a comparison operator and a threshold value, and can be
-used to match files whose modification time meets the specified age
-criteria.
+Each filter uses a comparison operator and a threshold value, and can be used to
+match files whose modification time meets the specified age criteria.
 
-NOTE: We specifically use modification time (mtime) for age calculations,
-as it is widely supported across different operating systems and file
-systems. Creation time (ctime) is not consistently available or consistent
-across platforms (surprisingly), so we avoid using it for age-based
-filters. If you must have creation time-based filtering you can build one
-using something like:
+NOTE: We specifically use modification time (mtime) for age calculations, as it is
+widely supported across different operating systems and file systems. Creation time
+(ctime) is not consistently available or consistent across platforms (surprisingly),
+so we avoid using it for age-based filters. If you must have creation time-based
+filtering you can build one using something like:
 
 Created < some_datetime
 
-This will use the created timestamp and will often be correct, surprisingly
-working better on Windows than on Unix-like systems.
+This will use the created timestamp and will often be correct, surprisingly working
+better on Windows than on Unix-like systems.
 """
 
 import datetime as dt
