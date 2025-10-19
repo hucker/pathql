@@ -6,6 +6,7 @@ NotFilter) for building composable filesystem queries.
 """
 
 import pathlib
+from types import NotImplementedType
 from .alias import DatetimeOrNone, StatResultOrNone
 
 
@@ -60,15 +61,12 @@ class AndFilter(Filter):
         self.left = left
         self.right = right
 
-    def __and__(self, other):
+    def __and__(self, other: Filter | type[Filter]) -> 'AndFilter | NotImplementedType':
         # Allow chaining: (Read & Write) & Execute and ((Read & Write) & (Execute & Write))
-        if isinstance(other, type) and issubclass(other, Filter):
+        if isinstance(other, type):
             return AndFilter(self, other())
-        if isinstance(other, Filter):
-            return AndFilter(self, other)
-        if isinstance(other, AndFilter):
-            return AndFilter(self, other)
-        return NotImplemented
+        return AndFilter(self, other)
+
     def match(
         self,
         path: pathlib.Path,
@@ -79,20 +77,21 @@ class AndFilter(Filter):
         return self.left.match(path, now=now, stat_result=stat_result) and self.right.match(path, now=now, stat_result=stat_result)
 
 class OrFilter(Filter):
-    def __or__(self, other):
-        # Allow chaining: (Read | Write) | Execute
-        if isinstance(other, type) and issubclass(other, Filter):
-            return OrFilter(self, other())
-        if isinstance(other, Filter):
-            return OrFilter(self, other)
-        return NotImplemented
     """
     Filter that matches if either left or right filter matches.
     """
+
     def __init__(self, left: Filter, right: Filter):
         """Initialize with two filters to combine with logical OR."""
-        self.left = left
-        self.right = right
+        self.left:Filter = left
+        self.right:Filter = right
+
+    def __or__(self, other: Filter | type[Filter]) -> 'OrFilter | NotImplementedType':
+        # Allow chaining: (Read | Write) | Execute
+        if isinstance(other, type):
+            return OrFilter(self, other())
+        return OrFilter(self, other)
+
     def match(
         self,
         path: pathlib.Path,
@@ -109,6 +108,7 @@ class NotFilter(Filter):
     def __init__(self, operand: Filter):
         """Initialize with a filter to negate."""
         self.operand = operand
+
     def match(
         self,
         path: pathlib.Path,

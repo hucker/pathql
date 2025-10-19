@@ -11,7 +11,7 @@ This module covers:
 import os
 import datetime as dt
 import pytest
-from pathql.filters import Modified, Created, Year, Month, Day, Hour, Minute, Second
+from pathql.filters import Modified, Year, Month, Day, Hour, Minute, Second
 from typing import Union
 import pathlib
 
@@ -129,6 +129,6 @@ def test_modified_with_extractor_classes(tmp_path:pathlib.Path):
     # Datetime object for minute
     assert Modified(Minute == dt.datetime(2025, 10, 15, 12, 34)).match(file), "Minute == datetime(2025, 10, 15, 12, 34) should match"
     # Datetime object for second
-    assert Modified(Second == dt.datetime(2025, 10, 15, 12, 34, 56)).match(file), Second == datetime(2025, 10, 15, 12, 34, 56) should match"
+    assert Modified(Second == dt.datetime(2025, 10, 15, 12, 34, 56)).match(file), "Second == datetime(2025, 10, 15, 12, 34, 56) should match"
 
 # Created filter is not reliably testable on all platforms, but we can check it runs
