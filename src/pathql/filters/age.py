@@ -28,12 +28,11 @@ working better on Windows than on Unix-like systems.
 """
 
 import datetime as dt
+import operator
 import pathlib
 from typing import Callable
-import operator
-
 from .base import Filter
-from .alias import DatetimeOrNone, StatResultOrNone,IntOrFloat,IntOrFloatOrNone
+from .alias import DatetimeOrNone, StatResultOrNone, IntOrFloat, IntOrFloatOrNone
 
 
 # Metaclass for class-level operator overloading
@@ -52,7 +51,11 @@ class AgeDays(Filter):
         value (float, optional): Value to compare file age (in days) against.
     """
 
-    def __init__(self, op: Callable[[float, float], bool] = operator.lt, value: IntOrFloatOrNone = None) -> None:
+    def __init__(
+        self,
+        op: Callable[[float, float], bool] = operator.lt,
+        value: IntOrFloatOrNone = None,
+    ) -> None:
         """
         Initialize an AgeDays filter.
 
@@ -64,10 +67,11 @@ class AgeDays(Filter):
         == and != are not supported and will raise TypeError. This should be documented in the README.
         """
         if op in (operator.eq, operator.ne):
-            raise TypeError("== and != not supported for this filter. Use < or > (inclusive) only.")
+            raise TypeError(
+                "== and != not supported for this filter. Use < or > (inclusive) only."
+            )
         self.op = op
         self.value: float | None = float(value) if value is not None else None
-
 
     def __le__(self, other: IntOrFloat):
         """Return a new AgeDays filter for <= comparison."""
@@ -86,16 +90,17 @@ class AgeDays(Filter):
         return AgeDays(operator.gt, other)
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, AgeDays):
-            return NotImplemented
-        return self.value == other.value
+        raise TypeError("== not supported for this filter.")
 
     def __ne__(self, other: object) -> bool:
-        if not isinstance(other, AgeDays):
-            return NotImplemented
-        return self.value != other.value
+        raise TypeError("!= not supported for this filter.")
 
-    def match(self, path: pathlib.Path, now: DatetimeOrNone = None, stat_result: StatResultOrNone = None) -> bool:
+    def match(
+        self,
+        path: pathlib.Path,
+        now: DatetimeOrNone = None,
+        stat_result: StatResultOrNone = None,
+    ) -> bool:
         """
         Determine if the file's age in days matches the filter criteria.
 
@@ -133,7 +138,12 @@ class AgeYears(Filter):
         op (callable, optional): Operator function (e.g., operator.lt, operator.ge).
         value (float, optional): Value to compare file age (in years) against.
     """
-    def __init__(self, op: Callable[[float, float], bool] = operator.lt, value: IntOrFloatOrNone = None) -> None:
+
+    def __init__(
+        self,
+        op: Callable[[float, float], bool] = operator.lt,
+        value: IntOrFloatOrNone = None,
+    ) -> None:
         """
         Initialize an AgeYears filter.
 
@@ -145,7 +155,9 @@ class AgeYears(Filter):
         == and != are not supported and will raise TypeError. This should be documented in the README.
         """
         if op in (operator.eq, operator.ne):
-            raise TypeError("== and != not supported for this filter. Use < or > (inclusive) only.")
+            raise TypeError(
+                "== and != not supported for this filter. Use < or > (inclusive) only."
+            )
         self.op = op
         self.value: float | None = float(value) if value is not None else None
 
@@ -162,16 +174,17 @@ class AgeYears(Filter):
         return AgeYears(operator.gt, other)
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, AgeYears):
-            return NotImplemented
-        return self.value == other.value
+        raise TypeError("== not supported for this filter.")
 
     def __ne__(self, other: object) -> bool:
-        if not isinstance(other, AgeYears):
-            return NotImplemented
-        return self.value != other.value
+        raise TypeError("!= not supported for this filter.")
 
-    def match(self, path: pathlib.Path, now: DatetimeOrNone = None, stat_result: StatResultOrNone = None) -> bool:
+    def match(
+        self,
+        path: pathlib.Path,
+        now: DatetimeOrNone = None,
+        stat_result: StatResultOrNone = None,
+    ) -> bool:
         """
         Determine if the file's age in years matches the filter criteria.
 
@@ -196,7 +209,6 @@ class AgeYears(Filter):
             return False
 
 
-
 class AgeMinutes(Filter):
     """
     Filter for file age in minutes (since last modification).
@@ -210,7 +222,11 @@ class AgeMinutes(Filter):
         value (float, optional): Value to compare file age (in minutes) against.
     """
 
-    def __init__(self, op: Callable[[float, float], bool] = operator.lt, value: IntOrFloatOrNone = None) -> None:
+    def __init__(
+        self,
+        op: Callable[[float, float], bool] = operator.lt,
+        value: IntOrFloatOrNone = None,
+    ) -> None:
         """
         Initialize an AgeMinutes filter.
 
@@ -222,11 +238,18 @@ class AgeMinutes(Filter):
         == and != are not supported and will raise TypeError. This should be documented in the README.
         """
         if op in (operator.eq, operator.ne):
-            raise TypeError("== and != not supported for this filter. Use < or > (inclusive) only.")
+            raise TypeError(
+                "== and != not supported for this filter. Use < or > (inclusive) only."
+            )
         self.op = op
         self.value: float | None = float(value) if value is not None else None
 
-    def match(self, path: pathlib.Path, now: DatetimeOrNone = None, stat_result: StatResultOrNone = None) -> bool:
+    def match(
+        self,
+        path: pathlib.Path,
+        now: DatetimeOrNone = None,
+        stat_result: StatResultOrNone = None,
+    ) -> bool:
         if self.op is None or self.value is None:
             raise TypeError("AgeMinutes filter not fully specified.")
         try:
@@ -255,14 +278,10 @@ class AgeMinutes(Filter):
         return AgeMinutes(operator.gt, other)
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, AgeMinutes):
-            return NotImplemented
-        return self.value == other.value
+        raise TypeError("== not supported for this filter.")
 
     def __ne__(self, other: object) -> bool:
-        if not isinstance(other, AgeMinutes):
-            return NotImplemented
-        return self.value != other.value
+        raise TypeError("!= not supported for this filter.")
 
 
 class AgeHours(Filter):
@@ -277,13 +296,25 @@ class AgeHours(Filter):
         op (callable, optional): Operator function (e.g., operator.lt, operator.ge).
         value (float, optional): Value to compare file age (in hours) against.
     """
-    def __init__(self, op: Callable[[float, float], bool] = operator.lt, value: IntOrFloatOrNone = None) -> None:
+
+    def __init__(
+        self,
+        op: Callable[[float, float], bool] = operator.lt,
+        value: IntOrFloatOrNone = None,
+    ) -> None:
         if op in (operator.eq, operator.ne):
-            raise TypeError("== and != not supported for AgeHours filter. Use < or > (inclusive) only.")
+            raise TypeError(
+                "== and != not supported for AgeHours filter. Use < or > (inclusive) only."
+            )
         self.op = op
         self.value: float | None = float(value) if value is not None else None
 
-    def match(self, path: pathlib.Path, now: DatetimeOrNone = None, stat_result: StatResultOrNone = None) -> bool:
+    def match(
+        self,
+        path: pathlib.Path,
+        now: DatetimeOrNone = None,
+        stat_result: StatResultOrNone = None,
+    ) -> bool:
         if self.op is None or self.value is None:
             raise TypeError("AgeHours filter not fully specified.")
         try:
@@ -309,11 +340,7 @@ class AgeHours(Filter):
         return AgeHours(operator.gt, other)
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, AgeHours):
-            return NotImplemented
-        return self.value == other.value
+        raise TypeError("== not supported for this filter.")
 
     def __ne__(self, other: object) -> bool:
-        if not isinstance(other, AgeHours):
-            return NotImplemented
-        return self.value != other.value
+        raise TypeError("!= not supported for this filter.")

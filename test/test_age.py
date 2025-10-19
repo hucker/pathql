@@ -3,14 +3,17 @@ Tests for Age filters (AgeMinutes, AgeDays, AgeYears) in PathQL.
 
 Includes helpers to set file modification times and exhaustive parametric tests for all age filters and comparison operators.
 """
+
 import os
-import time
 import datetime as dt
 import operator
 import pathlib
 import pytest
+from typing import Callable
 
 from pathql.filters.age import AgeDays, AgeHours, AgeMinutes, AgeYears
+from pathql.filters.base import Filter
+from pathql.filters.alias import DatetimeOrNone
 
 def set_mtime_minutes_ago(path: pathlib.Path, minutes: float, now: dt.datetime | None = None) -> None:
     """Set file mtime to N minutes ago using a datetime object."""
@@ -108,7 +111,7 @@ def test_age_thresholds(tmp_path:pathlib.Path,
 
 
 # Test that == and != raise TypeError for age filters
-import pytest
+# Fixed the test to correctly check for TypeError when using == or != with filter_cls()
 @pytest.mark.parametrize(
     "filter_cls,setter,unit",
     [
@@ -119,10 +122,10 @@ import pytest
     ]
 )
 @pytest.mark.parametrize("op", [operator.eq, operator.ne])
-def test_age_filter_eq_ne_typeerror(tmp_path, filter_cls, setter, unit, op):
-    f = tmp_path / "test.txt"
+def test_age_filter_eq_ne_typeerror(tmp_path: pathlib.Path, filter_cls: type, setter: Callable[[pathlib.Path, float, DatetimeOrNone], None], unit: float, op: Callable[[Filter, float], bool]):
+    f: pathlib.Path = tmp_path / "test.txt"
     f.write_text("X")
-    now = dt.datetime.now()
+    now: DatetimeOrNone = dt.datetime.now()
     setter(f, unit, now)
     with pytest.raises(TypeError):
-        op(filter_cls(), unit).match(f, now=now)
+        op(filter_cls(), unit)  # Removed .match() call, as op returns a bool

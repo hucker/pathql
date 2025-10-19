@@ -40,6 +40,14 @@ class Filter:
         """
         raise NotImplementedError
 
+    def __eq__(self, other: object) -> bool:
+        """Disable == operator for Filter objects."""
+        raise TypeError("== operator is not supported for Filter objects.")
+
+    def __ne__(self, other: object) -> bool:
+        """Disable != operator for Filter objects."""
+        raise TypeError("!= operator is not supported for Filter objects.")
+
 class AndFilter(Filter):
     """
     Filter that matches if both left and right filters match.
