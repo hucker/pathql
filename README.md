@@ -165,6 +165,7 @@ pytest --cov=src/pathql --cov-report=xml
 
 Coverage results are saved to `coverage.xml`.
 
+
 ## Extending PathQL
 
 To add a new filter:
