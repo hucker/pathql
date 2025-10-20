@@ -25,5 +25,7 @@
     ,
     "python.analysis.extraPaths": [
         "src"
-    ]
+    ],
+    "python.terminal.activateEnvironment": true,
+    "python.linting.pylintArgs": ["--rcfile=pylint.ini"]
 }

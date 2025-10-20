@@ -15,9 +15,12 @@ where = ["src"]
 [project.optional-dependencies]
 dev = [
 	"pytest",
-	"pytest-cov"
+	"pytest-cov",
+	"mypy"
 ]
 
 [tool.pytest.ini_options]
 addopts = "--cov=src/pathql --cov-report=xml:coverage.xml"
+
+
 

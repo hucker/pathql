@@ -1,5 +1,6 @@
 import pathlib
 from typing import Callable, Any
+from types import NotImplementedType
 from .alias import StatResultOrNone, IntOrNone
 from .base import Filter
 
@@ -31,20 +32,44 @@ class Size(Filter):
         except Exception:
             return False
 
-    def __le__(self, other: int) -> 'Size':
+    def __le__(self, other: object) -> 'Size | NotImplementedType':
+        if not isinstance(other, int):
+            return NotImplemented
+        if other < 0:
+            raise ValueError("size must be non-negative")
         return Size(lambda x, y: x <= y, other)
 
-    def __lt__(self, other: int) -> 'Size':
+    def __lt__(self, other: object) -> 'Size | NotImplementedType':
+        if not isinstance(other, int):
+            return NotImplemented
+        if other < 0:
+            raise ValueError("size must be non-negative")
         return Size(lambda x, y: x < y, other)
 
-    def __ge__(self, other: int) -> 'Size':
+    def __ge__(self, other: object) -> 'Size | NotImplementedType':
+        if not isinstance(other, int):
+            return NotImplemented
+        if other < 0:
+            raise ValueError("size must be non-negative")
         return Size(lambda x, y: x >= y, other)
 
-    def __gt__(self, other: int) -> 'Size':
+    def __gt__(self, other: object) -> 'Size | NotImplementedType':
+        if not isinstance(other, int):
+            return NotImplemented
+        if other < 0:
+            raise ValueError("size must be non-negative")
         return Size(lambda x, y: x > y, other)
 
-    def __eq__(self, other: int) -> 'Size':
+    def __eq__(self, other: object) -> 'Size | NotImplementedType':
+        if not isinstance(other, int):
+            return NotImplemented
+        if other < 0:
+            raise ValueError("size must be non-negative")
         return Size(lambda x, y: x == y, other)
 
-    def __ne__(self, other: int) -> 'Size':
+    def __ne__(self, other: object) -> 'Size | NotImplementedType':
+        if not isinstance(other, int):
+            return NotImplemented
+        if other < 0:
+            raise ValueError("size must be non-negative")
         return Size(lambda x, y: x != y, other)

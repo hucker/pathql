@@ -263,7 +263,7 @@ class _DateTimePart:
 
     def _filter(self, op, value, attr: str = "st_mtime"):
         class _PartFilter(Filter):
-            def match(_, path, now=None, stat_result=None):
+            def match(_, path: pathlib.Path, now: DatetimeOrNone = None, stat_result: StatResultOrNone = None):
                 if stat_result is None:
                     stat_result = path.stat()
                 ts = getattr(stat_result, attr)

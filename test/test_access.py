@@ -1,10 +1,13 @@
-import os
-import sys
-import pytest
+""" Testing for the access permission filters and their aliases. """
+
 import pathlib
+import sys
+import typing
+
+import pytest
+
 from pathql.filters import Read, Write, Execute, Exec, RdWt, RdWtEx, Filter
 
-import typing
 
 @pytest.fixture
 def make_file(tmp_path: pathlib.Path) -> typing.Generator[typing.Callable[[str, bytes, bool], pathlib.Path], None, None]:
@@ -55,7 +58,8 @@ def test_executable_aliases(filter_func: type[Filter], make_file: typing.Callabl
         pytest.skip("Access denied for setting executable permission")
 
 @pytest.mark.parametrize("filter_func", [Read, Write])
-def test_read_write_aliases(filter_func: type[Filter], make_file: typing.Callable[[str, bytes, bool], pathlib.Path]) -> None:
+def test_read_write_aliases(filter_func: type[Filter],
+                            make_file: typing.Callable[[str, bytes, bool], pathlib.Path]) -> None:
     """
     Test Read and Write filters on a regular file.
 

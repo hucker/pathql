@@ -89,14 +89,20 @@ def test_directory(tmp_path):
 def test_suffix_filter(test_directory):
     # Arrange
     query = Suffix({".txt"})
+    expected_len = 1
+    expected_file = "file1.txt"
 
     # Act
     results = list(Query(test_directory, query))
+    actual_len = len(results)
+    actual_name = results[0].name
 
     # Assert
-    assert len(results) == 1, "Only one .txt file should match"
-    assert results[0].name == "file1.txt", "Matched file name is incorrect"
+    assert actual_len == expected_len, "Only one .txt file should match"
+    assert actual_name == expected_file, "Matched file name is incorrect"
 ```
+
+
 
 ### Simple One-Liner Tests
 
@@ -139,6 +145,33 @@ def test_divide_by_zero():
     # Act and Assert
     with pytest.raises(ValueError, match="Cannot divide by zero"):
         divide(numerator, denominator)
+
+
+### Multiple Tests
+
+It is possible that there might be more than one test case for a given test, representing differnt conditions.  In this
+case it is ok to use nomenclature reflective of the condition.  In this case the answers for the assert are simple comments
+so it we just use the constant.  If the expected value is a complex data structure or object it then create save these values
+to variables rather than calculating them in line on the assert.
+
+```python
+def test_edge():
+
+    # Arrange
+    high_val = .0001
+    on_val = 0
+    low_val = -.0001
+
+    # Act
+    actual_high = function_with_edge(high_val)
+    actual_on = function_with_edge(on_val)
+    actual_low = function_with_edge(low_val)
+
+    # Assert
+    assert actual_high is False
+    assert actual_on is True
+    assert actual low is False
+```
 
 ### Best Practices
 

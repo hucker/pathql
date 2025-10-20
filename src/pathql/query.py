@@ -130,7 +130,7 @@ class Query(Filter):
         t = threading.Thread(target=producer, daemon=True)
         t.start()
         while True:
-            item:tuple[pathlib.Path,os.stat_result] = q.get()
+            item:tuple[pathlib.Path,os.stat_result]|None = q.get()
             if item is None:
                 break
             p, stat_result = item
@@ -143,7 +143,7 @@ class Query(Filter):
         path: pathlib.Path,
         recursive: bool = True,
         files: bool = True,
-        now: float | None = None,
+        now: DatetimeOrNone = None,
         threaded: bool = False,
     ) -> Iterator[pathlib.Path]:
         """
@@ -173,7 +173,7 @@ class Query(Filter):
         path: pathlib.Path,
         recursive: bool = True,
         files: bool = True,
-        now: float | None = None,
+        now: DatetimeOrNone = None,
         threaded: bool = False,
     )->ResultSet:
         """

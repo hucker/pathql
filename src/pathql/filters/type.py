@@ -52,11 +52,12 @@ class Type(Filter, metaclass=_TypeMeta):
             type_name (str | set[str] | None): File type(s) to match. Use Type.FILE, Type.DIRECTORY, etc.
         """
         if isinstance(type_name, set):
-            self.type_names: set[str] = set(type_name)
+            type_names = set(type_name)
         elif type_name is not None:
-            self.type_names: set[str] = {type_name}
+            type_names = {type_name}
         else:
-            self.type_names: set[str] = set()
+            type_names = set()
+        self.type_names: set[str] = type_names  # Defined only once here
 
 
     # WARNING: Symlink and broken symlink handling is platform-dependent and not well tested across all OSes and edge cases.

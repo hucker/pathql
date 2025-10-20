@@ -1,21 +1,20 @@
 """Extra tests for Query and custom filters, including AlwaysTrue/AlwaysFalse and file creation helpers."""
+import datetime as dt
 import os
 import pathlib
 import sys
-import pytest
-import pathlib
+
+
 from pathql.query import Query
-from pathql.filters.size import Size
-from pathql.filters.suffix import Suffix
 from pathql.filters.base import Filter
 
 class AlwaysTrue(Filter):
-    def match(self, path, now=None, stat_result: os.stat_result | None = None) -> bool:
+    def match(self, path:pathlib.Path, now:dt.datetime|None=None, stat_result: os.stat_result | None = None) -> bool:
         """Always returns True for any path."""
         return True
 
 class AlwaysFalse(Filter):
-    def match(self, path:pathlib.Path, now:float|None=None, stat_result: os.stat_result | None = None) -> bool:
+    def match(self, path:pathlib.Path, now:dt.datetime|None=None, stat_result: os.stat_result | None = None) -> bool:
         """Always returns False for any path."""
         return False
 

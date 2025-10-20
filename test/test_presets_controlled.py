@@ -8,7 +8,8 @@ from typing import Dict
 import pathlib
 import datetime as dt
 import pytest
-from pathql.presets.dates import  modified_this_minute,modified_this_hour, modified_today, modified_this_month, modified_this_year
+from pathql.presets.dates import modified_this_minute,modified_this_hour
+from pathql.presets.dates import modified_today, modified_this_month, modified_this_year
 
 from pathql.filters.base import Filter
 

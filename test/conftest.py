@@ -199,7 +199,10 @@ def test_result_folder(tmp_path: pathlib.Path) -> pathlib.Path:
 @pytest.fixture
 def test_result_files_with_mtime(tmp_path: pathlib.Path) -> list[pathlib.Path]:
     """
-    Create files named oldest_1.txt, oldest_2.txt, oldest_3.txt, middle_1.txt, ..., youngest_1.txt, youngest_2.txt, youngest_3.txt.
+    Create files named oldest_1.txt, oldest_2.txt, oldest_3.txt, middle_1.txt, ...,
+                      bazbaz123
+                      youngest_1.txt, youngest_2.txt, youngest_3.txt.
+
     Each file's modification time is set N days ago, for easy inspection and sorting by age.
     Returns a list of pathlib.Path objects.
     """
