@@ -24,12 +24,16 @@ def test_suffix_basic(tmp_path: pathlib.Path) -> None:
     file = make_file(tmp_path, "foo.txt")
 
     # Act and Assert
-    assert Suffix("txt").match(file)
-    assert not Suffix("md").match(file)
-    assert Suffix(["txt", "md"]).match(file)
-    assert Suffix("txt md").match(file)
-    assert Suffix(["TXT"]).match(file)  # case-insensitive
-    assert Ext("txt").match(file)  # alias works
+    assert Suffix(".txt").match(file)
+    assert not Suffix(".md").match(file)
+    assert Suffix([".txt", ".md"]).match(file)
+    assert Suffix(".txt .md").match(file)
+    assert Suffix([".TXT"]).match(file)  # case-insensitive
+    assert Ext(".txt").match(file)  # alias works
+    # Permissive: '.txt' matches any file ending in .txt, even with multiple dots
+    file2 = make_file(tmp_path, "foo.bar.txt")
+    assert Suffix(".txt").match(file2)
+    assert Ext(".txt").match(file2)
 
 def test_suffix_nosplit(tmp_path: pathlib.Path) -> None:
     """
@@ -74,7 +78,12 @@ def test_suffix_operator_overloads(tmp_path: pathlib.Path) -> None:
 
     # Act and Assert
     assert Suffix(["txt"]) == Suffix(["txt"])
-    assert "txt" in Suffix("txt md")
-    assert Suffix("txt")(["txt"]).match(file)
-    assert Suffix["txt"].match(file)
-    assert Suffix["txt", "md"].match(file)
+    # Membership checks normalized dot-prefixed patterns
+    assert ".txt" in Suffix(["txt", "md"])
+    assert ".md" in Suffix(["txt", "md"])
+    # Suffix("txt") returns a filter; test match directly
+    assert Suffix("txt").match(file)
+    # Suffix(["txt"]) returns a filter; test match directly
+    assert Suffix(["txt"]).match(file)
+    # Suffix(["txt", "md"]) returns a filter; test match directly
+    assert Suffix(["txt", "md"]).match(file)

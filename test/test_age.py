@@ -102,21 +102,28 @@ def test_age_thresholds(tmp_path:pathlib.Path,
 
     This dense test provides coverage for all filter/operator/unit combinations in a single place.
     """
+    # Arrange
     f = tmp_path / "test.txt"
     f.write_text("X")
     now = dt.datetime.now()  # Use datetime, not time.time()
 
-    # Just below threshold
+    # Act & Assert: Just below threshold
     setter(f, unit - 0.0001, now)
-    assert op(filter_cls(), unit).match(f, now=now) is expected_below
+    result_below = op(filter_cls(), unit).match(f, now=now)
+    # Assert
+    assert result_below is expected_below
 
-    # Exactly at threshold
+    # Act & Assert: Exactly at threshold
     setter(f, unit, now)
-    assert op(filter_cls(), unit).match(f, now=now) is expected_exact
+    result_exact = op(filter_cls(), unit).match(f, now=now)
+    # Assert
+    assert result_exact is expected_exact
 
-    # Just above threshold
+    # Act & Assert: Just above threshold
     setter(f, unit + 0.0001, now)
-    assert op(filter_cls(), unit).match(f, now=now) is expected_above
+    result_above = op(filter_cls(), unit).match(f, now=now)
+    # Assert
+    assert result_above is expected_above
 
 
 # Test that == and != raise TypeError for age filters
@@ -137,9 +144,11 @@ def test_age_filter_eq_ne_typeerror(tmp_path: pathlib.Path,
                                     unit: float,
                                     op: Callable[[Filter, float], bool]):
     """ Test different types of age filters to raise exceptions for == and != operators."""
+    # Arrange
     f: pathlib.Path = tmp_path / "test.txt"
     f.write_text("X")
     now: DatetimeOrNone = dt.datetime.now()
     setter(f, unit, now)
+    # Act & Assert
     with pytest.raises(TypeError):
         op(filter_cls(), unit)  # Removed .match() call, as op returns a bool

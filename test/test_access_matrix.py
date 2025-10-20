@@ -62,10 +62,10 @@ def test_access_matrix(
     - Assert: Verify that only the expected files are matched.
     """
     # Arrange
-    expected = set(expected_files)
+    expected_set = set(expected_files)
 
     # Act
-    matched = {fname for fname, fpath in access_matrix.items() if filter_obj.match(fpath)}
+    actual_set  = {fname for fname, fpath in access_matrix.items() if filter_obj.match(fpath)}
 
     # Assert
-    assert matched == expected, f"Filter {filter_obj} matched {matched}, expected {expected}"
+    assert actual_set == expected_set, f"Filter {filter_obj} matched {actual_set}, expected {expected_set}"

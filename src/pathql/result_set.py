@@ -68,20 +68,22 @@ class ResultSet(list[pathlib.Path]):
             raise ValueError(f"Unknown field: {field}")
 
     def max(self, field: ResultField) -> Optional[Any]:
-        """Return the maximum value in the result set."""
-        key = self._get_key(field)
-        return max((key(f) for f in self), default=None)
-
-    def min(self, field: ResultField) -> Optional[Any]:
-        """Return the minimum value in the result set."""
-        key = self._get_key(field)
-        return min((key(f) for f in self), default=None)
-
-    def average(self, field: ResultField) -> Optional[float]:
-        """Return the average value of the result set."""
+        """Return the maximum value in the result set using built-in max."""
         key = self._get_key(field)
         vals = [key(f) for f in self]
-        return sum(vals) / len(vals) if vals else None
+        return max(vals) if vals else None
+
+    def min(self, field: ResultField) -> Optional[Any]:
+        """Return the minimum value in the result set using built-in min."""
+        key = self._get_key(field)
+        vals = [key(f) for f in self]
+        return min(vals) if vals else None
+
+    def average(self, field: ResultField) -> Optional[float]:
+        """Return the average value of the result set using statistics.mean."""
+        key = self._get_key(field)
+        vals = [key(f) for f in self]
+        return statistics.mean(vals) if vals else None
 
     def median(self, field: ResultField) -> Optional[float]:
         """Return the median value of the result set."""

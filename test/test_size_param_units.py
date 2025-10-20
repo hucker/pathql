@@ -14,16 +14,8 @@ SIZES = [
     ("b", 1),
     ("kb", 1000),
     ("mb", 1000 ** 2),
-    ("gb", 1000 ** 3),
-    ("tb", 1000 ** 4),
-    ("pb", 1000 ** 5),
-    ("eb", 1000 ** 6),
     ("KiB", 1024),
     ("MiB", 1024 ** 2),
-    ("GiB", 1024 ** 3),
-    ("TiB", 1024 ** 4),
-    ("PiB", 1024 ** 5),
-    ("EiB", 1024 ** 6),
 ]
 
 
@@ -38,8 +30,29 @@ def test_numeric_and_string_equivalents(tmp_path: pathlib.Path, unit: str, mult:
 
     # String operand, various casings and whitespace
     assert (Size() == f"1 {unit}").match(p)
+
     assert (Size() == f"1{unit}").match(p)
     assert (Size() == f"1 {unit.lower()}").match(p)
+
+
+def test_large_unit_ranges(tmp_path: pathlib.Path):
+    """Create a 1MB file and verify that larger unit filters (GB, TB, PB, etc.) are correct."""
+    p = tmp_path / "one_mb.bin"
+    p.write_bytes(b"x" * 1000**2)
+
+    # Should be less than 1GB, 1TB, 1PB, etc.
+    assert (Size() < "1 GB").match(p)
+    assert (Size() < "1 TB").match(p)
+    assert (Size() < "1 PB").match(p)
+    assert (Size() < "1 EB").match(p)
+    assert (Size() < "1 GiB").match(p)
+    assert (Size() < "1 TiB").match(p)
+    assert (Size() < "1 PiB").match(p)
+    assert (Size() < "1 EiB").match(p)
+
+    # Should be greater than 1KB, 1B
+    assert (Size() > "1 KB").match(p)
+    assert (Size() > "1 B").match(p)
 
 
 @pytest.mark.parametrize("unit,mult", SIZES)

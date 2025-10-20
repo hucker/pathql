@@ -7,6 +7,9 @@ authors = [
 ]
 readme = "README.md"
 requires-python = ">=3.10"
+dependencies = [
+	"python-dateutil"
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]

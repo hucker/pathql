@@ -109,3 +109,63 @@ def test_suffix_nosplit(suffix_cls_fixture: Type[Suffix | Ext]) -> None:
     # Act and Assert
     assert suffix_filter.match(f)
     assert not suffix_filter2.match(f)
+
+def test_suffix_dot_prefix_equivalence(suffix_cls_fixture: Type[Suffix | Ext]) -> None:
+    """
+    Test that Suffix/Ext treat '.jpg' and 'jpg' identically.
+
+    - Arrange: Create file paths with .jpg extension.
+    - Act: Apply filters with and without leading dot.
+    - Assert: Both match identically.
+    """
+    # Arrange
+    f = pathlib.Path("image.jpg")
+    f_upper = pathlib.Path("image.JPG")
+
+    # Act & Assert
+    assert suffix_cls_fixture("jpg").match(f)
+    assert suffix_cls_fixture(".jpg").match(f)
+    assert suffix_cls_fixture(["jpg"]).match(f)
+    assert suffix_cls_fixture([".jpg"]).match(f)
+    assert suffix_cls_fixture("jpg").match(f_upper)
+    assert suffix_cls_fixture(".jpg").match(f_upper)
+    # Mixed list
+    assert suffix_cls_fixture([".jpg", "txt"]).match(f)
+    assert suffix_cls_fixture(["jpg", ".txt"]).match(f)
+    # Curly-brace expansion
+    assert suffix_cls_fixture("{.jpg,.png}").match(f)
+    assert suffix_cls_fixture("{jpg,png}").match(f)
+    # Negative case
+    assert not suffix_cls_fixture("png").match(f)
+    assert not suffix_cls_fixture([".png"]).match(f)
+
+def test_suffix_multi_part_extensions(suffix_cls_fixture: Type[Suffix | Ext]) -> None:
+    """
+    Test that Suffix/Ext can match multi-part extensions like '.tar.gz', '.tif.back'.
+
+    - Arrange: Create file paths with multi-part extensions.
+    - Act: Apply filters with multi-part extension patterns.
+    - Assert: Only correct files match.
+    """
+    # Arrange
+    f1 = pathlib.Path("archive.tar.gz")
+    f2 = pathlib.Path("image.tif.back")
+    f3 = pathlib.Path("foo.txt.back")
+    f4 = pathlib.Path("foo.back")
+    f5 = pathlib.Path("foo.tif")
+    f6 = pathlib.Path("foo.tar.zip")
+
+    # Act & Assert
+    assert suffix_cls_fixture(".tar.gz").match(f1)
+    assert not suffix_cls_fixture(".tar.gz").match(f2)
+    assert suffix_cls_fixture(".tar.gz").match(pathlib.Path("foo.bar.tar.gz"))
+    assert suffix_cls_fixture(".tif.back").match(f2)
+    assert suffix_cls_fixture(".tif.back").match(pathlib.Path("foo.tif.back"))
+    assert suffix_cls_fixture(".txt.back").match(f3)
+    assert suffix_cls_fixture(".back").match(f4)
+    assert suffix_cls_fixture(".back").match(f2)
+    assert suffix_cls_fixture(".back").match(f3)
+    assert not suffix_cls_fixture(".back").match(f5)
+    assert suffix_cls_fixture(".tar.zip").match(f6)
+    assert not suffix_cls_fixture(".tar.zip").match(f1)
+    assert not suffix_cls_fixture(".tar.zip").match(f2)

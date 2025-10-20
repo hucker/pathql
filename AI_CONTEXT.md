@@ -12,7 +12,14 @@
 - Never use `import datetime` without aliasing, and never use `datetime` as a variable or argument name.
 - import pathlib instead of "from datetime import datetime"
 - All references to datetime classes and functions (e.g., `datetime.datetime`, `datetime.date`, `datetime.timedelta`) should be updated to use the `dt` prefix (e.g., `dt.datetime`, `dt.date`, `dt.timedelta`).
+- Code and comment lines shoudl be <= 100 characters wide.
 - This convention applies to all source files, test files, and documentation code blocks.
+
+
+
+## Function and Method Declarations
+- For functions/methods with more than 2 arguments,there should be one parameter per line in order to prevent line length warnings.
+
 
 ## Doc Strings
 
@@ -50,6 +57,15 @@ PathQL follows the Arrange-Act-Assert (AAA) pattern for writing tests. This patt
 1. **Arrange**: Set up the test data, environment, and dependencies. If Python fixtures are used, they should be documented here.
 2. **Act**: Perform the action or behavior being tested.
 3. **Assert**: Verify the outcome.
+
+### Fixtures
+
+- Inside of fixtures thre should be a comment for # Arrange at the start of the fixtures
+- If there is code after the yield there should be a # Teardown comment
+
+### Test Comments
+- Test modules should have at least a short one line description of the module
+- Test functions should have at least a short one line descrition of the test.
 
 ### Inline Example
 

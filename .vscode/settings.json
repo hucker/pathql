@@ -20,7 +20,8 @@
         "capsys",
         "nosplit",
         "parameterizes",
-        "pathql"
+        "pathql",
+        "relativedelta"
     ]
     ,
     "python.analysis.extraPaths": [

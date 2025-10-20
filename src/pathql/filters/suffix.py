@@ -53,21 +53,38 @@ class Suffix(Filter, metaclass=SuffixMeta):
 
         self.ignore_case = ignore_case
         pats: set[str] = set()
-        if isinstance(patterns, str) and not nosplit:
-            # Expand curly-brace sets: foo.{img,bmp,jpg} -> foo.img, foo.bmp, foo.jpg
+        # Normalize patterns: strip leading dot, lowercase
+        def norm(p):
+            if not isinstance(p, str):
+                return None
+            p = p.strip().lower()
+            return p if p.startswith('.') else f'.{p}'
 
+        pats: set[str] = set()
+        if isinstance(patterns, str) and not nosplit:
             brace = re.search(r"\{([^}]+)\}", patterns)
             if brace:
                 base = patterns[:brace.start()]
                 exts = [e.strip() for e in brace.group(1).split(",")]
                 for ext in exts:
-                    pats.add(base + ext)
+                    n = norm(base + ext)
+                    if n:
+                        pats.add(n)
             else:
-                pats.update(patterns.split())
+                for e in patterns.split():
+                    n = norm(e)
+                    if n:
+                        pats.add(n)
         elif isinstance(patterns, str):
-            pats.add(patterns)
+            n = norm(patterns)
+            if n:
+                pats.add(n)
         elif patterns:
-            pats.update(patterns)
+            for e in patterns:
+                n = norm(e)
+                if n:
+                    pats.add(n)
+        self.patterns: list[str] = [p for p in pats if p]
         self.patterns:list[str] = list(pats)
         self._fnmatch = fnmatch
 
@@ -87,17 +104,13 @@ class Suffix(Filter, metaclass=SuffixMeta):
         """
         if not self.patterns:
             raise ValueError("No file extension patterns specified.")
-        # path.suffix includes the dot, so strip it
-        ext = path.suffix[1:] if path.suffix.startswith('.') else path.suffix
-        if self.ignore_case:
-            ext = ext.lower()
-            pats:list[str] = [p.lower() for p in self.patterns]
-        else:
-            pats = self.patterns
-        match_result = any(self._fnmatch.fnmatchcase(ext, pat) for pat in pats)
-        msg =f"Suffix.match: {path=}, {ext=}, patterns={self.patterns}, {match_result=}"
-        logging.debug(msg)
-        return match_result
+        fname = path.name.lower()
+        for pat in self.patterns:
+            if fname.endswith(pat):
+                logging.debug(f"Suffix.match: {path=}, pattern={pat}, match_result=True")
+                return True
+        logging.debug(f"Suffix.match: {path=}, patterns={self.patterns}, match_result=False")
+        return False
 
     def __contains__(self, item: str) -> bool:
         """Check if an extension pattern is in the filter's pattern list."""
