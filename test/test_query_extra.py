@@ -26,8 +26,8 @@ def make_file(tmp_path:pathlib.Path, name:str="afile.txt")->pathlib.Path:
 
 def test_query_files_nonrecursive(tmp_path:pathlib.Path):
     """Test non-recursive file matching with AlwaysTrue filter."""
-    f1: pathlib.Path = make_file(tmp_path, "foo.txt")
-    f2: pathlib.Path = make_file(tmp_path, "bar.txt")
+    make_file(tmp_path, "foo.txt")
+    make_file(tmp_path, "bar.txt")
     q = Query(AlwaysTrue())
     files = list(q.files(tmp_path, recursive=False, files=True, threaded=False))
     names = sorted(f.name for f in files)
@@ -37,7 +37,7 @@ def test_query_files_dirs(tmp_path:pathlib.Path):
     """Test directory matching with files=False option."""
     d:pathlib.Path = tmp_path / "adir"
     d.mkdir()
-    f:pathlib.Path = make_file(d, "foo.txt")
+    make_file(d, "foo.txt")
     q = Query(AlwaysTrue())
     # files=False yields directories
     dirs = list(q.files(tmp_path, recursive=True, files=False, threaded=False))

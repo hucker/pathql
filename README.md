@@ -243,14 +243,56 @@ for path in Query("/data", query):
 
 #### Match files modified on a specific date
 ```python
-import datetime
+import datetime as dt
 from pathql.filters.datetimes_ import Modified, Day
 from pathql.query import Query
 
-query = Modified(Day == datetime.date(2025, 10, 16))
+query = Modified(Day == dt.date(2025, 10, 16))
 for path in Query("/data", query):
    print(path)
 ```
+
+### Size units (SI vs IEC)
+
+PathQL's `Size` filter and the `parse_size` helper accept human-friendly size strings and numeric values. Behavior and rules:
+
+- Plain unit suffixes use SI (decimal) multipliers. For example: `kb` = 1_000, `MB` = 1_000_000.
+- Unit suffixes that include an "i" use IEC (binary) multipliers. For example: `KiB` = 1_024, `MiB` = 1_024**2.
+- Units are case-insensitive and may include optional whitespace between the number and unit (e.g., `"1.5 kb"`, `"1.5KB"`, `"1.5 kib"`).
+- Decimal numbers are allowed and are converted to bytes by truncation to an integer (e.g., `"1.5 kb" -> 1500` bytes).
+- Accepted input types for parsing: `int`, `float`, and `str` (with optional unit). Negative values raise `ValueError`. Unsupported types raise `TypeError` when using the public `parse_size` wrapper.
+
+Unit examples:
+
+| Suffix (examples) | Power | Bytes |
+|---|---:|---:|
+| `b`, `B` | 1000**0 | 1 |
+| `kb`, `KB` | 1000**1 | 1_000 |
+| `mb`, `MB` | 1000**2 | 1_000_000 |
+| `gb`, `GB` | 1000**3 | 1_000_000_000 |
+| `tb`, `TB` | 1000**4 | 1_000_000_000_000 |
+| `pb`, `PB` | 1000**5 | 1_000_000_000_000_000 |
+| `kib`, `KiB` | 1024**1 | 1_024 |
+| `mib`, `MiB` | 1024**2 | 1_048_576 |
+| `gib`, `GiB` | 1024**3 | 1_073_741_824 |
+| `tib`, `TiB` | 1024**4 | 1_099_511_627_776 |
+| `pib`, `PiB` | 1024**5 | 1_125_899_906_842_624 |
+
+Examples:
+
+```python
+from pathql.filters import Size
+from pathql import parse_size
+
+parse_size(1024)          # -> 1024
+parse_size("1.5 kb")     # -> 1500  (1.5 * 1000)
+parse_size("1 KiB")      # -> 1024  (1 * 1024)
+
+# Use in a query
+query = Size() <= "1.5 kb"  # matches files up to 1500 bytes
+```
+
+Note: `parse_size` is exported from the package root and is intended for programmatic parsing of size-like inputs. The `Size` filter will also accept numeric and string representations where supported.
 
 #### Advanced: Use a custom extractor, operator, and value
 ```python

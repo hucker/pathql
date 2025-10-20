@@ -23,9 +23,9 @@ import heapq
 import statistics
 import pathlib
 from typing import Callable, Any, Optional
-from datetime import datetime
+import datetime as dt
 from .result_fields import ResultField
-from .result_scalars import scalar_aggregate
+# scalar_aggregate is not used in this module; removed unused import
 
 class ResultSet(list[pathlib.Path]):
     """
@@ -45,11 +45,11 @@ class ResultSet(list[pathlib.Path]):
         elif field == ResultField.ATIME:
             return lambda f: f.stat().st_atime
         elif field == ResultField.MTIME_DT:
-            return lambda f: datetime.fromtimestamp(f.stat().st_mtime)
+            return lambda f: dt.datetime.fromtimestamp(f.stat().st_mtime)
         elif field == ResultField.CTIME_DT:
-            return lambda f: datetime.fromtimestamp(f.stat().st_ctime)
+            return lambda f: dt.datetime.fromtimestamp(f.stat().st_ctime)
         elif field == ResultField.ATIME_DT:
-            return lambda f: datetime.fromtimestamp(f.stat().st_atime)
+            return lambda f: dt.datetime.fromtimestamp(f.stat().st_atime)
         elif field == ResultField.NAME:
             return lambda f: f.name
         elif field == ResultField.SUFFIX:

@@ -3,6 +3,7 @@
 from .filters.base import Filter
 from .filters.suffix import Suffix, Ext
 from .filters.size import Size
+from .filters.size import parse_size
 from .filters.age import AgeMinutes, AgeDays, AgeYears
 from .filters.stem import Stem, Name
 from .filters.type import Type
@@ -14,5 +15,6 @@ __version__ = '0.0.2'
 
 __all__ = [
 	"Filter", "Suffix", "Ext", "Size", "AgeMinutes", "AgeDays", "AgeYears", "Stem", "Name", "Type",
-	"Modified", "Created", "Year", "Month", "Day", "Hour", "Minute", "Second", "File", "Query"
+	"Modified", "Created", "Year", "Month", "Day", "Hour", "Minute", "Second", "File", "Query",
+	"parse_size",
 ]
