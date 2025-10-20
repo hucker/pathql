@@ -99,7 +99,7 @@ class Size(Filter):
     Args:
         op (callable, optional): Operator function (e.g., operator.le, operator.gt).
         value (int, optional): Value to compare file size against.
-    
+
     Notes:
     - Operator overloads accept ints, floats, and size strings (e.g. "1.5 kb").
     - For unsupported operand types the dunder returns NotImplemented so Python
