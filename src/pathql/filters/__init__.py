@@ -10,10 +10,11 @@ from .datetime_parts import  HourFilter, MinuteFilter, SecondFilter
 from .file import File
 from .between import Between
 from .access import Read, Write, Execute, Exec, RdWt, RdWtEx
+from .callback import PathCallback
 
 __all__ = [
     "Filter", "Suffix", "Ext", "Size", "AgeHours", "AgeMinutes", "AgeDays", "AgeYears", "Stem",
     "Name", "Type",    "YearFilter", "MonthFilter", "DayFilter", "HourFilter", "MinuteFilter",
     "SecondFilter", "File", "Between",  "Read", "Write", "Execute", "Exec", "RdWt",
-    "RdWtEx"
+    "RdWtEx", "PathCallback"
 ]
