@@ -1,7 +1,7 @@
-"""Tests for File filter, especially curly-brace extension patterns and case insensitivity."""
+"""Tests for File filter: curly-brace extension patterns and case-insensitivity."""
 
-import pytest
 import pathlib
+import pytest
 from pathql.filters import File
 
 @pytest.mark.parametrize(
@@ -19,14 +19,13 @@ from pathql.filters import File
         ("foo.jpg.txt", "foo.{jpg,png,bmp}", False),
     ]
 )
-def test_file_curly_brace_suffix(tmp_path: pathlib.Path, filename: str, pattern: str, should_match: bool) -> None:
-    """
-    Test File filter with curly-brace extension patterns.
-
-    - Arrange: Create a file with the given filename.
-    - Act: Apply the File filter with the specified pattern.
-    - Assert: Verify that the filter matches the file correctly.
-    """
+def test_file_curly_brace_suffix(
+    tmp_path: pathlib.Path,
+    filename: str,
+    pattern: str,
+    should_match: bool,
+) -> None:
+    """Curly-brace patterns are not supported by File filter."""
     # Arrange
     f = make_file(tmp_path, filename)
 
@@ -35,16 +34,7 @@ def test_file_curly_brace_suffix(tmp_path: pathlib.Path, filename: str, pattern:
 
 
 def make_file(tmp_path: pathlib.Path, name: str) -> pathlib.Path:
-    """
-    Create a file with the given name in the temporary directory.
-
-    Args:
-        tmp_path (pathlib.Path): Temporary directory provided by pytest.
-        name (str): Name of the file to create.
-
-    Returns:
-        pathlib.Path: Path to the created file.
-    """
+    """Create a file with the given name in the temporary directory."""
     file = tmp_path / name
     file.write_text("x")
     return file
@@ -78,14 +68,13 @@ def make_file(tmp_path: pathlib.Path, name: str) -> pathlib.Path:
         ("foo.db", str(pathlib.Path("other.db")), False),
     ]
 )
-def test_file_patterns(tmp_path: pathlib.Path, filename: str, pattern: str, should_match: bool) -> None:
-    """
-    Test File filter with various patterns.
-
-    - Arrange: Create a file with the given filename.
-    - Act: Apply the File filter with the specified pattern.
-    - Assert: Verify that the filter matches the file correctly.
-    """
+def test_file_patterns(
+    tmp_path: pathlib.Path,
+    filename: str,
+    pattern: str,
+    should_match: bool,
+) -> None:
+    """File filter matches wildcard and exact patterns (case-insensitive)."""
     # Arrange
     f = make_file(tmp_path, filename)
 

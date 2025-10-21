@@ -1,4 +1,4 @@
-
+"""Classes for filtering files by type: file, directory, link, or unknown."""
 import pathlib
 import stat
 from .base import Filter
@@ -37,7 +37,7 @@ class Type(Filter, metaclass=_TypeMeta):
         Type("file")
 
     Args:
-        type_name (str | set[str] | None): File type(s) to match. Use Type.FILE, Type.DIRECTORY, etc.
+        type_name (str | set[str] | None): File type(s) to match. Use Type.FILE, Type.DIRECTORY.
     """
     FILE: str = "file"
     DIRECTORY: str = "directory"
@@ -49,10 +49,10 @@ class Type(Filter, metaclass=_TypeMeta):
         Initialize a Type filter.
 
         Args:
-            type_name (str | set[str] | None): File type(s) to match. Use Type.FILE, Type.DIRECTORY, etc.
+            type_name (str | set[str] | None): File type(s) to match. Use Type.FILE, Type.DIRECTORY.
         """
         if isinstance(type_name, set):
-            type_names = set(type_name)
+            type_names:set[str] = set(type_name)
         elif type_name is not None:
             type_names = {type_name}
         else:
@@ -60,8 +60,12 @@ class Type(Filter, metaclass=_TypeMeta):
         self.type_names: set[str] = type_names  # Defined only once here
 
 
-    # WARNING: Symlink and broken symlink handling is platform-dependent and not well tested across all OSes and edge cases.
-    def match(self, path: pathlib.Path, now: DatetimeOrNone = None, stat_result: StatResultOrNone = None) -> bool:
+    # WARNING: Symlink and broken symlink handling is platform-dependent and not well
+    #          tested across all OSes and edge cases.
+    def match(self,
+              path: pathlib.Path,
+              now: DatetimeOrNone = None,
+              stat_result: StatResultOrNone = None) -> bool:
         """
         Check if the path matches any of the specified types.
         Args:

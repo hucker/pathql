@@ -1,20 +1,27 @@
+"""Actions that delete filesystem entries matching a Query."""
+
 from __future__ import annotations
 
 import pathlib
 import shutil
-from typing import List, Optional, Callable
+from typing import Any, Callable, List, Optional
 
 from .utils import iter_matches
 
 
 def delete_matches(
     root: pathlib.Path,
-    query,
+    query: Any,
     *,
     recursive: bool = False,
     dry_run: bool = False,
     confirm: Optional[Callable[[pathlib.Path], bool]] = None,
-) -> List[pathlib.Path]:
+    ) -> List[pathlib.Path]:
+    """Delete matching paths and return the deleted candidates.
+
+    The function honors `dry_run` and an optional `confirm` callable to
+    make testing safe.
+    """
     root = pathlib.Path(root)
     candidates = [p for p in iter_matches(root, query)]
 

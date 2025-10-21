@@ -13,7 +13,7 @@ import sys
 import os
 import pathlib
 import time
-from typing import Dict
+from typing import Any, Dict, Iterator
 
 import pytest
 
@@ -26,10 +26,11 @@ def _set_permissions(path: pathlib.Path, readable: bool, writable: bool, executa
             path.write_bytes(path.read_bytes())
         # Read/write: Windows doesn't use chmod, but we can try
         # Note: os.chmod may not work as expected on Windows
-        mode = 0o666 if readable and writable else 0o444 if readable else 0o222 if writable else 0o000
+        mode = 0o666 if readable and writable else 0o444 \
+                     if readable else 0o222 if writable else 0o000
         try:
             os.chmod(path, mode)
-        except Exception:
+        except OSError:
             pass
     else:
         # Unix: set permissions using chmod
@@ -44,7 +45,7 @@ def _set_permissions(path: pathlib.Path, readable: bool, writable: bool, executa
     return path
 
 @pytest.fixture(scope="function")
-def access_matrix(tmp_path: pathlib.Path) -> Dict[str, pathlib.Path]:
+def access_matrix(tmp_path: pathlib.Path) -> Iterator[Dict[str, pathlib.Path]]:
     """
     Creates all combinations of rwx files in tmp_path.
     Returns a dict mapping file name (e.g. 'rwx.ext') to pathlib.Path.
@@ -71,7 +72,7 @@ def access_matrix(tmp_path: pathlib.Path) -> Dict[str, pathlib.Path]:
     for f in files.values():
         try:
             f.unlink()
-        except Exception:
+        except OSError:
             pass
 
 @pytest.fixture(scope="function")
@@ -124,7 +125,7 @@ def rich_filesystem(tmp_path:pathlib.Path):
     # Symlink (if supported)
     try:
         (root / "i.link").symlink_to(root / "a10.txt")
-    except Exception:
+    except OSError:
         pass
     # Set times: age in seconds = file size
     now = time.time()
@@ -166,7 +167,7 @@ def test_result_files(tmp_path: pathlib.Path) -> list[pathlib.Path]:
         "middle.txt": 175,
     }
     _create_test_files(tmp_path, files)
-    return [tmp_path / name for name in files.keys()]
+    return [tmp_path / name for name in files]
 
 @pytest.fixture
 def test_result_folder(tmp_path: pathlib.Path) -> pathlib.Path:
@@ -192,7 +193,8 @@ def test_result_folder(tmp_path: pathlib.Path) -> pathlib.Path:
         "middle.txt": 175,
     }
     # Ensure all files have the .txt suffix
-    files = {f"{name}.txt" if not name.endswith(".txt") else name: size for name, size in files.items()}
+    files = {f"{name}.txt" if not name.endswith(".txt")\
+              else name: size for name, size in files.items()}
     _create_test_files(tmp_path, files)
     return tmp_path
 
@@ -200,13 +202,12 @@ def test_result_folder(tmp_path: pathlib.Path) -> pathlib.Path:
 def test_result_files_with_mtime(tmp_path: pathlib.Path) -> list[pathlib.Path]:
     """
     Create files named oldest_1.txt, oldest_2.txt, oldest_3.txt, middle_1.txt, ...,
-                      bazbaz123
                       youngest_1.txt, youngest_2.txt, youngest_3.txt.
 
     Each file's modification time is set N days ago, for easy inspection and sorting by age.
     Returns a list of pathlib.Path objects.
     """
-    files = [
+    files: list[dict[str, Any]] = [
         {"name": "oldest_1.txt", "size": 100, "modification_days_offset": 30},
         {"name": "oldest_2.txt", "size": 110, "modification_days_offset": 29},
         {"name": "oldest_3.txt", "size": 120, "modification_days_offset": 28},
@@ -220,9 +221,9 @@ def test_result_files_with_mtime(tmp_path: pathlib.Path) -> list[pathlib.Path]:
     paths: list[pathlib.Path] = []
     now = time.time()
     for file in files:
-        p = tmp_path / file["name"]
+        p: pathlib.Path = tmp_path / file["name"]
         p.write_bytes(b'x' * file["size"])
-        mtime = now - (file["modification_days_offset"] * 86400)
+        mtime:float = now - (file["modification_days_offset"] * 86400)
         os.utime(p, (mtime, mtime))
         paths.append(p)
     return paths

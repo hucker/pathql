@@ -1,20 +1,20 @@
-"""
-Tests for datetime_parts filters: YearFilter, MonthFilter, DayFilter, HourFilter, MinuteFilter, SecondFilter.
-Follows AI_CONTEXT.md conventions and AAA pattern.
-"""
+"""Tests for datetime part filters (Year/Month/Day/Hour/Minute/Second)."""
 import datetime as dt
+import os
 import pathlib
-import pytest
 from typing import Type
+
+import pytest
+
 from pathql.filters.base import Filter
-from pathql.filters.datetime_parts import YearFilter, MonthFilter, DayFilter, HourFilter, MinuteFilter, SecondFilter
+from pathql.filters.datetime_parts import YearFilter, MonthFilter
+from pathql.filters.datetime_parts import DayFilter, HourFilter, MinuteFilter, SecondFilter
 
 def make_file_with_mtime(tmp_path: pathlib.Path, datetime_obj: dt.datetime) -> pathlib.Path:
-    """Create a file at tmp_path with a specific modification time (mtime) set to the given datetime."""
+    """Create file at tmp_path with a modification time (mtime) set to the given datetime."""
     file = tmp_path / f"f_{datetime_obj.strftime('%Y%m%d%H%M%S')}"
     file.write_text("x")
     ts = datetime_obj.timestamp()
-    import os
     os.utime(str(file), (ts, ts))
     return file
 
@@ -22,14 +22,20 @@ def make_file_with_mtime(tmp_path: pathlib.Path, datetime_obj: dt.datetime) -> p
     (2025, True),
     (2024, False),
 ])
-def test_year_filter(tmp_path: pathlib.Path, year: int, should_match: bool):
-    """Test YearFilter for current year and other year."""
+def test_year_filter(
+    tmp_path: pathlib.Path,
+    year: int,
+    should_match: bool,
+) -> None:
+    """YearFilter returns expected matches for given years."""
     # Arrange
     dt_ = dt.datetime(2025, 5, 1, 12, 0, 0)
     file = make_file_with_mtime(tmp_path, dt_)
+
     # Act
-    filt = YearFilter(year)
-    actual = filt.match(file)
+    filter_ = YearFilter(year)
+    actual = filter_.match(file)
+
     # Assert
     assert actual is should_match, f"YearFilter({year}) should be {should_match}"
 
@@ -40,14 +46,20 @@ def test_year_filter(tmp_path: pathlib.Path, year: int, should_match: bool):
     (6, False),
     ("jun", False),
 ])
-def test_month_filter(tmp_path: pathlib.Path, month: int | str, should_match: bool):
-    """Test MonthFilter with int and string month values."""
+def test_month_filter(
+    tmp_path: pathlib.Path,
+    month: int | str,
+    should_match: bool,
+) -> None:
+    """MonthFilter matches numeric and string month names."""
     # Arrange
     dt_ = dt.datetime(2025, 5, 1, 12, 0, 0)
     file = make_file_with_mtime(tmp_path, dt_)
+
     # Act
-    filt = MonthFilter(month)
-    actual = filt.match(file)
+    filter_ = MonthFilter(month)
+    actual = filter_.match(file)
+
     # Assert
     assert actual is should_match, f"MonthFilter({month}) should be {should_match}"
 
@@ -55,14 +67,20 @@ def test_month_filter(tmp_path: pathlib.Path, month: int | str, should_match: bo
     (1, True),
     (2, False),
 ])
-def test_day_filter(tmp_path: pathlib.Path, day: int, should_match: bool):
-    """Test DayFilter for current day and other day."""
+def test_day_filter(
+    tmp_path: pathlib.Path,
+    day: int,
+    should_match: bool,
+) -> None:
+    """DayFilter matches the expected day of month."""
     # Arrange
     dt_ = dt.datetime(2025, 5, 1, 12, 0, 0)
     file = make_file_with_mtime(tmp_path, dt_)
+
     # Act
-    filt = DayFilter(day, base=dt_)
-    actual = filt.match(file)
+    filter_ = DayFilter(day, base=dt_)
+    actual = filter_.match(file)
+
     # Assert
     assert actual is should_match, f"DayFilter({day}) should be {should_match}"
 
@@ -72,14 +90,20 @@ def test_day_filter(tmp_path: pathlib.Path, day: int, should_match: bool):
     (12, True),
     (13, False),
 ])
-def test_hour_filter(tmp_path: pathlib.Path, hour: int, should_match: bool):
-    """Test HourFilter for current hour and other hour."""
+def test_hour_filter(
+    tmp_path: pathlib.Path,
+    hour: int,
+    should_match: bool,
+) -> None:
+    """HourFilter matches the expected hour of day."""
     # Arrange
     dt_ = dt.datetime(2025, 5, 1, 12, 0, 0)
     file = make_file_with_mtime(tmp_path, dt_)
+
     # Act
-    filt = HourFilter(hour, base=dt_)
-    actual = filt.match(file)
+    filter_ = HourFilter(hour, base=dt_)
+    actual = filter_.match(file)
+
     # Assert
     assert actual is should_match, f"HourFilter({hour}) should be {should_match}"
 
@@ -89,14 +113,18 @@ def test_hour_filter(tmp_path: pathlib.Path, hour: int, should_match: bool):
     (0, True),
     (1, False),
 ])
-def test_minute_filter(tmp_path: pathlib.Path, minute: int, should_match: bool):
-    """Test MinuteFilter for current minute and other minute."""
+def test_minute_filter(
+    tmp_path: pathlib.Path,
+    minute: int,
+    should_match: bool,
+) -> None:
+    """MinuteFilter matches the expected minute of hour."""
     # Arrange
     dt_ = dt.datetime(2025, 5, 1, 12, 0, 0)
     file = make_file_with_mtime(tmp_path, dt_)
     # Act
-    filt = MinuteFilter(minute, base=dt_)
-    actual = filt.match(file)
+    filter_ = MinuteFilter(minute, base=dt_)
+    actual = filter_.match(file)
     # Assert
     assert actual is should_match, f"MinuteFilter({minute}) should be {should_match}"
 
@@ -104,21 +132,31 @@ def test_minute_filter(tmp_path: pathlib.Path, minute: int, should_match: bool):
     (0, True),
     (1, False),
 ])
-def test_second_filter(tmp_path: pathlib.Path, second: int, should_match: bool):
-    """Test SecondFilter for current second and other second."""
+def test_second_filter(
+    tmp_path: pathlib.Path,
+    second: int,
+    should_match: bool,
+) -> None:
+    """SecondFilter matches the expected second of minute."""
     # Arrange
     dt_ = dt.datetime(2025, 5, 1, 12, 0, 0)
     file = make_file_with_mtime(tmp_path, dt_)
     # Act
-    filt = SecondFilter(second, base=dt_)
-    actual = filt.match(file)
+    filter_ = SecondFilter(second, base=dt_)
+    actual = filter_.match(file)
     # Assert
     assert actual is should_match, f"SecondFilter({second}) should be {should_match}"
 
 
-@pytest.mark.parametrize("cls", [YearFilter, MonthFilter, DayFilter, HourFilter, MinuteFilter, SecondFilter])
-def test_filters_raise_on_invalid_attr(cls: Type[Filter]):
-    """All datetime part filters should raise ValueError when given an unknown attr."""
+@pytest.mark.parametrize("cls", [YearFilter,
+                                 MonthFilter,
+                                 DayFilter,
+                                 HourFilter,
+                                 MinuteFilter,
+                                 SecondFilter])
+
+def test_filters_raise_on_invalid_attr(cls: Type[Filter]) -> None:
+    """All datetime part filters raise ValueError for unknown attrs."""
     # Arrange
     invalid_attr = "access_time"
     # Act / Assert - construction should fail fast with ValueError

@@ -1,9 +1,4 @@
-"""
-PathQL CLI entry point.
-
-Provides a command-line interface for querying files in the filesystem using shell-style patterns.
-Prints the PathQL version and lists matching files.
-"""
+"""PathQL CLI entry point and minimal command-line interface."""
 
 import argparse
 import pathlib
@@ -13,6 +8,7 @@ from pathql import __version__
 
 
 def main():
+    """Run the CLI to query files and print matches."""
     parser = argparse.ArgumentParser(
         description="PathQL: Declarative Filesystem Query Language",
         epilog="""
@@ -38,7 +34,9 @@ Use --recursive to search subdirectories.
 
     query = Query(File(args.pattern))
     print("PathQL v" + __version__)
-    for f in query.files(path=pathlib.Path("."), recursive=args.recursive, files=True):
+    for f in query.files(
+        path=pathlib.Path("."), recursive=args.recursive, files=True
+    ):
         print(f)
 
 

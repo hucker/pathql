@@ -1,25 +1,17 @@
 """Extra tests for Suffix and Ext filters, including nosplit and case-insensitive matching."""
 
-import pytest
 import pathlib
+import pytest
 from pathql.filters.suffix import Suffix, Ext
 
 def make_file(tmp_path: pathlib.Path, name: str) -> pathlib.Path:
-    """
-    Helper function to create a file with the given name.
-    """
+    """Create a file with the given name inside tmp_path."""
     file = tmp_path / name
     file.write_text("x")
     return file
 
 def test_suffix_basic(tmp_path: pathlib.Path) -> None:
-    """
-    Test basic matching for Suffix and Ext filters.
-
-    - Arrange: Create a file with a specific extension.
-    - Act: Apply various suffix filters.
-    - Assert: Verify matching results.
-    """
+    """Basic matching for Suffix and Ext filters."""
     # Arrange
     file = make_file(tmp_path, "foo.txt")
 
@@ -36,13 +28,7 @@ def test_suffix_basic(tmp_path: pathlib.Path) -> None:
     assert Ext(".txt").match(file2)
 
 def test_suffix_nosplit(tmp_path: pathlib.Path) -> None:
-    """
-    Test no-split matching for Suffix filter.
-
-    - Arrange: Create a file with a compound extension.
-    - Act: Apply no-split filter.
-    - Assert: Verify matching results.
-    """
+    """No-split matching works for space-containing suffixes."""
     # Arrange
     file = make_file(tmp_path, "foo.bar baz")
 
@@ -51,13 +37,7 @@ def test_suffix_nosplit(tmp_path: pathlib.Path) -> None:
     assert not Suffix("bar baz").match(file)
 
 def test_suffix_empty_patterns(tmp_path: pathlib.Path) -> None:
-    """
-    Test empty pattern handling for Suffix filter.
-
-    - Arrange: Create a file with an extension.
-    - Act: Apply an empty suffix filter.
-    - Assert: Verify ValueError is raised.
-    """
+    """Empty suffix patterns raise ValueError."""
     # Arrange
     file = make_file(tmp_path, "foo.txt")
 
@@ -66,13 +46,7 @@ def test_suffix_empty_patterns(tmp_path: pathlib.Path) -> None:
         Suffix().match(file)
 
 def test_suffix_operator_overloads(tmp_path: pathlib.Path) -> None:
-    """
-    Test operator overloads for Suffix filter.
-
-    - Arrange: Create a file with a specific extension.
-    - Act: Apply various operator overloads.
-    - Assert: Verify operator behavior.
-    """
+    """Operator overloads behave as expected for Suffix."""
     # Arrange
     file = make_file(tmp_path, "foo.txt")
 

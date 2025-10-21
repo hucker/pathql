@@ -102,7 +102,7 @@ Equality (`==`) and inequality (`!=`) comparisons are not supported and will rai
 
 If you are familiar with `pandas` you will notice that instead of using python `and` `or` and `not` operators we use the ones shown above in order to build
 up arbitrary boolean expressions in code.  This is actually a limitation of `python` (or a reach on my part to make this work).  Operators that short circuit do
-not have dunder methods and can not be "overridden" from code so we are stuck using the mathematical equivalent operators.
+not have double underscore methods and can not be "overridden" from code so we are stuck using the mathematical equivalent operators.
 
 #### Example Filters
 
@@ -116,8 +116,8 @@ not have dunder methods and can not be "overridden" from code so we are stuck us
 - `MonthFIlter("May")`
 - `DayFilter(23)`
 - `HourFIlter(12)`
-- `MinutFilter(59)`
-- `SecondFilter(40`)
+- `MinuteFilter(59)`
+- `SecondFilter(40)`
 
 ### Using the `Between` Filter
 
@@ -321,7 +321,7 @@ for path in Query("/archive", query):
 
 ### 4. Use with custom filters
 
-You can define your own filters by subclassing `Filter`:
+You can define your own filters by sub-classing `Filter`:
 ```python
 from pathql.filters.base import Filter
 
@@ -378,7 +378,7 @@ for path in Query("/photos", Suffix('jpg') & CameraMakeFilter("Canon")):
 
 These project conventions are required for releases and developer contributions.
 
-- Always import the stdlib datetime module with the `dt` alias:
+- Always import the `stdlib` datetime module with the `dt` alias:
 
 ```py
 import datetime as dt
@@ -389,12 +389,12 @@ import datetime as dt
 
 - Prefer `import pathlib` and use `pathlib.Path` instead of importing path classes.
 
-- Docstrings: keep function and method docstrings short (1-2 lines, <=88 chars).
+- Doc-strings: keep function and method doc-strings short (1-2 lines, <=88 chars).
 
 - Function signatures with more than two parameters should put one parameter
     per line to avoid long lines and improve readability.
 
-- Tests must follow Arrange–Act–Assert (AAA). Use short docstrings for tests and
+- Tests must follow Arrange–Act–Assert (AAA). Use short doc-strings for tests and
     explicit `# Arrange`, `# Act`, `# Assert` comments inside the test body.
 
 - Avoid curly-brace expansion in filename patterns (File filter uses fnmatch).

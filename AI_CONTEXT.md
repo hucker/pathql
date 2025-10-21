@@ -13,7 +13,7 @@
 - Never use `import datetime` without aliasing, and never use `datetime` as a variable or argument name.
 - import pathlib instead of "from datetime import datetime"
 - All references to datetime classes and functions (e.g., `datetime.datetime`, `datetime.date`, `datetime.timedelta`) should be updated to use the `dt` prefix (e.g., `dt.datetime`, `dt.date`, `dt.timedelta`).
-- Code and comment lines shoudl be <= 100 characters wide.
+- Code and comment lines should be <= 100 characters wide.
 - This convention applies to all source files, test files, and documentation code blocks.
 
 
@@ -24,9 +24,9 @@
 
 ## Doc Strings
 
-- Please always create docstiings for all functions, methods, classes and files.
-- Function docstrings can be short 1 or 2 line descriptions in tests.
-- Docstrings should be no longer than 88 characters
+- Please always create doc strings for all functions, methods, classes and files.
+- Function doc strings can be short 1 or 2 line descriptions in tests.
+- Doc strings should be no longer than 88 characters
 
 ## Readme Files
 
@@ -49,6 +49,7 @@ delta = dt2 - dt1
 print(dt1.date())
 ```
 
+
 ## Testing
 
 ### Testing Conventions
@@ -61,12 +62,12 @@ PathQL follows the Arrange-Act-Assert (AAA) pattern for writing tests. This patt
 
 ### Fixtures
 
-- Inside of fixtures thre should be a comment for # Arrange at the start of the fixtures
+- Inside of fixtures there should be a comment for # Arrange at the start of the fixtures
 - If there is code after the yield there should be a # Teardown comment
 
 ### Test Comments
 - Test modules should have at least a short one line description of the module
-- Test functions should have at least a short one line descrition of the test.
+- Test functions should have at least a short one line description of the test.
 
 ### Inline Example
 
@@ -166,7 +167,7 @@ def test_divide_by_zero():
 
 ### Multiple Tests
 
-It is possible that there might be more than one test case for a given test, representing differnt conditions.  In this
+It is possible that there might be more than one test case for a given test, representing different conditions.  In this
 case it is ok to use nomenclature reflective of the condition.  In this case the answers for the assert are simple comments
 so it we just use the constant.  If the expected value is a complex data structure or object it then create save these values
 to variables rather than calculating them in line on the assert.
@@ -195,12 +196,15 @@ def test_edge():
 - **Clarity**: Ensure each section is clearly marked and easy to identify.
 - **Fixtures**: Use fixtures for reusable setup logic, and document their role in the Arrange section.
 - **Assert Messages**: Include descriptive messages in assertions to aid debugging.
-- **Docstrings**: Add a one-line docstring to each test function to describe its purpose.
+- **Doc strings**: Add one-line docstring to each test function. Use more lines as needed.
+
+## Automatic Tooling
+- When updating code ruff in autofix mode should be run on files to ensure compliance
 
 
 ## Release Actions
 - When I ask to prepare for release can you run all tests, coverage (on src), mypy and ruff.
-- I would like you to add badges for pytest test count, coverage percentage on src folder, mypy errors and ruff status using shieldsio to the READM.md.
+- I would like you to add badges for pytest test count, coverage percentage on src folder, mypy errors and ruff status using shieldsio to the README.md.
 - The badges should appear on top line in the README.md file.
 
 ## Migration Guidance

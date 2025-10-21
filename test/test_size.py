@@ -1,6 +1,4 @@
-"""
-Tests for Size filter using a fixture with files of known sizes.
-"""
+"""Tests for Size filter using fixture files with known sizes."""
 
 # Tests for Size filter using the size_test_folder fixture.
 # size_test_folder contains:
@@ -11,13 +9,7 @@ import pathlib
 from pathql.filters.size import Size
 
 def test_size_eq(size_test_folder: pathlib.Path) -> None:
-    """
-    Test Size == operator.
-
-    - Arrange: Retrieve test files.
-    - Act: Apply equality filter.
-    - Assert: Verify matching files.
-    """
+    """Equality operator matches expected files by size."""
     # Arrange
     files = list(size_test_folder.iterdir())
 
@@ -27,13 +19,7 @@ def test_size_eq(size_test_folder: pathlib.Path) -> None:
     assert not any((Size() == 150).match(f) for f in files)
 
 def test_size_ne(size_test_folder: pathlib.Path) -> None:
-    """
-    Test Size != operator.
-
-    - Arrange: Retrieve test files.
-    - Act: Apply inequality filter.
-    - Assert: Verify matching files.
-    """
+    """Inequality operator matches expected files by size."""
     # Arrange
     files = list(size_test_folder.iterdir())
 
@@ -42,13 +28,7 @@ def test_size_ne(size_test_folder: pathlib.Path) -> None:
     assert any((Size() != 100).match(f) for f in files)
 
 def test_size_lt(size_test_folder: pathlib.Path) -> None:
-    """
-    Test Size < operator.
-
-    - Arrange: Retrieve test files.
-    - Act: Apply less-than filter.
-    - Assert: Verify matching files.
-    """
+    """Less-than operator matches files below the threshold."""
     # Arrange
     files = list(size_test_folder.iterdir())
 
@@ -58,13 +38,7 @@ def test_size_lt(size_test_folder: pathlib.Path) -> None:
     assert not any((Size() < 100).match(f) for f in files)
 
 def test_size_le(size_test_folder: pathlib.Path) -> None:
-    """
-    Test Size <= operator.
-
-    - Arrange: Retrieve test files.
-    - Act: Apply less-than-or-equal filter.
-    - Assert: Verify matching files.
-    """
+    """Less-than-or-equal operator matches files at or below threshold."""
     # Arrange
     files = list(size_test_folder.iterdir())
 
@@ -74,13 +48,7 @@ def test_size_le(size_test_folder: pathlib.Path) -> None:
     assert not any((Size() <= 50).match(f) for f in files)
 
 def test_size_gt(size_test_folder: pathlib.Path) -> None:
-    """
-    Test Size > operator.
-
-    - Arrange: Retrieve test files.
-    - Act: Apply greater-than filter.
-    - Assert: Verify matching files.
-    """
+    """Greater-than operator matches files above the threshold."""
     # Arrange
     files = list(size_test_folder.iterdir())
 
@@ -89,13 +57,7 @@ def test_size_gt(size_test_folder: pathlib.Path) -> None:
     assert not any((Size() > 200).match(f) for f in files)
 
 def test_size_ge(size_test_folder: pathlib.Path) -> None:
-    """
-    Test Size >= operator.
-
-    - Arrange: Retrieve test files.
-    - Act: Apply greater-than-or-equal filter.
-    - Assert: Verify matching files.
-    """
+    """Greater-than-or-equal operator matches files at or above threshold."""
     # Arrange
     files = list(size_test_folder.iterdir())
 

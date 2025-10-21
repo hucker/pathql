@@ -1,24 +1,21 @@
-"""
-Tests for Age filters (AgeMinutes, AgeDays, AgeYears) in PathQL.
-
-Includes helpers to set file modification times and exhaustive parametric tests for all
-age filters and comparison operators.
-"""
+"""Tests for Age filters: minutes, hours, days, and years."""
 
 import os
 import datetime as dt
 import operator
 import pathlib
-import pytest
 from typing import Callable
+import pytest
 
 from pathql.filters.age import AgeDays, AgeHours, AgeMinutes, AgeYears
 from pathql.filters.base import Filter
 from pathql.filters.alias import DatetimeOrNone
 
-def set_mtime_minutes_ago(path: pathlib.Path,
-                          minutes: float, now:
-                          dt.datetime | None = None) -> None:
+def set_mtime_minutes_ago(
+    path: pathlib.Path,
+    minutes: float,
+    now: dt.datetime | None = None,
+) -> None:
     """Set file mtime to N minutes ago using a datetime object."""
     if now is None:
         now = dt.datetime.now()
@@ -26,9 +23,11 @@ def set_mtime_minutes_ago(path: pathlib.Path,
     ts = ago.timestamp()
     os.utime(path, (ts, ts))
 
-def set_mtime_hours_ago(path: pathlib.Path,
-                        hours: float,
-                        now: dt.datetime | None = None) -> None:
+def set_mtime_hours_ago(
+    path: pathlib.Path,
+    hours: float,
+    now: dt.datetime | None = None,
+) -> None:
     """Set file mtime to N hours ago using a datetime object."""
     if now is None:
         now = dt.datetime.now()
@@ -36,9 +35,11 @@ def set_mtime_hours_ago(path: pathlib.Path,
     ts = ago.timestamp()
     os.utime(path, (ts, ts))
 
-def set_mtime_days_ago(path: pathlib.Path,
-                       days: float, now:
-                       dt.datetime | None = None) -> None:
+def set_mtime_days_ago(
+    path: pathlib.Path,
+    days: float,
+    now: dt.datetime | None = None,
+) -> None:
     """Set file mtime to N days ago using a datetime object."""
     if now is None:
         now = dt.datetime.now()
@@ -46,9 +47,11 @@ def set_mtime_days_ago(path: pathlib.Path,
     ts = ago.timestamp()
     os.utime(path, (ts, ts))
 
-def set_mtime_years_ago(path: pathlib.Path,
-                        years: float,
-                        now: dt.datetime | None = None) -> None:
+def set_mtime_years_ago(
+    path: pathlib.Path,
+    years: float,
+    now: dt.datetime | None = None,
+) -> None:
     """Set file mtime to N years ago using a datetime object."""
     if now is None:
         now = dt.datetime.now()
@@ -79,29 +82,17 @@ def set_mtime_years_ago(path: pathlib.Path,
         (operator.gt, False, False, True),
     ]
 )
-def test_age_thresholds(tmp_path:pathlib.Path,
-                        filter_cls,
-                        setter,
-                        unit,
-                        op,
-                        expected_below:bool,
-                        expected_exact:bool,
-                        expected_above:bool):
-    """
-    Exhaustive parametric test for age filters (minutes, days, years) and all comparison operators.
-
-    For each filter and operator, this test sets the file's mtime to just below, exactly at,
-    and just above the threshold (e.g., 1 minute, 1 day, 1 year) and asserts the expected
-    result for the operator. This ensures:
-            - Operator overloading works for <, <=, ==, >=, >, !=
-            - Each filter correctly computes age in its unit
-            - Edge cases at the threshold are handled correctly
-
-    To add more time units (e.g., AgeSeconds), add to the filter_cls/setter/unit param list.
-    To test more edge cases, adjust the values passed to the setter.
-
-    This dense test provides coverage for all filter/operator/unit combinations in a single place.
-    """
+def test_age_thresholds(
+    tmp_path: pathlib.Path,
+    filter_cls: type[Filter],
+    setter: Callable[[pathlib.Path, float, dt.datetime | None], None],
+    unit: float,
+    op: Callable[[Filter, float], Filter],
+    expected_below: bool,
+    expected_exact: bool,
+    expected_above: bool,
+) -> None:
+    """Parametric test across age units and comparison operators (below/equal/above)."""
     # Arrange
     f = tmp_path / "test.txt"
     f.write_text("X")
@@ -138,12 +129,14 @@ def test_age_thresholds(tmp_path:pathlib.Path,
     ]
 )
 @pytest.mark.parametrize("op", [operator.eq, operator.ne])
-def test_age_filter_eq_ne_typeerror(tmp_path: pathlib.Path,
-                                    filter_cls: type,
-                                    setter: Callable[[pathlib.Path, float, DatetimeOrNone], None],
-                                    unit: float,
-                                    op: Callable[[Filter, float], bool]):
-    """ Test different types of age filters to raise exceptions for == and != operators."""
+def test_age_filter_eq_ne_typeerror(
+    tmp_path: pathlib.Path,
+    filter_cls: type,
+    setter: Callable[[pathlib.Path, float, DatetimeOrNone], None],
+    unit: float,
+    op: Callable[[Filter, float], bool],
+) -> None:
+    """Age filter equality and inequality operators raise TypeError."""
     # Arrange
     f: pathlib.Path = tmp_path / "test.txt"
     f.write_text("X")

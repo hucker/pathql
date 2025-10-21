@@ -57,7 +57,7 @@ class ResultSet(list[pathlib.Path]):
         elif field == ResultField.STEM:
             return lambda f: f.stem
         elif field == ResultField.PATH:
-            return lambda f: str(f)
+            return str #lambda f: str(f)
         elif field == ResultField.PARENT:
             return lambda f: str(f.parent)
         elif field == ResultField.PARENTS:

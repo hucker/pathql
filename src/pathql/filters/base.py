@@ -74,7 +74,8 @@ class AndFilter(Filter):
         stat_result: StatResultOrNone = None
     ) -> bool:
         """Return True if both filters match the path."""
-        return self.left.match(path, now=now, stat_result=stat_result) and self.right.match(path, now=now, stat_result=stat_result)
+        return self.left.match(path, now=now, stat_result=stat_result) and \
+               self.right.match(path, now=now, stat_result=stat_result)
 
 class OrFilter(Filter):
     """
@@ -99,7 +100,10 @@ class OrFilter(Filter):
         stat_result:StatResultOrNone = None
     ) -> bool:
         """Return True if either filter matches the path."""
-        return self.left.match(path, now=now, stat_result=stat_result) or self.right.match(path, now=now, stat_result=stat_result)
+        return self.left.match(path,
+                               now=now,
+                               stat_result=stat_result) or \
+                               self.right.match(path, now=now, stat_result=stat_result)
 
 class NotFilter(Filter):
     """

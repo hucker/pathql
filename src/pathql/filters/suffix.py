@@ -6,21 +6,18 @@ Includes operator overloads and curly-brace expansion for extension sets.
 import pathlib
 import re
 import fnmatch
-import logging
 
 from .base import Filter
 from .alias import DatetimeOrNone, StatResultOrNone,StrOrListOfStr
 
-logging.basicConfig(level=logging.DEBUG)
-
-
 
 # Metaclass for class-level operator overloads
 class SuffixMeta(type):
-    def __eq__(cls, other):
+    """Class-level operator overloads for Suffix filter."""
+    def __eq__(cls, other:object):
         """Allow Suffix == value to create a Suffix filter for that value."""
         return cls([other])
-    def __ne__(cls, other):
+    def __ne__(cls, other:object):
         """Allow Suffix != value to create an empty Suffix filter (not meaningful)."""
         return cls([])  # Not meaningful, but for completeness
 
@@ -53,8 +50,9 @@ class Suffix(Filter, metaclass=SuffixMeta):
 
         self.ignore_case = ignore_case
         pats: set[str] = set()
-        # Normalize patterns: strip leading dot, lowercase
-        def norm(p):
+
+        def norm(p:str|None):
+            """Normalize pattern: ensure leading dot, lowercase if ignore_case."""
             if not isinstance(p, str):
                 return None
             p = p.strip().lower()
@@ -107,9 +105,7 @@ class Suffix(Filter, metaclass=SuffixMeta):
         fname = path.name.lower()
         for pat in self.patterns:
             if fname.endswith(pat):
-                logging.debug(f"Suffix.match: {path=}, pattern={pat}, match_result=True")
                 return True
-        logging.debug(f"Suffix.match: {path=}, patterns={self.patterns}, match_result=False")
         return False
 
     def __contains__(self, item: str) -> bool:

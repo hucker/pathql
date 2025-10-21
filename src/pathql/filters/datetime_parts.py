@@ -6,7 +6,9 @@ the canonical attribute name.
 """
 import datetime as dt
 import pathlib
+
 from dateutil.relativedelta import relativedelta
+
 from .base import Filter
 from .alias import DatetimeOrNone, StatResultOrNone
 
@@ -48,15 +50,27 @@ def _normalize_attr(attr: str) -> str:
 class YearFilter(Filter):
     """Filter files by year (with optional base and offset)."""
 
-    def __init__(self, year: int, base: dt.datetime | None = None, offset: int = 0, attr: str = "st_mtime"):
+    def __init__(
+        self,
+        year: int,
+        base: dt.datetime | None = None,
+        offset: int = 0,
+        attr: str = "st_mtime",
+    ):
+        """Initialize a YearFilter."""
         base = base or dt.datetime.now()
         base = base + relativedelta(years=offset)
         self.year = year
         self.month = base.month
         self.day = base.day
         self.attr = _normalize_attr(attr)
-
-    def match(self, path: pathlib.Path, now: DatetimeOrNone = None, stat_result: StatResultOrNone = None) -> bool:
+    def match(
+        self,
+        path: pathlib.Path,
+        now: DatetimeOrNone = None,
+        stat_result: StatResultOrNone = None,
+    ) -> bool:
+        """Return True if the file's year matches the filter's year."""
         stat_result = stat_result or path.stat()
         ts = getattr(stat_result, self.attr)
         dt_obj = dt.datetime.fromtimestamp(ts)
@@ -65,7 +79,14 @@ class YearFilter(Filter):
 class MonthFilter(Filter):
     """Filter files by month (supports month name or number)."""
 
-    def __init__(self, month: int | str, base: dt.datetime | None = None, offset: int = 0, attr: str = "st_mtime"):
+    def __init__(
+        self,
+        month: int | str,
+        base: dt.datetime | None = None,
+        offset: int = 0,
+        attr: str = "st_mtime",
+    ):
+        """Initialize a MonthFilter."""
         base = base or dt.datetime.now()
         base = base + relativedelta(months=offset)
         self.year = base.year
@@ -79,7 +100,13 @@ class MonthFilter(Filter):
             return MONTH_NAME_TO_NUM[key]
         raise ValueError(f"Unknown month: {v}")
 
-    def match(self, path: pathlib.Path, now: DatetimeOrNone = None, stat_result: StatResultOrNone = None) -> bool:
+    def match(
+        self,
+        path: pathlib.Path,
+        now: DatetimeOrNone = None,
+        stat_result: StatResultOrNone = None,
+    ) -> bool:
+        """Return True if the file's year and month match the filter."""
         stat_result = stat_result or path.stat()
         ts = getattr(stat_result, self.attr)
         dt_obj = dt.datetime.fromtimestamp(ts)
@@ -88,24 +115,47 @@ class MonthFilter(Filter):
 class DayFilter(Filter):
     """Filter files by day of month (with base/offset)."""
 
-    def __init__(self, day: int, base: dt.datetime | None = None, offset: int = 0, attr: str = "st_mtime"):
+    def __init__(
+        self,
+        day: int,
+        base: dt.datetime | None = None,
+        offset: int = 0,
+        attr: str = "st_mtime",
+    ):
+        """Initialize a DayFilter."""
         base = base or dt.datetime.now()
         base = base + relativedelta(days=offset)
         self.year = base.year
         self.month = base.month
         self.day = day
         self.attr = _normalize_attr(attr)
-
-    def match(self, path: pathlib.Path, now: DatetimeOrNone = None, stat_result: StatResultOrNone = None) -> bool:
+    def match(
+        self,
+        path: pathlib.Path,
+        now: DatetimeOrNone = None,
+        stat_result: StatResultOrNone = None,
+    ) -> bool:
+        """Return True if the file's year, month and day match the filter."""
         stat_result = stat_result or path.stat()
         ts = getattr(stat_result, self.attr)
         dt_obj = dt.datetime.fromtimestamp(ts)
-        return dt_obj.year == self.year and dt_obj.month == self.month and dt_obj.day == self.day
+        return (
+            dt_obj.year == self.year
+            and dt_obj.month == self.month
+            and dt_obj.day == self.day
+        )
 
 class HourFilter(Filter):
     """Filter files by hour (with base/offset)."""
 
-    def __init__(self, hour: int, base: dt.datetime | None = None, offset: int = 0, attr: str = "st_mtime"):
+    def __init__(
+        self,
+        hour: int,
+        base: dt.datetime | None = None,
+        offset: int = 0,
+        attr: str = "st_mtime",
+    ):
+        """Initialize an HourFilter."""
         base = base or dt.datetime.now()
         base = base + relativedelta(hours=offset)
         self.year = base.year
@@ -113,17 +163,34 @@ class HourFilter(Filter):
         self.day = base.day
         self.hour = hour
         self.attr = _normalize_attr(attr)
-
-    def match(self, path: pathlib.Path, now: DatetimeOrNone = None, stat_result: StatResultOrNone = None) -> bool:
+    def match(
+        self,
+        path: pathlib.Path,
+        now: DatetimeOrNone = None,
+        stat_result: StatResultOrNone = None,
+    ) -> bool:
+        """Return True if the file's date/time matches this hour filter."""
         stat_result = stat_result or path.stat()
         ts = getattr(stat_result, self.attr)
         dt_obj = dt.datetime.fromtimestamp(ts)
-        return dt_obj.year == self.year and dt_obj.month == self.month and dt_obj.day == self.day and dt_obj.hour == self.hour
+        return (
+            dt_obj.year == self.year
+            and dt_obj.month == self.month
+            and dt_obj.day == self.day
+            and dt_obj.hour == self.hour
+        )
 
 class MinuteFilter(Filter):
     """Filter files by minute (with base/offset)."""
 
-    def __init__(self, minute: int, base: dt.datetime | None = None, offset: int = 0, attr: str = "st_mtime"):
+    def __init__(
+        self,
+        minute: int,
+        base: dt.datetime | None = None,
+        offset: int = 0,
+        attr: str = "st_mtime",
+    ):
+        """Initialize a MinuteFilter."""
         base = base or dt.datetime.now()
         base = base + relativedelta(minutes=offset)
         self.year = base.year
@@ -132,17 +199,35 @@ class MinuteFilter(Filter):
         self.hour = base.hour
         self.minute = minute
         self.attr = _normalize_attr(attr)
-
-    def match(self, path: pathlib.Path, now: DatetimeOrNone = None, stat_result: StatResultOrNone = None) -> bool:
+    def match(
+        self,
+        path: pathlib.Path,
+        now: DatetimeOrNone = None,
+        stat_result: StatResultOrNone = None,
+    ) -> bool:
+        """Return True if the file's date/time matches this minute filter."""
         stat_result = stat_result or path.stat()
         ts = getattr(stat_result, self.attr)
         dt_obj = dt.datetime.fromtimestamp(ts)
-        return dt_obj.year == self.year and dt_obj.month == self.month and dt_obj.day == self.day and dt_obj.hour == self.hour and dt_obj.minute == self.minute
+        return (
+            dt_obj.year == self.year
+            and dt_obj.month == self.month
+            and dt_obj.day == self.day
+            and dt_obj.hour == self.hour
+            and dt_obj.minute == self.minute
+        )
 
 class SecondFilter(Filter):
     """Filter files by second (with base/offset)."""
 
-    def __init__(self, second: int, base: dt.datetime | None = None, offset: int = 0, attr: str = "st_mtime"):
+    def __init__(
+        self,
+        second: int,
+        base: dt.datetime | None = None,
+        offset: int = 0,
+        attr: str = "st_mtime",
+    ):
+        """Initialize a SecondFilter."""
         base = base or dt.datetime.now()
         base = base + relativedelta(seconds=offset)
         self.year = base.year
@@ -152,9 +237,21 @@ class SecondFilter(Filter):
         self.minute = base.minute
         self.second = second
         self.attr = _normalize_attr(attr)
-
-    def match(self, path: pathlib.Path, now: DatetimeOrNone = None, stat_result: StatResultOrNone = None) -> bool:
+    def match(
+        self,
+        path: pathlib.Path,
+        now: DatetimeOrNone = None,
+        stat_result: StatResultOrNone = None,
+    ) -> bool:
+        """Return True if the file's date/time matches this second filter."""
         stat_result = stat_result or path.stat()
         ts = getattr(stat_result, self.attr)
         dt_obj = dt.datetime.fromtimestamp(ts)
-        return dt_obj.year == self.year and dt_obj.month == self.month and dt_obj.day == self.day and dt_obj.hour == self.hour and dt_obj.minute == self.minute and dt_obj.second == self.second
+        return (
+            dt_obj.year == self.year
+            and dt_obj.month == self.month
+            and dt_obj.day == self.day
+            and dt_obj.hour == self.hour
+            and dt_obj.minute == self.minute
+            and dt_obj.second == self.second
+        )

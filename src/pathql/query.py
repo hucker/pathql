@@ -68,7 +68,7 @@ class Query(Filter):
         now: DatetimeOrNone = None,
     ) -> Iterator[pathlib.Path]:
         """
-        Yield files matching the filter expression using a single-threaded approach (no queue/thread).
+        Yield files matching filter expression using a single-threaded approach (no queue/thread).
 
         Args:
             path (pathlib.Path): Root directory to search.
@@ -154,7 +154,8 @@ class Query(Filter):
             recursive (bool): If True, search recursively. If False, only top-level files.
             files (bool): If True, yield only files (not directories).
             now (float, optional): Reference time for filters. Defaults to current time.
-            threaded (bool): If True, use threaded producer-consumer model. If False, use single-threaded.
+            threaded (bool): If True, use threaded producer-consumer model. If False,
+            use single-threaded.
 
         Yields:
             pathlib.Path: Files matching the filter expression.
@@ -185,6 +186,7 @@ class Query(Filter):
             recursive (bool): If True, search recursively. If False, only top-level files.
             files (bool): If True, yield only files (not directories).
             now (float, optional): Reference time for filters. Defaults to current time.
-            threaded (bool): If True, use threaded producer-consumer model. If False, use single-threaded.
+            threaded (bool): If True, use threaded producer-consumer model. If False,
+            use single-threaded.
         """
         return ResultSet(self.files(path, recursive, files, now, threaded))

@@ -4,9 +4,10 @@ import pathlib
 from typing import Iterable
 
 from pathql.filters.base import Filter
+from pathql.query import Query
 
 
-def iter_matches(root: pathlib.Path, query) -> Iterable[pathlib.Path]:
+def iter_matches(root: pathlib.Path, query:Query) -> Iterable[pathlib.Path]:
     """Yield Path objects matching `query` under `root`.
 
     Supported query shapes:

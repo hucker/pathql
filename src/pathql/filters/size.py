@@ -1,15 +1,21 @@
+"""Utilities and a filter for parsing and matching file sizes."""
+
 from __future__ import annotations
 
 import re
 import pathlib
 from typing import Callable, Mapping, Final, Pattern
 from types import NotImplementedType
-from .alias import StatResultOrNone, IntOrNone, DatetimeOrNone
+from .alias import DatetimeOrNone, IntOrNone, StatResultOrNone
 from .base import Filter
 
 
 # Accept ints, floats, or strings like "1.5 kb". Default to binary units (KB=1024).
-_SIZE_RE: Final[Pattern[str]] = re.compile(r"^\s*([0-9]+(?:\.[0-9]+)?)\s*([kmgtpe]?i?b?|b)?\s*$", re.IGNORECASE)
+_SIZE_RE_STRING =r"^\s*([0-9]+(?:\.[0-9]+)?)\s*([kmgtpe]?i?b?|b)?\s*$"
+_SIZE_RE: Final[Pattern[str]] = re.compile(_SIZE_RE_STRING, re.IGNORECASE)
+
+
+# Table lookup for multiplier strings -> multiplier.
 _UNIT_MULTIPLIERS: Final[Mapping[str, int]] = {
     "": 1,
     "b": 1,
@@ -26,6 +32,7 @@ _UNIT_MULTIPLIERS: Final[Mapping[str, int]] = {
     "pb": 1000 ** 5,
     "e": 1000 ** 6,
     "eb": 1000 ** 6,
+    "zb": 1000 ** 9,
     # IEC (binary) for explicit "i" suffixes
     "kib": 1024,
     "mib": 1024 ** 2,
@@ -33,19 +40,15 @@ _UNIT_MULTIPLIERS: Final[Mapping[str, int]] = {
     "tib": 1024 ** 4,
     "pib": 1024 ** 5,
     "eib": 1024 ** 6,
+    "zib": 1024 ** 9,
 }
 
 
 def _parse_size(value: object) -> int | NotImplementedType:
-    """Parse int/float/string sizes into bytes (int).
+    """Parse int/float/string sizes into bytes.
 
-    Returns:
-      - int: parsed byte count
-      - NotImplemented: if the operand type is not supported (so Python can
-        attempt reflected operations)
-
-    Raises:
-      ValueError: for invalid numeric strings or negative values.
+    Returns NotImplemented for unsupported operand types so Python can try
+    the reflected operation.
     """
     # direct ints/floats
     if isinstance(value, int):
@@ -61,10 +64,10 @@ def _parse_size(value: object) -> int | NotImplementedType:
             num = float(num_str)
         except ValueError as exc:
             raise ValueError(f"invalid numeric value in size: {value!r}") from exc
-        mult = _UNIT_MULTIPLIERS.get(unit)
-        if mult is None:
+        multiplier = _UNIT_MULTIPLIERS.get(unit)
+        if multiplier is None:
             raise ValueError(f"unknown size unit: {unit!r}")
-        val = num * mult
+        val = num * multiplier
     else:
         return NotImplemented
 
@@ -75,11 +78,9 @@ def _parse_size(value: object) -> int | NotImplementedType:
 
 
 def parse_size(value: object) -> int:
-    """Public wrapper for size parsing.
+    """Parse a size value and return the byte count as an int.
 
-    Accepts int, float, or string with units and returns an integer byte count.
-    Raises ValueError for invalid numeric strings or negative values. Raises
-    TypeError if the operand type is unsupported.
+    Raises TypeError for unsupported operand types.
     """
     res = _parse_size(value)
     if res is NotImplemented:
@@ -88,30 +89,25 @@ def parse_size(value: object) -> int:
 
 
 class Size(Filter):
-    """
-    Filter for file size (in bytes).
+    """Filter for file size (in bytes)."""
+    def __init__(
+        self,
+        op: Callable[[int, int], bool] | None = None,
+        value: IntOrNone = None,
+    ) -> None:
+        """Initialize a Size filter.
 
-    Allows declarative queries on file size using operator overloads:
-        Size() <= 1024
-        Size() > 1_000_000
-        Size(lambda x, y: x % 2 == 0, None)  # custom logic
-
-    Args:
-        op (callable, optional): Operator function (e.g., operator.le, operator.gt).
-        value (int, optional): Value to compare file size against.
-
-    Notes:
-    - Operator overloads accept ints, floats, and size strings (e.g. "1.5 kb").
-    - For unsupported operand types the dunder returns NotImplemented so Python
-      will attempt the reflected operation on the other operand. This is not
-      an exception — invalid numeric values (e.g. negative sizes) raise
-      ValueError.
-    """
-    def __init__(self, op: Callable[[int, int], bool] | None = None, value: IntOrNone = None) -> None:
-        # op compares two integer byte counts
+        The op callable receives two integer byte counts.
+        """
         self.op: Callable[[int, int], bool] | None = op
         self.value: IntOrNone = value
-    def match(self, path: pathlib.Path, now: DatetimeOrNone = None, stat_result: StatResultOrNone = None) -> bool:
+    def match(
+        self,
+        path: pathlib.Path,
+        now: DatetimeOrNone = None,
+        stat_result: StatResultOrNone = None,
+    ) -> bool:
+        """Return True if the file's size matches the filter criteria."""
         if self.op is None or self.value is None:
             raise TypeError("Size filter not fully specified.")
         try:
@@ -123,36 +119,42 @@ class Size(Filter):
             return False
 
     def __le__(self, other: object) -> Size | NotImplementedType:
+        """Return a Size filter for <= comparison with size strings/ints."""
         parsed = _parse_size(other)
         if parsed is NotImplemented:
             return NotImplemented
         return Size(lambda x, y: x <= y, parsed)
 
     def __lt__(self, other: object) -> Size | NotImplementedType:
+        """Return a Size filter for < comparison with size strings/ints."""
         parsed = _parse_size(other)
         if parsed is NotImplemented:
             return NotImplemented
         return Size(lambda x, y: x < y, parsed)
 
     def __ge__(self, other: object) -> Size | NotImplementedType:
+        """Return a Size filter for >= comparison with size strings/ints."""
         parsed = _parse_size(other)
         if parsed is NotImplemented:
             return NotImplemented
         return Size(lambda x, y: x >= y, parsed)
 
     def __gt__(self, other: object) -> Size | NotImplementedType:
+        """Return a Size filter for > comparison with size strings/ints."""
         parsed = _parse_size(other)
         if parsed is NotImplemented:
             return NotImplemented
         return Size(lambda x, y: x > y, parsed)
 
     def __eq__(self, other: object) -> Size | NotImplementedType:
+        """Return a Size filter for == comparison with size strings/ints."""
         parsed = _parse_size(other)
         if parsed is NotImplemented:
             return NotImplemented
         return Size(lambda x, y: x == y, parsed)
 
     def __ne__(self, other: object) -> Size | NotImplementedType:
+        """Return a Size filter for != comparison with size strings/ints."""
         parsed = _parse_size(other)
         if parsed is NotImplemented:
             return NotImplemented

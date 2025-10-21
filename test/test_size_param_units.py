@@ -19,14 +19,17 @@ SIZES = [
 ]
 
 
-@pytest.mark.parametrize("unit,mult", SIZES)
-def test_numeric_and_string_equivalents(tmp_path: pathlib.Path, unit: str, mult: int) -> None:
-    # integer equality: 1 <unit> == mult bytes
+@pytest.mark.parametrize("unit,multiplier", SIZES)
+def test_numeric_and_string_equivalents(tmp_path: pathlib.Path,
+                                        unit: str,
+                                        multiplier: int) -> None:
+    """Verify that numeric and string size representations are equivalent for Size filter."""
+    # integer equality: 1 <unit> == multiplier bytes
     p = tmp_path / f"one_{unit}.bin"
-    p.write_bytes(b"x" * mult)
+    p.write_bytes(b"x" * multiplier)
 
     # Numeric operand
-    assert (Size() == mult).match(p)
+    assert (Size() == multiplier).match(p)
 
     # String operand, various casings and whitespace
     assert (Size() == f"1 {unit}").match(p)
@@ -55,14 +58,14 @@ def test_large_unit_ranges(tmp_path: pathlib.Path):
     assert (Size() > "1 B").match(p)
 
 
-@pytest.mark.parametrize("unit,mult", SIZES)
-def test_decimal_string_values_truncate(tmp_path: pathlib.Path, unit: str, mult: int) -> None:
-    # Create a file of size int(1.5 * mult)
-    size = int(1.5 * mult)
+@pytest.mark.parametrize("unit,multiplier", SIZES)
+def test_decimal_string_values_truncate(tmp_path: pathlib.Path, unit: str, multiplier: int) -> None:
+    # Create a file of size int(1.5 * multiplier)
+    size = int(1.5 * multiplier)
     p = tmp_path / f"one_half_{unit}.bin"
     p.write_bytes(b"x" * size)
 
-    # '1.5 <unit>' should truncate to int(1.5 * mult)
+    # '1.5 <unit>' should truncate to int(1.5 * multiplier)
     assert (Size() == "1.5 " + unit).match(p)
     # parse_size should produce the same numeric value
     assert parse_size("1.5 " + unit) == size

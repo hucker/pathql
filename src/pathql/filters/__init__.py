@@ -1,4 +1,4 @@
-"""Convenience imports for all PathQL filters."""
+"""Convenience imports for PathQL filter classes and helpers."""
 from .base import Filter
 from .suffix import Suffix, Ext
 from .size import Size

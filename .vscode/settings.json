@@ -19,10 +19,14 @@
     "cSpell.words": [
         "capsys",
         "dateutil",
+        "dunder",
+        "mypy",
         "nosplit",
         "parameterizes",
         "pathql",
-        "relativedelta"
+        "relativedelta",
+        "shieldsio",
+        "timedelta"
     ]
     ,
     "python.analysis.extraPaths": [

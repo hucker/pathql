@@ -1,19 +1,12 @@
-"""
-Tests for Type filter, covering file, directory, and symlink detection.
-"""
+"""Tests for Type filter: file, directory, and symlink detection."""
 import pathlib
-import pytest
+from typing import cast
 import sys
+import pytest
 from pathql.filters.type import Type
 
 def test_type_file(tmp_path: pathlib.Path) -> None:
-    """
-    Test that Type.FILE matches a regular file.
-
-    - Arrange: Create a regular file.
-    - Act: Apply Type.FILE filter.
-    - Assert: Verify the file matches.
-    """
+    """Type.FILE matches a regular file."""
     # Arrange
     f = tmp_path / "a.txt"
     f.write_text("A")
@@ -22,13 +15,7 @@ def test_type_file(tmp_path: pathlib.Path) -> None:
     assert (Type == Type.FILE).match(f)
 
 def test_type_directory(tmp_path: pathlib.Path) -> None:
-    """
-    Test that Type.DIRECTORY matches a directory.
-
-    - Arrange: Create a directory.
-    - Act: Apply Type.DIRECTORY filter.
-    - Assert: Verify the directory matches.
-    """
+    """Type.DIRECTORY matches a directory."""
     # Arrange
     d = tmp_path / "dir"
     d.mkdir()
@@ -37,13 +24,7 @@ def test_type_directory(tmp_path: pathlib.Path) -> None:
     assert (Type == Type.DIRECTORY).match(d)
 
 def test_type_link(tmp_path: pathlib.Path) -> None:
-    """
-    Test that Type.LINK matches a symlink and not file or directory.
-
-    - Arrange: Create a symlink.
-    - Act: Apply Type.LINK filter.
-    - Assert: Verify the symlink matches.
-    """
+    """Type.LINK matches symlinks and not files or directories."""
     # Arrange
     if sys.platform.startswith("win"):
         pytest.skip("Symlink tests are skipped on Windows.")
@@ -57,17 +38,11 @@ def test_type_link(tmp_path: pathlib.Path) -> None:
     assert not (Type == Type.FILE).match(link)
 
 def test_type_union_and_set(tmp_path: pathlib.Path) -> None:
-    """
-    Test Type filter with set union and direct string/set construction.
-
-    - Arrange: Create a file and a directory.
-    - Act: Apply union and set filters.
-    - Assert: Verify matching results.
-    """
+    """Type filter supports unions and set/string construction."""
     # Arrange
     f = tmp_path / "a.txt"
     f.write_text("A")
-    d = tmp_path / "adir"
+    d = tmp_path / "a_dir"
     d.mkdir()
 
     # Act and Assert
@@ -80,13 +55,7 @@ def test_type_union_and_set(tmp_path: pathlib.Path) -> None:
     assert Type({"file", "directory"}).match(d)
 
 def test_type_contains() -> None:
-    """
-    Test __contains__ for Type filter set membership.
-
-    - Arrange: Create a Type filter with multiple types.
-    - Act: Check membership.
-    - Assert: Verify membership results.
-    """
+    """Type filter supports membership testing via `in`."""
     # Arrange
     t = Type({Type.FILE, Type.DIRECTORY})
 
@@ -96,13 +65,7 @@ def test_type_contains() -> None:
     assert Type.LINK not in t
 
 def test_type_or_and_ror() -> None:
-    """
-    Test __or__ and __ror__ operator overloads for Type filter.
-
-    - Arrange: Create Type filters.
-    - Act: Apply union operations.
-    - Assert: Verify union results.
-    """
+    """OR operations produce a union of types."""
     # Arrange
     t1 = Type(Type.FILE)
     t2 = Type(Type.DIRECTORY)
@@ -115,27 +78,34 @@ def test_type_or_and_ror() -> None:
     assert Type.FILE in t3.type_names and Type.DIRECTORY in t3.type_names
     assert t3.type_names == t4.type_names
 
-def test_type_error_handling(monkeypatch: pytest.MonkeyPatch, tmp_path: pathlib.Path) -> None:
-    """
-    Test error handling and UNKNOWN logic in Type filter.
-
-    - Arrange: Create a bad path and a broken symlink.
-    - Act: Apply Type filters.
-    - Assert: Verify error handling and UNKNOWN logic.
-    """
+def test_type_error_handling(
+    tmp_path: pathlib.Path,
+) -> None:
+    """Type filter handles errors and recognizes UNKNOWN types."""
     # Arrange
     f = tmp_path / "err.txt"
     f.write_text("E")
-    class BadPath(type(f)):
+    class BadPath:
+        """A minimal Path-like stub that raises on lstat()."""
+
+        def __init__(self, p: pathlib.Path) -> None:
+            """Initialize with a Path."""
+            self._p = p
+
         def exists(self) -> bool:
+            """Always exists"""
             return True
+
         def lstat(self):
+            """stat generates an OS Error."""
             raise OSError("fail")
+
     bad = BadPath(f)
 
     # Act and Assert
-    assert Type(Type.UNKNOWN).match(bad)
-    assert not Type(Type.FILE).match(bad)
+    # Cast to satisfy type checkers; BadPath implements only minimal Path-like API
+    assert Type(Type.UNKNOWN).match(cast(pathlib.Path, bad))
+    assert not Type(Type.FILE).match(cast(pathlib.Path, bad))
     if sys.platform.startswith("win"):
         pytest.skip("Symlink tests are skipped on Windows.")
     broken = tmp_path / "broken_link"

@@ -1,5 +1,4 @@
-
-
+"""Top-level PathQL package exports and convenience imports."""
 from .filters.base import Filter
 from .filters.suffix import Suffix, Ext
 from .filters.size import Size
@@ -15,7 +14,7 @@ from .query import Query
 __version__ = '0.0.3'
 
 __all__ = [
-	"Filter", "Suffix", "Ext", "Size", "AgeMinutes", "AgeDays", "AgeYears", "Stem", "Name", "Type",
-	"YearFilter", "MonthFilter", "DayFilter", "HourFilter", "MinuteFilter", "SecondFilter", "File",
-    "Query", "parse_size",
+	"Filter", "Suffix", "Ext", "Size", "AgeMinutes", "AgeDays", "AgeYears", "Stem", "Name",
+    "Type",	"YearFilter", "MonthFilter", "DayFilter", "HourFilter", "MinuteFilter",
+    "SecondFilter", "File","Query", "parse_size",
 ]

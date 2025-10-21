@@ -1,8 +1,4 @@
-"""
-Tests for ResultSet aggregations in PathQL.
-
-Covers max, min, top_n, bottom_n, sort, average, median, and count operations on a known set of files.
-"""
+"""Tests for ResultSet aggregations (min/max/top_n/sort/average/median/count)."""
 
 import pathlib
 import pytest
@@ -160,13 +156,7 @@ def test_min_max_mtime(test_result_files_with_mtime: list[pathlib.Path]) -> None
 
 @pytest.mark.usefixtures("test_result_folder")
 def test_end_to_end_query_and_aggregations(test_result_folder: pathlib.Path) -> None:
-    """
-    End-to-end test: filter files, aggregate, and sort.
-
-    - Arrange: Set up a test folder and a Query for files with suffix '.txt'.
-    - Act: Execute the query and perform aggregations.
-    - Assert: Verify the results meet the expected criteria.
-    """
+    """End-to-end: filter files, aggregate, and verify results."""
     # Arrange
     query = Query(Suffix == "txt")
 

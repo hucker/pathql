@@ -2,10 +2,11 @@
 
 Follows AI_CONTEXT.md: AAA structure and clear Arrange/Act/Assert sections.
 """
-import pytest
 import pathlib
 
-from pathql.filters.size import _parse_size, parse_size, Size
+import pytest
+
+from pathql.filters.size import parse_size, Size
 
 
 @pytest.mark.parametrize(
@@ -42,9 +43,13 @@ from pathql.filters.size import _parse_size, parse_size, Size
         ("42", 42),
     ],
 )
-def test_parse_valid_values(inp: object, expected: int) -> None:
+def test_parse_valid_values(
+    inp: object,
+    expected: int,
+) -> None:
+    """Valid size representations parse to expected byte counts."""
     # Arrange/Act
-    got = _parse_size(inp)
+    got = parse_size(inp)
 
     # Assert
     assert isinstance(got, int)
@@ -61,7 +66,11 @@ def test_parse_valid_values(inp: object, expected: int) -> None:
         ("1.5 PB", int(1.5 * 1000 ** 5)),
     ],
 )
-def test_parse_very_large_units(inp: object, expected: int) -> None:
+def test_parse_very_large_units(
+    inp: object,
+    expected: int,
+) -> None:
+    """Very large unit values parse correctly to bytes."""
     # Arrange/Act
     got = parse_size(inp)
 
@@ -72,16 +81,18 @@ def test_parse_very_large_units(inp: object, expected: int) -> None:
 
 @pytest.mark.parametrize("bad", ["ten kb", "1 XB", "", "kb", "1.2.3 kb"])
 def test_parse_invalid_strings_raise(bad: str) -> None:
-    # Arrange/Act/Assert
+    """Invalid size strings raise ValueError."""
+    # Act/Assert
     with pytest.raises(ValueError):
-        _parse_size(bad)
+        parse_size(bad)
 
 
 @pytest.mark.parametrize("neg", [-1, -1.0, "-1 kb", "-1 KiB"])
 def test_parse_negative_values_raise(neg: object) -> None:
-    # Arrange/Act/Assert
+    """Negative numeric sizes raise ValueError."""
+    # Act/Assert
     with pytest.raises(ValueError):
-        _parse_size(neg)
+        parse_size(neg)
 
 
 @pytest.mark.parametrize(
@@ -95,7 +106,14 @@ def test_parse_negative_values_raise(neg: object) -> None:
         (1500, "__eq__", "1500", True),
     ],
 )
-def test_size_operator_with_various_units(tmp_path: pathlib.Path, file_size: int, op: str, operand: object, expected: bool) -> None:
+def test_size_operator_with_various_units(
+    tmp_path: pathlib.Path,
+    file_size: int,
+    op: str,
+    operand: object,
+    expected: bool,
+) -> None:
+    """Verify Size operator overloads handle different unit formats correctly."""
     # Arrange
     f = tmp_path / "f.txt"
     f.write_text("x" * file_size)
@@ -109,6 +127,7 @@ def test_size_operator_with_various_units(tmp_path: pathlib.Path, file_size: int
 
 
 def test_size_operator_notimplemented_for_other_types() -> None:
+    """Operator overloads return NotImplemented for unsupported operands."""
     # Arrange
     s = Size()
 

@@ -1,22 +1,18 @@
+"""Tests for Query class and filter composition on a mini filesystem."""
 
-"""
-Tests for Query class and filter composition on a mini filesystem.
-"""
 
+import pathlib
 import shutil
 import pytest
-import pathlib
 from pathql.query import Query
 from pathql.filters.size import Size
 from pathql.filters.suffix import Suffix
 from pathql.filters.type import Type
 
 
-@pytest.fixture
-def hundred_files(tmp_path: pathlib.Path):
-    """
-    Create a temp folder with 100 files for benchmarking/concurrency tests.
-    """
+@pytest.fixture(name="hundred_files")
+def _hundred_files(tmp_path: pathlib.Path):  # pyright: ignore[reportUnusedFunction]
+    """Create a temp folder with 100 files for benchmarking/concurrency tests."""
     # Arrange
     folder = tmp_path / "hundred_files"
     folder.mkdir()
@@ -27,11 +23,9 @@ def hundred_files(tmp_path: pathlib.Path):
     shutil.rmtree(folder)
 
 
-@pytest.fixture
-def mini_fs(tmp_path: pathlib.Path) -> pathlib.Path:
-    """
-    Create a small file structure for query tests.
-    """
+@pytest.fixture(name="mini_fs")
+def _mini_fs(tmp_path: pathlib.Path) -> pathlib.Path:  # pyright: ignore[reportUnusedFunction]
+    """Create a small file structure for query tests."""
     # Arrange
     f1 = tmp_path / "foo.txt"
     f2 = tmp_path / "bar.md"
@@ -47,9 +41,7 @@ def mini_fs(tmp_path: pathlib.Path) -> pathlib.Path:
 
 
 def test_query_size_and_suffix(mini_fs: pathlib.Path) -> None:
-    """
-    Test Query with size and suffix filters.
-    """
+    """Test Query with size and suffix filters."""
     # Arrange
     q = Query((Size() >= 100) & (Suffix == "txt"))
     # Act
@@ -60,9 +52,7 @@ def test_query_size_and_suffix(mini_fs: pathlib.Path) -> None:
 
 
 def test_query_or_and(mini_fs: pathlib.Path) -> None:
-    """
-    Test Query with OR and AND filters.
-    """
+    """Test Query with OR and AND filters."""
     # Arrange
     q = Query(((Size() > 250) & (Suffix == "txt")) | (Suffix == "md"))
     # Act
@@ -73,9 +63,7 @@ def test_query_or_and(mini_fs: pathlib.Path) -> None:
 
 
 def test_query_in_operator(mini_fs: pathlib.Path) -> None:
-    """
-    Test Query with 'in' operator for suffix.
-    """
+    """Test Query with 'in' operator for suffix."""
     # Arrange
     q = Query((Suffix == "txt") & (Size() > 50))
     # Act
@@ -88,9 +76,7 @@ def test_query_in_operator(mini_fs: pathlib.Path) -> None:
 
 
 def test_query_type_file_and_dir(mini_fs: pathlib.Path) -> None:
-    """
-    Test Query for file and directory types.
-    """
+    """Test Query for file and directory types."""
     # Arrange
     q_files = Query(Type == Type.FILE)
     q_dirs = Query(Type == Type.DIRECTORY)
@@ -103,32 +89,45 @@ def test_query_type_file_and_dir(mini_fs: pathlib.Path) -> None:
 
 
 def test_query_complex(mini_fs: pathlib.Path) -> None:
-    """
-    Test Query with complex filter combinations.
-    """
+    """Test Query with complex filter combinations."""
     # Arrange
     q = Query(((Suffix == "txt") & (Size() > 50)) | ((Suffix == "md") & (Size() < 300)))
+
     # Act
     files = list(q.files(mini_fs, recursive=True, files=True, threaded=False))
     names = sorted(f.name for f in files)
+
     # Assert
     assert names == ["bar.md", "foo.txt", "qux.txt"]
 
 
 def test_threaded_vs_unthreaded_equivalence_hundred(
-    hundred_files: pathlib.Path
+    hundred_files: pathlib.Path,
 ) -> None:
-    """
-    Verify threaded and unthreaded Query methods yield the same results on 100 files.
-    """
+    """Threaded and unthreaded Query yield the same results on 100 files."""
     # Arrange
     q = Query(Suffix == "txt")
+
     # Act
-    threaded = set(f.name for f in q.files(hundred_files, recursive=True, files=True, threaded=True))
-    unthreaded = set(f.name for f in q.files(hundred_files, recursive=True, files=True, threaded=False))
+    threaded = set(
+        f.name
+        for f in q.files(
+            hundred_files,
+            recursive=True,
+            files=True,
+            threaded=True,
+        )
+    )
+    unthreaded = set(
+        f.name
+        for f in q.files(
+            hundred_files,
+            recursive=True,
+            files=True,
+            threaded=False,
+        )
+    )
+
     # Assert
     assert threaded == unthreaded
     assert len(threaded) == 100
-
-
-

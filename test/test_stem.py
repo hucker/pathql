@@ -1,6 +1,4 @@
-"""
-Tests for Stem and Name filters, including equality and multiple stem matching.
-"""
+"""Tests for Stem and Name filters (equality, multiple, and wildcard)."""
 
 import pathlib
 import pytest
@@ -9,13 +7,7 @@ from pathql.filters.stem import Stem, Name
 
 @pytest.mark.parametrize("cls", [Stem, Name])
 def test_stem_eq(cls: type) -> None:
-    """
-    Test equality matching for Stem and Name filters.
-
-    - Arrange: Create a file path.
-    - Act: Apply equality filter.
-    - Assert: Verify matching results.
-    """
+    """Equality matching for Stem and Name filters."""
     # Arrange
     f = pathlib.Path("foo.txt")
 
@@ -26,13 +18,7 @@ def test_stem_eq(cls: type) -> None:
 
 @pytest.mark.parametrize("cls", [Stem, Name])
 def test_stem_multiple(cls: type) -> None:
-    """
-    Test multiple stem matching for Stem and Name filters.
-
-    - Arrange: Create multiple file paths.
-    - Act: Apply multiple stem filter.
-    - Assert: Verify matching results.
-    """
+    """Multiple stem matching works as expected."""
     # Arrange
     f1 = pathlib.Path("foo.txt")
     f2 = pathlib.Path("bar.txt")
@@ -45,13 +31,7 @@ def test_stem_multiple(cls: type) -> None:
 
 @pytest.mark.parametrize("cls", [Stem, Name])
 def test_stem_string(cls: type) -> None:
-    """
-    Test string-based matching for Stem and Name filters.
-
-    - Arrange: Create a file path.
-    - Act: Apply string-based filter.
-    - Assert: Verify matching results.
-    """
+    """String-based matching for Stem and Name filters."""
     # Arrange
     f = pathlib.Path("foo.txt")
 
@@ -62,13 +42,7 @@ def test_stem_string(cls: type) -> None:
 
 @pytest.mark.parametrize("cls", [Stem, Name])
 def test_stem_wildcard(cls: type) -> None:
-    """
-    Test wildcard matching for Stem and Name filters.
-
-    - Arrange: Create a file path.
-    - Act: Apply wildcard filter.
-    - Assert: Verify matching results.
-    """
+    """Wildcard matching for Stem and Name filters."""
     # Arrange
     f = pathlib.Path("foo123.txt")
 
@@ -79,13 +53,7 @@ def test_stem_wildcard(cls: type) -> None:
 
 @pytest.mark.parametrize("cls", [Stem, Name])
 def test_name_alias(cls: type) -> None:
-    """
-    Test alias matching for Stem and Name filters.
-
-    - Arrange: Create a file path.
-    - Act: Apply alias filter.
-    - Assert: Verify matching results.
-    """
+    """Name alias behaves like Stem filter."""
     # Arrange
     f = pathlib.Path("foo.txt")
 
@@ -96,17 +64,11 @@ def test_name_alias(cls: type) -> None:
 
 @pytest.mark.parametrize("cls", [Stem, Name])
 def test_stem_fnmatch_patterns(cls: type) -> None:
-    """
-    Test fnmatch pattern matching for Stem and Name filters.
-
-    - Arrange: Create file paths.
-    - Act: Apply fnmatch pattern filters.
-    - Assert: Verify matching results.
-    """
+    """fnmatch patterns are supported for Stem/Name filters."""
     # Arrange
     f1 = pathlib.Path("foo123.txt")
     f2 = pathlib.Path("foo.txt")
-    f3 = pathlib.Path("barfoo.txt")
+    f3 = pathlib.Path("bar_foo.txt")
     f4 = pathlib.Path("file1.txt")
     f5 = pathlib.Path("fileA.txt")
     f6 = pathlib.Path("bar.txt")
