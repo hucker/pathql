@@ -5,6 +5,8 @@ Follows AI_CONTEXT.md conventions and AAA pattern.
 import datetime as dt
 import pathlib
 import pytest
+from typing import Type
+from pathql.filters.base import Filter
 from pathql.filters.datetime_parts import YearFilter, MonthFilter, DayFilter, HourFilter, MinuteFilter, SecondFilter
 
 def make_file_with_mtime(tmp_path: pathlib.Path, datetime_obj: dt.datetime) -> pathlib.Path:
@@ -112,3 +114,25 @@ def test_second_filter(tmp_path: pathlib.Path, second: int, should_match: bool):
     actual = filt.match(file)
     # Assert
     assert actual is should_match, f"SecondFilter({second}) should be {should_match}"
+
+
+@pytest.mark.parametrize("cls", [YearFilter, MonthFilter, DayFilter, HourFilter, MinuteFilter, SecondFilter])
+def test_filters_raise_on_invalid_attr(cls: Type[Filter]):
+    """All datetime part filters should raise ValueError when given an unknown attr."""
+    # Arrange
+    invalid_attr = "access_time"
+    # Act / Assert - construction should fail fast with ValueError
+    with pytest.raises(ValueError):
+        # For simplicity, pass a minimal valid value for the constructor
+        if cls is YearFilter:
+            cls(2025, attr=invalid_attr)
+        elif cls is MonthFilter:
+            cls(1, attr=invalid_attr)
+        elif cls is DayFilter:
+            cls(1, attr=invalid_attr)
+        elif cls is HourFilter:
+            cls(0, attr=invalid_attr)
+        elif cls is MinuteFilter:
+            cls(0, attr=invalid_attr)
+        elif cls is SecondFilter:
+            cls(0, attr=invalid_attr)

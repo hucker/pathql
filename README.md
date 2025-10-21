@@ -1,9 +1,42 @@
+
+<!-- Badges: pytest count, coverage (src), mypy errors, ruff status -->
+
+![pytest](https://img.shields.io/badge/pytest-233-blue)
+![coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)
+![mypy](https://img.shields.io/badge/mypy-13-orange)
+![ruff](https://img.shields.io/badge/ruff-passed-brightgreen)
+
 # PathQL Declarative SQL Globbing
 
 ---
 
+
+## Quick Examples
+
+Print backup files older than 1 year:
+
+```py
+from pathql import AgeYears, EXT
+
+for f in Query("C:/logs",  (AgeYears > 1) & Ext(".bak")):
+    print(f"Files to delete - {f.resolve()}")
+```
+
+Print files created today and larger than 10MB in C:\\logs:
+
+```py
+from pathql import AgeDays, Size, Type
+
+
+for p in Query(r"C:/logs", (AgeDays == 0) & (Size() > "10 mb"):
+    print(f"Files to zip - {f.resolve()}")
+```
+
+
+
 ## Table of Contents
 - [PathQL Declarative SQL Globbing](#pathql-declarative-sql-globbing)
+  - [Quick Examples](#quick-examples)
   - [Table of Contents](#table-of-contents)
   - [PathQL: Declarative Filesystem Query Language for Python](#pathql-declarative-filesystem-query-language-for-python)
   - [Features](#features)
@@ -13,7 +46,9 @@
     - [Using the `Between` Filter](#using-the-between-filter)
     - [Query](#query)
       - [Threaded Producer-Consumer Model](#threaded-producer-consumer-model)
-  - [Extension (Suffix) Filter Semantics](#extension-suffix-filter-semantics)
+  - [File and Suffix Filter Semantics](#file-and-suffix-filter-semantics)
+    - [File Filter](#file-filter)
+    - [Suffix Filter](#suffix-filter)
   - [Datetime Part Filters](#datetime-part-filters)
     - [Key Idea](#key-idea)
     - [How `base`, `offset`, and `attr` Work](#how-base-offset-and-attr-work)
@@ -29,6 +64,12 @@
     - [3. Find all directories older than 1 year](#3-find-all-directories-older-than-1-year)
     - [4. Use with custom filters](#4-use-with-custom-filters)
     - [5. Advanced Example: Custom Filter Using PIL for Image Metadata](#5-advanced-example-custom-filter-using-pil-for-image-metadata)
+  - [Developer \& Release Conventions](#developer--release-conventions)
+  - [Release Summary (v0.0.3, 2025-10-20)](#release-summary-v003-2025-10-20)
+    - [Highlights](#highlights)
+    - [Breaking Changes](#breaking-changes)
+    - [Test Results](#test-results)
+    - [Static Analysis](#static-analysis)
 
 ## PathQL: Declarative Filesystem Query Language for Python
 
@@ -59,13 +100,16 @@ Equality (`==`) and inequality (`!=`) comparisons are not supported and will rai
 - `|` (OR)
 - `~` (NOT)
 
+If you are familiar with `pandas` you will notice that instead of using python `and` `or` and `not` operators we use the ones shown above in order to build
+up arbitrary boolean expressions in code.  This is actually a limitation of `python` (or a reach on my part to make this work).  Operators that short circuit do
+not have dunder methods and can not be "overridden" from code so we are stuck using the mathematical equivalent operators.
 
 #### Example Filters
 
 - `Size() <= 1_000_000` — files up to 1MB
 - `Suffix({".png", ".jpg"})` — files with .png or .jpg extension
 - `Stem("report_*")` — files whose stem matches a glob pattern (e.g., starts with "report_")
-- `Type("file")` — regular files
+- `Type("file")` — 'file, 'dir', 'link'
 - `AgeMinutes < 10` — modified in the last 10 minutes
 - `Between(Size(), 1000, 2000)` — files with size >= 1000 and < 2000 bytes (inclusive lower, exclusive upper)
 - `YearFIlter(2024)`
@@ -156,7 +200,8 @@ for path in Query("/photos", Suffix('.jpg') & CameraMakeFilter("Canon")):
 PathQL provides powerful filters for matching files based on specific parts of their modification, creation, or access datetime. These filters allow precise queries for year, month, day, hour, minute, and second.
 
 ### Key Idea
-You almost never need to interact with the raw `datetime` API. The filter constructors and defaults are designed so that typical queries (by year, month, day, etc.) are ergonomic and intuitive. You specify the part you care about (e.g., `YearFilter(2025)`, `MonthFilter("may")`), and PathQL handles all the datetime logic for you.
+You almost never need to interact with the raw `datetime` objects if you are dealing with time scales relative to today. The filter constructors and defaults are designed so that typical queries (by year, month, day, etc.) will just work. You specify the part you care about (e.g., `YearFilter(2025)`, `MonthFilter("may")`), and PathQL will filter data in that time period. If that time period is in the future (you ask for May and it is April)
+
 
 ### How `base`, `offset`, and `attr` Work
 - **base**: The reference datetime for the filter. By default, this is the current date/time, but you can set it to any `datetime` object. This is useful for queries like "files from the same month last year" or "files from a specific day."
@@ -327,6 +372,79 @@ from pathql.query import Query
 for path in Query("/photos", Suffix('jpg') & CameraMakeFilter("Canon")):
     print(path)
 ```
+
+
+## Developer & Release Conventions
+
+These project conventions are required for releases and developer contributions.
+
+- Always import the stdlib datetime module with the `dt` alias:
+
+```py
+import datetime as dt
+```
+
+- Never use `datetime` as a variable or argument name. Use `dt`prefix for types
+    (e.g. `dt.datetime`, `dt.date`, `dt.timedelta`).
+
+- Prefer `import pathlib` and use `pathlib.Path` instead of importing path classes.
+
+- Docstrings: keep function and method docstrings short (1-2 lines, <=88 chars).
+
+- Function signatures with more than two parameters should put one parameter
+    per line to avoid long lines and improve readability.
+
+- Tests must follow Arrange–Act–Assert (AAA). Use short docstrings for tests and
+    explicit `# Arrange`, `# Act`, `# Assert` comments inside the test body.
+
+- Avoid curly-brace expansion in filename patterns (File filter uses fnmatch).
+
+Developer commands (run from repository root):
+
+```bash
+# Run tests with coverage for the src folder
+pytest --cov=src --cov-report=term
+
+# Run mypy type checks
+mypy src/pathql
+
+# Run ruff linter
+ruff check src test
+```
+
+If mypy reports missing stubs for third-party libs, install recommended stubs:
+
+```bash
+python -m pip install types-python-dateutil
+```
+
+When preparing a release, bump `version` in `pyproject.toml`, update
+`CHANGELOG.md`, and ensure tests and linters are clean before tagging.
+
+
+---
+
+## Release Summary (v0.0.3, 2025-10-20)
+
+### Highlights
+- File filter now uses shell-style globbing (fnmatch) on full filenames.
+- Suffix filter supports dot-prefixed, fnmatch-compatible patterns and wildcards.
+- Curly-brace expansion is no longer supported in File filter.
+- All filters and tests are PEP8 and docstring compliant.
+- Improved documentation and test coverage.
+
+### Breaking Changes
+- File filter does not support curly-brace expansion (e.g., foo.{jpg,png}). Use wildcards or multiple queries.
+- Suffix filter matches using normalized dot-prefixed patterns and supports wildcards.
+- All datetime usage is via `import datetime as dt` per project convention.
+
+### Test Results
+- All tests pass: 233/233
+- Coverage: 100% of src/
+
+### Static Analysis
+- mypy: 13 errors (see details in repository run); run `mypy src/pathql` to reproduce
+- ruff: no linting issues found
 
 This approach works for any custom logic—just implement the `match` method. You can combine your custom filter with built-in filters using `&`, `|`, and `~` for powerful queries.
 

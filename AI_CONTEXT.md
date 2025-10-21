@@ -1,5 +1,6 @@
 # AI Coding Context: datetime Import Convention
 
+
 ## Project-wide Convention
 
 - Always import the standard library datetime module as:
@@ -196,12 +197,21 @@ def test_edge():
 - **Assert Messages**: Include descriptive messages in assertions to aid debugging.
 - **Docstrings**: Add a one-line docstring to each test function to describe its purpose.
 
+
+## Release Actions
+- When I ask to prepare for release can you run all tests, coverage (on src), mypy and ruff.
+- I would like you to add badges for pytest test count, coverage percentage on src folder, mypy errors and ruff status using shieldsio to the READM.md.
+- The badges should appear on top line in the README.md file.
+
 ## Migration Guidance
 
 - When refactoring or adding new code, always use `import datetime as dt`.
 - Update all existing code to use the `dt.` prefix for all datetime-related calls.
 - If you see `import datetime` or `from datetime import ...`, refactor to the above convention unless there is a compelling reason not to.
 -
+
+
+
 
 ---
 This file is intended for both human and AI contributors to ensure a consistent and robust datetime import style throughout the project.
