@@ -65,6 +65,9 @@ class Suffix(Filter, metaclass=SuffixMeta):
                 base = patterns[:brace.start()]
                 exts = [e.strip() for e in brace.group(1).split(",")]
                 for ext in exts:
+                    # Ignore empty entries like in '{foo,,fum}'
+                    if not ext:
+                        continue
                     n = norm(base + ext)
                     if n:
                         pats.add(n)
@@ -116,31 +119,52 @@ class Suffix(Filter, metaclass=SuffixMeta):
         """Allow Suffix(...) to create a new Suffix filter with given patterns."""
         # Flatten if a single list/tuple is passed
         if len(patterns) == 1 and isinstance(patterns[0], (list, tuple)):
-            return Suffix(patterns[0])
-        return Suffix(patterns)
+            pats = list(patterns[0])
+            return Suffix(pats)
+        return Suffix(list(patterns))
 
 
-    def __eq__(self, other: object) -> bool:
-        """Check equality with another Suffix filter (pattern list equality)."""
-        if not isinstance(other, Suffix):
-            return NotImplemented
-        return self.patterns == other.patterns
+    def __eq__(self, other: object):
+        """Equality and factory behavior.
 
-    def __ne__(self, other: object) -> bool:
-        """Check inequality with another Suffix filter (pattern list inequality)."""
-        if not isinstance(other, Suffix):
-            return NotImplemented
-        return self.patterns != other.patterns
+        - If `other` is a str/list/tuple, behave like a factory and return a
+          new `Suffix` filter constructed from that pattern(s).
+        - If `other` is a `Suffix`, return boolean equality of normalized patterns.
+        - Otherwise return `NotImplemented`.
+        """
+        if isinstance(other, str):
+            return Suffix(other)
+        if isinstance(other, list):
+            return Suffix(other)
+        if isinstance(other, tuple):
+            return Suffix(list(other))
+        if isinstance(other, Suffix):
+            return self.patterns == other.patterns
+        return NotImplemented
+
+    def __ne__(self, other: object):
+        """Inequality and factory behavior.
+
+        - If `other` is a str/list/tuple, return a (non-meaningful) empty Suffix
+          filter to mirror class-level behavior.
+        - If `other` is a `Suffix`, return boolean inequality of patterns.
+        - Otherwise return `NotImplemented`.
+        """
+        if isinstance(other, (str, list, tuple)):
+            return Suffix([])
+        if isinstance(other, Suffix):
+            return self.patterns != other.patterns
+        return NotImplemented
 
     def __ror__(self, other: str | list[str]) -> 'Suffix':
         """Support set union: value | Suffix."""
         return Suffix(other)
 
     @classmethod
-    def __class_getitem__(cls, item: str | tuple) -> 'Suffix':
+    def __class_getitem__(cls, item: str | tuple[str, ...]) -> 'Suffix':
         """Support Suffix[...] syntax to create a Suffix filter with given patterns."""
         if isinstance(item, tuple):
-            return Suffix(item)
+            return Suffix(list(item))
         return Suffix([item])
 
 

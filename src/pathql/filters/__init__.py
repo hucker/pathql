@@ -11,10 +11,13 @@ from .file import File
 from .between import Between
 from .access import Read, Write, Execute, Exec, RdWt, RdWtEx
 from .callback import PathCallback
+from .callback import MatchCallback
+from .alias import NumericFilterType
 
 __all__ = [
     "Filter", "Suffix", "Ext", "Size", "AgeHours", "AgeMinutes", "AgeDays", "AgeYears", "Stem",
     "Name", "Type",    "YearFilter", "MonthFilter", "DayFilter", "HourFilter", "MinuteFilter",
     "SecondFilter", "File", "Between",  "Read", "Write", "Execute", "Exec", "RdWt",
     "RdWtEx", "PathCallback"
+    , "MatchCallback","NumericFilterType",
 ]

@@ -28,7 +28,7 @@ class PathCallback(Filter):
         self.args = tuple(args)
         self.kwargs = dict(kwargs)
 
-        # Compose instance docstring from wrapped function doc and bound args
+        # Compose instance docstring from wrapped function doc, class docs, and bound args
         func_doc = inspect.getdoc(func) or ""
         bound_parts: list[str] = []
         if self.args:
@@ -36,7 +36,16 @@ class PathCallback(Filter):
         if self.kwargs:
             bound_parts.append(f"kwargs={self.kwargs!r}")
         bound = ", ".join(bound_parts) if bound_parts else "no bound args"
-        self.__doc__ = (func_doc + "\n\n" if func_doc else "") + f"Bound arguments: {bound}"
+
+        # Include class __init__ and match() docstrings so instance introspection
+        # surfaces helpful usage information.
+        init_doc = getattr(self.__class__, "__init__", None)
+        init_doc = (init_doc.__doc__ or "") if init_doc is not None else ""
+        match_doc = getattr(self.__class__, "match", None)
+        match_doc = (match_doc.__doc__ or "") if match_doc is not None else ""
+        parts = [p for p in (func_doc, init_doc, match_doc) if p]
+        parts.append(f"Bound arguments: {bound}")
+        self.__doc__ = "\n\n".join(parts)
 
         # Try to capture signature for nicer errors (optional)
         try:
@@ -110,3 +119,66 @@ class PathCallback(Filter):
     def __repr__(self) -> str:
         name = getattr(self.func, "__name__", repr(self.func))
         return f"PathCallback({name}, args={self.args!r}, kwargs={self.kwargs!r})"
+
+
+class MatchCallback(PathCallback):
+    """Call a user function with (path, now, stat_result, ...) signature.
+
+    Works like PathCallback but enforces that the underlying callable accepts
+    at least three leading positional parameters (for path, now, and stat).
+    The callable may accept fewer if it has var positional parameters, but
+    this class will prefer callables that accept (path, now, stat_result).
+    """
+
+    def __init__(self, func: PathCallable, *args: Any, **kwargs: Any) -> None:
+        """Create a MatchCallback that binds positional and keyword args.
+
+        Validation mirrors PathCallback but ensures the callable can accept
+        the (path, now, stat_result) parameter trio.
+        """
+        if not callable(func):
+            raise TypeError("func must be callable")
+
+        # Reuse PathCallback validation but perform extra check on signature.
+        try:
+            sig = inspect.signature(func)
+        except (TypeError, ValueError):
+            # If uninspectable, fall back to PathCallback behavior.
+            super().__init__(func, *args, **kwargs)
+            return
+
+        params = list(sig.parameters.values())
+        var_positional = any(p.kind == inspect.Parameter.VAR_POSITIONAL for p in params)
+
+        # Count leading positional params (POSITIONAL_ONLY or POSITIONAL_OR_KEYWORD)
+        pos_params = [
+            p
+            for p in params
+            if p.kind in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
+        ]
+
+        # Need to ensure there are at least 3 positional slots for path, now, stat
+        if not var_positional and len(pos_params) < 3:
+            raise TypeError("callback must accept at least three positional args: path, now, stat_result")
+
+        # Delegate the rest of the validation/binding to PathCallback
+        super().__init__(func, *args, **kwargs)
+
+    def __call__(self, *args: Any, **kwargs: Any) -> "MatchCallback":
+        """Return a new MatchCallback with additional bound args/kwargs."""
+        combined_args = (*self.args, *args)
+        combined_kwargs = {**self.kwargs, **kwargs}
+        return MatchCallback(self.func, *combined_args, **combined_kwargs)
+
+    def match(
+        self,
+        path: pathlib.Path,
+        now: DatetimeOrNone = None,
+        stat_result: StatResultOrNone = None,
+    ) -> bool:
+        """Call the callback with (path, now, stat_result, *bound_args, **bound_kwargs)."""
+        try:
+            return bool(self.func(path, now, stat_result, *self.args, **self.kwargs))
+        except TypeError as exc:
+            name = getattr(self.func, "__name__", repr(self.func))
+            raise TypeError(f"Callback {name!r} invocation failed: {exc}") from exc

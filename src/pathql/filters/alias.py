@@ -1,10 +1,35 @@
-"""Type aliases for PathQL."""
+"""Type aliases for the filters package.
 
-from typing import TypeAlias
+Provides common TypeAlias names used throughout the filters module (e.g.
+StatResultOrNone, DatetimeOrNone, IntOrFloat). Concrete filter class
+imports are guarded under TYPE_CHECKING to avoid runtime circular imports;
+add new numeric-comparison filter classes to NumericFilterType for accurate
+static typing.
+"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, TypeAlias, Type
 import os
 import datetime as dt
 import pathlib
 
+if TYPE_CHECKING:
+    # Imports only for static type checkers — avoid runtime circular imports
+    from .age import AgeHours, AgeMinutes, AgeDays, AgeYears  # noqa: F401
+    from .size import Size  # noqa: F401
+
+
+# These filters support numeric comparisons (expressed as types of classes)
+# Use explicit Type[...] union so static checkers see the concrete classes.
+# Any Filters with numeric comparisons should be added here.
+NumericFilterType: TypeAlias = (
+    Type["Size"]
+    | Type["AgeHours"]
+    | Type["AgeMinutes"]
+    | Type["AgeDays"]
+    | Type["AgeYears"]
+)
 
 # Common type aliases used throughout PathQL to help static type checkers like mypy
 StatResultOrNone: TypeAlias = os.stat_result | None
