@@ -5,7 +5,9 @@ Creates a temporary multi-level 'source' directory and a 'destination' directory
 Verifies correct file manipulation for flat and nested structures using AAA (Arrange, Act, Assert) comments.
 """
 import pathlib
+
 import pytest
+
 from pathql.actions import file_actions
 from pathql.filters.suffix import Suffix
 from pathql.query import Query
@@ -127,9 +129,7 @@ def test_delete_files_flat(test_dirs: tuple[pathlib.Path, pathlib.Path]):
     """Test deleting flat files from source."""
 
     # Arrange
-    source: pathlib.Path
-    destination: pathlib.Path
-    source, destination = test_dirs
+    source, _ = test_dirs 
     q = Query(Suffix() == "txt")
     files = list(q.files(source, recursive=False))
 
@@ -145,9 +145,7 @@ def test_delete_files_nested(test_dirs: tuple[pathlib.Path, pathlib.Path]):
     """Test deleting nested files from source."""
 
     # Arrange
-    source: pathlib.Path
-    destination: pathlib.Path
-    source, destination = test_dirs
+    source, _ = test_dirs
     q = Query(Suffix() == "txt")
     files = list(q.files(source, recursive=True))
 

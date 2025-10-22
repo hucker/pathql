@@ -4,20 +4,14 @@ All functions operate on lists of pathlib.Path objects (or ResultSet).
 """
 
 from .file_actions import (
-    copy_files,
-    delete_files,
-    move_files,
     EXCEPTIONS,
     FileActionResult,
     combine_results,
+    copy_files,
+    delete_files,
+    move_files,
 )
-
-from .zip import (
-    zip_files,
-    zip_delete_files,
-    zip_move_files,
-    zip_copy_files,
-)
+from .zip import zip_copy_files, zip_delete_files, zip_files, zip_move_files
 
 __all__ = [
     "copy_files",

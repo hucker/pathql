@@ -1,9 +1,11 @@
 import pathlib
-import pytest
 import zipfile
+
+import pytest
+
 from pathql.actions import zip as zip_actions
-from pathql.query import Query
 from pathql.filters import Suffix
+from pathql.query import Query
 
 TREE = {
     "src": [
