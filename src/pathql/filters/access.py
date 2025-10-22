@@ -12,17 +12,22 @@ is determined by file extension and access, not a permission bit.
 
 import os
 import pathlib
-from .base import Filter
+
 from .alias import DatetimeOrNone, StatResultOrNone
+from .base import Filter
+
 
 class Read(Filter):
     """
     Filter that matches if the file is readable by the current user.
     """
-    def match(self,
-              path: pathlib.Path,
-              now: DatetimeOrNone = None,
-              stat_result: StatResultOrNone = None) -> bool:
+
+    def match(
+        self,
+        path: pathlib.Path,
+        now: DatetimeOrNone = None,
+        stat_result: StatResultOrNone = None,
+    ) -> bool:
         return os.access(path, os.R_OK)
 
 
@@ -30,10 +35,13 @@ class Write(Filter):
     """
     Filter that matches if the file is writable by the current user.
     """
-    def match(self,
-              path: pathlib.Path,
-              now: DatetimeOrNone = None,
-              stat_result: StatResultOrNone = None) -> bool:
+
+    def match(
+        self,
+        path: pathlib.Path,
+        now: DatetimeOrNone = None,
+        stat_result: StatResultOrNone = None,
+    ) -> bool:
         return os.access(path, os.W_OK)
 
 
@@ -41,14 +49,17 @@ class Execute(Filter):
     """
     Filter that matches if the file is executable by the current user.
     """
-    def match(self,
-              path: pathlib.Path,
-              now: DatetimeOrNone = None,
-              stat_result: StatResultOrNone = None) -> bool:
+
+    def match(
+        self,
+        path: pathlib.Path,
+        now: DatetimeOrNone = None,
+        stat_result: StatResultOrNone = None,
+    ) -> bool:
         return os.access(path, os.X_OK)
 
-Exec = Execute
 
+Exec = Execute
 
 
 # Composite filters for convenience (instances)
@@ -59,6 +70,7 @@ def RdWt() -> Filter:
     """
     return Read() & Write()
 
+
 def RdWtEx() -> Filter:
     """
     Composite filter: matches files that are readable, writable, and executable by the current user.
@@ -66,6 +78,9 @@ def RdWtEx() -> Filter:
     """
     return Read() & Write() & Execute()
 
+
 # Instance-level composability for idiomatic usage
+ReadWrite = Read() & Write()
+ReadWriteExec = Read() & Write() & Execute()
 ReadWrite = Read() & Write()
 ReadWriteExec = Read() & Write() & Execute()

@@ -1,4 +1,5 @@
 import pathlib
+
 from pathql.actions import zip_matches
 
 
@@ -16,4 +17,3 @@ def test_zip_matches_dry_run(tmp_path: pathlib.Path) -> None:
     matches = zip_matches(d, lambda root: root.iterdir(), z, dry_run=True)
     assert set(matches) == {f1, f2}
     assert not z.exists()
-

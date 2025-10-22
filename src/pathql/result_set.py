@@ -19,13 +19,16 @@ allowing users to perform complex queries and aggregations on file systems or ot
 data sources.
 """
 
-import heapq
-import statistics
-import pathlib
-from typing import Callable, Any, Optional
 import datetime as dt
+import heapq
+import pathlib
+import statistics
+from typing import Any, Callable, Optional
+
 from .result_fields import ResultField
+
 # scalar_aggregate is not used in this module; removed unused import
+
 
 class ResultSet(list[pathlib.Path]):
     """
@@ -57,7 +60,7 @@ class ResultSet(list[pathlib.Path]):
         elif field == ResultField.STEM:
             return lambda f: f.stem
         elif field == ResultField.PATH:
-            return str #lambda f: str(f)
+            return str  # lambda f: str(f)
         elif field == ResultField.PARENT:
             return lambda f: str(f.parent)
         elif field == ResultField.PARENTS:
@@ -95,17 +98,18 @@ class ResultSet(list[pathlib.Path]):
         """Return the count of items in the result set."""
         return len(self)
 
-    def sort_(self, field: ResultField, ascending: bool = True) -> 'ResultSet':
+    def sort_(self, field: ResultField, ascending: bool = True) -> "ResultSet":
         """Sort the result set based on a key and order."""
         key = self._get_key(field)
         return ResultSet(sorted(self, key=key, reverse=not ascending))
 
-    def top_n(self, field: ResultField, n: int) -> 'ResultSet':
+    def top_n(self, field: ResultField, n: int) -> "ResultSet":
         """Return the top N items from the result set."""
         key = self._get_key(field)
         return ResultSet(heapq.nlargest(n, self, key=key))
 
-    def bottom_n(self, field: ResultField, n: int) -> 'ResultSet':
+    def bottom_n(self, field: ResultField, n: int) -> "ResultSet":
         """Return the bottom N items from the result set."""
         key = self._get_key(field)
         return ResultSet(heapq.nsmallest(n, self, key=key))
+ 

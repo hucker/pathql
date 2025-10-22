@@ -4,28 +4,52 @@ These filters match files by parts of their modification, creation, or access
 timestamp. Constructors validate and normalize the `attr` once; `match()` uses
 the canonical attribute name.
 """
+
 import datetime as dt
 import pathlib
 
 from dateutil.relativedelta import relativedelta
 
-from .base import Filter
 from .alias import DatetimeOrNone, StatResultOrNone
+from .base import Filter
 
 MONTH_NAME_TO_NUM: dict[str | int, int] = {
-    "jan": 1, "january": 1, 1:1,
-    "feb": 2, "february": 2, 2:2,
-    "mar": 3, "march": 3, 3:3,
-    "apr": 4, "april": 4, 4:4,
-    "may": 5, 5:5,
-    "jun": 6, "june": 6, 6:6,
-    "jul": 7, "july": 7, 7:7,
-    "aug": 8, "august": 8, 8:8,
-    "sep": 9, "sept": 9, "september": 9, 9:9,
-    "oct": 10, "october": 10, 10:10,
-    "nov": 11, "november": 11, 11:11,
-    "dec": 12, "december": 12, 12:12,
-
+    "jan": 1,
+    "january": 1,
+    1: 1,
+    "feb": 2,
+    "february": 2,
+    2: 2,
+    "mar": 3,
+    "march": 3,
+    3: 3,
+    "apr": 4,
+    "april": 4,
+    4: 4,
+    "may": 5,
+    5: 5,
+    "jun": 6,
+    "june": 6,
+    6: 6,
+    "jul": 7,
+    "july": 7,
+    7: 7,
+    "aug": 8,
+    "august": 8,
+    8: 8,
+    "sep": 9,
+    "sept": 9,
+    "september": 9,
+    9: 9,
+    "oct": 10,
+    "october": 10,
+    10: 10,
+    "nov": 11,
+    "november": 11,
+    11: 11,
+    "dec": 12,
+    "december": 12,
+    12: 12,
 }
 
 ATTR_MAP: dict[str, str] = {
@@ -68,6 +92,7 @@ class YearFilter(Filter):
         self.month = base.month
         self.day = base.day
         self.attr = normalize_attr(attr)
+
     def match(
         self,
         path: pathlib.Path,
@@ -79,6 +104,7 @@ class YearFilter(Filter):
         ts = getattr(stat_result, self.attr)
         dt_obj = dt.datetime.fromtimestamp(ts)
         return dt_obj.year == self.year
+
 
 class MonthFilter(Filter):
     """Filter files by month (supports month name or number)."""
@@ -116,6 +142,7 @@ class MonthFilter(Filter):
         dt_obj = dt.datetime.fromtimestamp(ts)
         return dt_obj.year == self.year and dt_obj.month == self.month
 
+
 class DayFilter(Filter):
     """Filter files by day of month (with base/offset)."""
 
@@ -133,6 +160,7 @@ class DayFilter(Filter):
         self.month = base.month
         self.day = day
         self.attr = normalize_attr(attr)
+
     def match(
         self,
         path: pathlib.Path,
@@ -148,6 +176,7 @@ class DayFilter(Filter):
             and dt_obj.month == self.month
             and dt_obj.day == self.day
         )
+
 
 class HourFilter(Filter):
     """Filter files by hour (with base/offset)."""
@@ -167,6 +196,7 @@ class HourFilter(Filter):
         self.day = base.day
         self.hour = hour
         self.attr = normalize_attr(attr)
+
     def match(
         self,
         path: pathlib.Path,
@@ -183,6 +213,7 @@ class HourFilter(Filter):
             and dt_obj.day == self.day
             and dt_obj.hour == self.hour
         )
+
 
 class MinuteFilter(Filter):
     """Filter files by minute (with base/offset)."""
@@ -203,6 +234,7 @@ class MinuteFilter(Filter):
         self.hour = base.hour
         self.minute = minute
         self.attr = normalize_attr(attr)
+
     def match(
         self,
         path: pathlib.Path,
@@ -220,6 +252,7 @@ class MinuteFilter(Filter):
             and dt_obj.hour == self.hour
             and dt_obj.minute == self.minute
         )
+
 
 class SecondFilter(Filter):
     """Filter files by second (with base/offset)."""

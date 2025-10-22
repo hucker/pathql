@@ -5,14 +5,15 @@ This module sets up a temporary directory with test files and verifies
 CLI output for various file patterns.
 """
 
-import sys
 import os
 import pathlib
-from typing import Set, Generator
+import sys
+from typing import Generator, Set
 from unittest.mock import patch
 
-from _pytest.capture import CaptureFixture
 import pytest
+from _pytest.capture import CaptureFixture
+
 from pathql.__main__ import main
 
 
@@ -52,10 +53,11 @@ def test_dir_fixture(tmp_path: pathlib.Path) -> Generator[pathlib.Path, None, No
         ("*", {"foo.txt", "foo2.txt", "bar.py", "baz.md"}),
     ],
 )
-def test_main_repl_inprocess_cli(test_dir_fixture: pathlib.Path,
-                                 capsys: CaptureFixture[str],
-                                 pattern: str,
-                                 expected: Set[str],
+def test_main_repl_inprocess_cli(
+    test_dir_fixture: pathlib.Path,
+    capsys: CaptureFixture[str],
+    pattern: str,
+    expected: Set[str],
 ) -> None:
     """
     Test CLI output for various file patterns in the test directory.
@@ -84,4 +86,5 @@ def test_main_repl_inprocess_cli(test_dir_fixture: pathlib.Path,
         if line and not line.startswith("PathQL")
     }
     assert found == expected
+    assert "PathQL v" in captured.out
     assert "PathQL v" in captured.out

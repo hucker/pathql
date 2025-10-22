@@ -1,8 +1,11 @@
 """Tests for File filter: curly-brace extension patterns and case-insensitivity."""
 
 import pathlib
+
 import pytest
+
 from pathql.filters import File
+
 
 @pytest.mark.parametrize(
     "filename, pattern, should_match",
@@ -17,7 +20,7 @@ from pathql.filters import File
         ("foo.PnG", "foo.{jpg,png,bmp}", False),
         ("foo", "foo.{jpg,png,bmp}", False),
         ("foo.jpg.txt", "foo.{jpg,png,bmp}", False),
-    ]
+    ],
 )
 def test_file_curly_brace_suffix(
     tmp_path: pathlib.Path,
@@ -66,7 +69,7 @@ def make_file(tmp_path: pathlib.Path, name: str) -> pathlib.Path:
         # Path object as pattern (converted to str)
         ("foo.db", str(pathlib.Path("foo.db")), True),
         ("foo.db", str(pathlib.Path("other.db")), False),
-    ]
+    ],
 )
 def test_file_patterns(
     tmp_path: pathlib.Path,
@@ -80,6 +83,9 @@ def test_file_patterns(
 
     # Act and Assert
     assert File(str(pattern)).match(f) is should_match
+
+
+## as_stem_and_suffix is no longer supported in File filter
 
 
 ## as_stem_and_suffix is no longer supported in File filter

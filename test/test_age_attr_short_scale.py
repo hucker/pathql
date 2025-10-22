@@ -1,22 +1,23 @@
-"""Deterministic tests for 1-second age behaviour using injected stat_result objects.
+"""Deterministic tests for 1-second age behavior using injected stat_result objects.
 
 These tests avoid filesystem platform differences (ctime semantics) by creating a
 lightweight object with the expected `st_mtime`, `st_atime`, and `st_ctime`
 attributes and passing it via the `stat_result` parameter to the filter's
 `match()` method.
 """
+
 import datetime as dt
+import pathlib
 import types
+
 import pytest
 
-from pathql.filters.age import AgeBase
+from pathql.filters.age import AgeSeconds
 
 
-class AgeSeconds(AgeBase):
-    unit_seconds = 1.0
-
-
-def make_stat(st_mtime: float, st_atime: float | None = None, st_ctime: float | None = None):
+def make_stat(
+    st_mtime: float, st_atime: float | None = None, st_ctime: float | None = None
+):
     # create a simple object with the required attributes
     obj = types.SimpleNamespace()
     obj.st_mtime = st_mtime
@@ -25,28 +26,46 @@ def make_stat(st_mtime: float, st_atime: float | None = None, st_ctime: float | 
     return obj
 
 
-@pytest.mark.parametrize("attr_name,stat_attr", [
-    ("modified", "st_mtime"),
-    ("accessed", "st_atime"),
-    ("created", "st_ctime"),
-])
-def test_age_seconds_boundaries(attr_name: str, stat_attr: str) -> None:
+@pytest.mark.parametrize(
+    "attr_name",
+    [
+        "st_atime",
+        "st_mtime",
+        "st_ctime",
+    ],
+)
+@pytest.mark.parametrize(
+    "offset,expected_age,msg",
+    [
+        (0.999999, 0, "just below 1 second should yield unit_age == 0"),
+        (1.0, 1, "exactly 1 second should yield unit_age == 1"),
+        (1.000001, 1, "just above 1 second should yield unit_age == 1"),
+    ],
+)
+def test_age_seconds_boundaries(attr_name: str, offset: float, expected_age: int, msg: str) -> None:
+    """
+    Test AgeSeconds filter at 1-second boundaries using injected stat_result.
+
+    This tests verifies that just below the integer boundary yields the lower age,
+    exactly at the boundary yields the expected age, and just above the boundary
+    still yields the expected age.
+    """
+
+    # Arrange
     now = dt.datetime(2025, 10, 21, 12, 0, 0)
 
-    # just-below 1 second: age < 1 -> unit_age == 0
-    just_below_ts = (now - dt.timedelta(seconds=0.000001)).timestamp()
-    st = make_stat(st_mtime=just_below_ts)
-    f = AgeSeconds(attr=attr_name) == 0
-    assert f.match(path=None, now=now, stat_result=st)
+    def stat_for_attr(attr_name: str, ts: float):
+        if "mtime" in attr_name or "mod" in attr_name:
+            return make_stat(st_mtime=ts)
+        if "atime" in attr_name or "access" in attr_name:
+            return make_stat(st_mtime=now.timestamp(), st_atime=ts)
+        # default to ctime/created
+        return make_stat(st_mtime=now.timestamp(), st_ctime=ts)
 
-    # exactly 1 second ago -> unit_age == 1
-    exact_ts = (now - dt.timedelta(seconds=1)).timestamp()
-    st = make_stat(st_mtime=exact_ts)
-    f = AgeSeconds(attr=attr_name) == 1
-    assert f.match(path=None, now=now, stat_result=st)
+    ts = (now - dt.timedelta(seconds=offset)).timestamp()
+    st = stat_for_attr(attr_name, ts)
+    f = AgeSeconds(attr=attr_name) == expected_age
+    dummy_path = pathlib.Path('dummy')
 
-    # just-above 1 second (1.000001) -> unit_age == 1
-    just_above_ts = (now - dt.timedelta(seconds=1.000001)).timestamp()
-    st = make_stat(st_mtime=just_above_ts)
-    f = AgeSeconds(attr=attr_name) == 1
-    assert f.match(path=None, now=now, stat_result=st)
+    # Act & Assert
+    assert f.match(path=dummy_path, now=now, stat_result=st), f"{attr_name}: {msg}"

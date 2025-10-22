@@ -8,13 +8,13 @@ cross-platform, and parameterizes tests to ensure each filter matches the correc
 files.
 """
 
-from pathlib import Path
 import sys
+from pathlib import Path
 from typing import Dict, List
+
 import pytest
-from pathql.filters import Read, Write, Execute, RdWt, RdWtEx, Filter
 
-
+from pathql.filters import Execute, Filter, RdWt, RdWtEx, Read, Write
 
 # Platform-specific expected filenames for each filter.
 #
@@ -41,6 +41,7 @@ expected_files_win = {
 # Select the correct table for the current platform
 table = expected_files_win if sys.platform == "win32" else expected_files_unix
 
+
 @pytest.mark.parametrize(
     "filter_obj,expected_files",
     [
@@ -49,7 +50,7 @@ table = expected_files_win if sys.platform == "win32" else expected_files_unix
         (Execute(), table["Execute"]),
         (RdWt(), table["RdWt"]),
         (RdWtEx(), table["RdWtEx"]),
-    ]
+    ],
 )
 def test_access_matrix(
     access_matrix: Dict[str, Path], filter_obj: Filter, expected_files: List[str]
@@ -65,7 +66,11 @@ def test_access_matrix(
     expected_set = set(expected_files)
 
     # Act
-    actual_set  = {fname for fname, fpath in access_matrix.items() if filter_obj.match(fpath)}
+    actual_set = {
+        fname for fname, fpath in access_matrix.items() if filter_obj.match(fpath)
+    }
 
     # Assert
-    assert actual_set == expected_set, f"Filter {filter_obj} matched {actual_set}, expected {expected_set}"
+    assert actual_set == expected_set, (
+        f"Filter {filter_obj} matched {actual_set}, expected {expected_set}"
+    )

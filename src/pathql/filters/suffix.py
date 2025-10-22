@@ -3,23 +3,27 @@ Suffix filter for matching file extensions (suffixes) using glob patterns.
 Supports declarative, pathlib-like queries for filesystem filtering.
 Includes operator overloads and curly-brace expansion for extension sets.
 """
+
+import fnmatch
 import pathlib
 import re
-import fnmatch
 
+from .alias import DatetimeOrNone, StatResultOrNone, StrOrListOfStr
 from .base import Filter
-from .alias import DatetimeOrNone, StatResultOrNone,StrOrListOfStr
 
 
 # Metaclass for class-level operator overloads
 class SuffixMeta(type):
     """Class-level operator overloads for Suffix filter."""
-    def __eq__(cls, other:object):
+
+    def __eq__(cls, other: object):
         """Allow Suffix == value to create a Suffix filter for that value."""
         return cls([other])
-    def __ne__(cls, other:object):
+
+    def __ne__(cls, other: object):
         """Allow Suffix != value to create an empty Suffix filter (not meaningful)."""
         return cls([])  # Not meaningful, but for completeness
+
 
 class Suffix(Filter, metaclass=SuffixMeta):
     """
@@ -33,10 +37,13 @@ class Suffix(Filter, metaclass=SuffixMeta):
         patterns (str | list[str] | None): Extensions to match (without dot).
         nosplit (bool): If True, do not split string patterns on whitespace.
     """
-    def __init__(self,
-                 patterns: StrOrListOfStr | None = None,
-                 nosplit: bool = False,
-                 ignore_case: bool = True):
+
+    def __init__(
+        self,
+        patterns: StrOrListOfStr | None = None,
+        nosplit: bool = False,
+        ignore_case: bool = True,
+    ):
         """
         Initialize a Suffix filter using fnmatch for shell-style wildcard matching.
 
@@ -51,18 +58,18 @@ class Suffix(Filter, metaclass=SuffixMeta):
         self.ignore_case = ignore_case
         pats: set[str] = set()
 
-        def norm(p:str|None):
+        def norm(p: str | None):
             """Normalize pattern: ensure leading dot, lowercase if ignore_case."""
             if not isinstance(p, str):
                 return None
             p = p.strip().lower()
-            return p if p.startswith('.') else f'.{p}'
+            return p if p.startswith(".") else f".{p}"
 
         pats: set[str] = set()
         if isinstance(patterns, str) and not nosplit:
             brace = re.search(r"\{([^}]+)\}", patterns)
             if brace:
-                base = patterns[:brace.start()]
+                base = patterns[: brace.start()]
                 exts = [e.strip() for e in brace.group(1).split(",")]
                 for ext in exts:
                     # Ignore empty entries like in '{foo,,fum}'
@@ -86,14 +93,15 @@ class Suffix(Filter, metaclass=SuffixMeta):
                 if n:
                     pats.add(n)
         self.patterns: list[str] = [p for p in pats if p]
-        self.patterns:list[str] = list(pats)
+        self.patterns: list[str] = list(pats)
         self._fnmatch = fnmatch
 
-
-    def match(self,
-              path: pathlib.Path,
-                now: DatetimeOrNone = None,
-                stat_result: StatResultOrNone = None) -> bool:
+    def match(
+        self,
+        path: pathlib.Path,
+        now: DatetimeOrNone = None,
+        stat_result: StatResultOrNone = None,
+    ) -> bool:
         """
         Check if the given path's suffix matches any of the filter's extension patterns.
         Args:
@@ -115,14 +123,13 @@ class Suffix(Filter, metaclass=SuffixMeta):
         """Check if an extension pattern is in the filter's pattern list."""
         return item in self.patterns
 
-    def __call__(self, *patterns: str) -> 'Suffix':
+    def __call__(self, *patterns: str) -> "Suffix":
         """Allow Suffix(...) to create a new Suffix filter with given patterns."""
         # Flatten if a single list/tuple is passed
         if len(patterns) == 1 and isinstance(patterns[0], (list, tuple)):
             pats = list(patterns[0])
             return Suffix(pats)
         return Suffix(list(patterns))
-
 
     def __eq__(self, other: object):
         """Equality and factory behavior.
@@ -156,12 +163,12 @@ class Suffix(Filter, metaclass=SuffixMeta):
             return self.patterns != other.patterns
         return NotImplemented
 
-    def __ror__(self, other: str | list[str]) -> 'Suffix':
+    def __ror__(self, other: str | list[str]) -> "Suffix":
         """Support set union: value | Suffix."""
         return Suffix(other)
 
     @classmethod
-    def __class_getitem__(cls, item: str | tuple[str, ...]) -> 'Suffix':
+    def __class_getitem__(cls, item: str | tuple[str, ...]) -> "Suffix":
         """Support Suffix[...] syntax to create a Suffix filter with given patterns."""
         if isinstance(item, tuple):
             return Suffix(list(item))

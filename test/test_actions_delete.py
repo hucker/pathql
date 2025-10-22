@@ -1,4 +1,5 @@
 import pathlib
+
 from pathql.actions import delete_matches
 
 
@@ -17,4 +18,5 @@ def test_delete_matches_dry_run_and_actual(tmp_path: pathlib.Path) -> None:
     # actual delete
     deleted = delete_matches(d, lambda root: root.iterdir(), dry_run=False)
     assert set(deleted) == {f1, f2}
+    assert not f1.exists() and not f2.exists()
     assert not f1.exists() and not f2.exists()

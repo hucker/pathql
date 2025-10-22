@@ -1,7 +1,9 @@
 import os
-import time
 import pathlib
-from pathql.filters import Between, AgeHours, AgeMinutes, Size
+import time
+
+from pathql.filters import AgeHours, AgeMinutes, Between, Size
+
 
 def touch(path: pathlib.Path, mtime: float | None = None) -> None:
     """Create a file and optionally set its modification time."""
@@ -10,6 +12,7 @@ def touch(path: pathlib.Path, mtime: float | None = None) -> None:
         atime = mtime
         path.stat()  # ensure file exists
         os.utime(str(path), (atime, mtime))
+
 
 def test_between_age_hours(tmp_path: pathlib.Path) -> None:
     """Between with AgeHours matches files in the provided hour range."""
@@ -27,6 +30,7 @@ def test_between_age_hours(tmp_path: pathlib.Path) -> None:
     age_above = Between(AgeHours, 3, 4)
     assert age_above.match(test_path) is False
 
+
 def test_between_age_minutes(tmp_path: pathlib.Path) -> None:
     """Between with AgeMinutes matches files in the provided minute range."""
     # Arrange
@@ -43,6 +47,7 @@ def test_between_age_minutes(tmp_path: pathlib.Path) -> None:
     min_above = Between(AgeMinutes, 121, 180)
     assert min_above.match(test_path) is False
 
+
 def test_between_size(tmp_path: pathlib.Path) -> None:
     """Between with Size matches files between the provided byte bounds."""
     # Arrange
@@ -54,5 +59,7 @@ def test_between_size(tmp_path: pathlib.Path) -> None:
     assert size_between.match(test_path) is True
     size_below = Between(Size, 0, 1000)
     assert size_below.match(test_path) is False
+    size_above = Between(Size, 2001, 3000)
+    assert size_above.match(test_path) is False
     size_above = Between(Size, 2001, 3000)
     assert size_above.match(test_path) is False

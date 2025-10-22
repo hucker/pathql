@@ -1,10 +1,13 @@
 """Extra tests for Age filters (error handling and edge cases)."""
+
 import operator
 import pathlib
+
 import pytest
 
-from pathql.filters.age import AgeDays, AgeYears, AgeHours, AgeMinutes
 from pathql.filters import Filter
+from pathql.filters.age import AgeDays, AgeHours, AgeMinutes, AgeYears
+
 
 def test_fractional_thresholds_disallowed_class_comparison():
     with pytest.raises(TypeError):
@@ -19,6 +22,7 @@ def test_fractional_thresholds_disallowed_instance_comparison():
 def test_fractional_thresholds_disallowed_direct_init():
     with pytest.raises(TypeError):
         _ = AgeMinutes(op=operator.gt, value=3.5)
+
 
 def make_file(tmp_path: pathlib.Path) -> pathlib.Path:
     """Create a temporary file for age filter tests."""
@@ -44,5 +48,7 @@ def test_age_error(
     # construction does not raise for eq/ne but match still respects semantics.
     eq_f = filter_cls(op=operator.eq, value=0)
     ne_f = filter_cls(op=operator.ne, value=1)
+    assert isinstance(eq_f, filter_cls)
+    assert isinstance(ne_f, filter_cls)
     assert isinstance(eq_f, filter_cls)
     assert isinstance(ne_f, filter_cls)

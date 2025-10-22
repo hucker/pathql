@@ -1,13 +1,14 @@
 """Tests for Query class and filter composition on a mini filesystem."""
 
-
 import pathlib
 import shutil
+
 import pytest
-from pathql.query import Query
+
 from pathql.filters.size import Size
 from pathql.filters.suffix import Suffix
 from pathql.filters.type import Type
+from pathql.query import Query
 
 
 @pytest.fixture(name="hundred_files")
@@ -129,5 +130,7 @@ def test_threaded_vs_unthreaded_equivalence_hundred(
     )
 
     # Assert
+    assert threaded == unthreaded
+    assert len(threaded) == 100
     assert threaded == unthreaded
     assert len(threaded) == 100

@@ -197,6 +197,7 @@ def test_edge():
 - **Fixtures**: Use fixtures for reusable setup logic, and document their role in the Arrange section.
 - **Assert Messages**: Include descriptive messages in assertions to aid debugging.
 - **Doc strings**: Add one-line docstring to each test function. Use more lines as needed.
+- ** AAA Comments**: There should be a new line before the Arrange Act and Assert comments
 
 ## Automatic Tooling
 - When updating code ruff in autofix mode should be run on files to ensure compliance

@@ -2,9 +2,8 @@
 
 import argparse
 import pathlib
-from pathql import File
-from pathql import Query
-from pathql import __version__
+
+from pathql import File, Query, __version__
 
 
 def main():
@@ -34,9 +33,7 @@ Use --recursive to search subdirectories.
 
     query = Query(File(args.pattern))
     print("PathQL v" + __version__)
-    for f in query.files(
-        path=pathlib.Path("."), recursive=args.recursive, files=True
-    ):
+    for f in query.files(path=pathlib.Path("."), recursive=args.recursive, files=True):
         print(f)
 
 

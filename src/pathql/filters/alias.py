@@ -9,14 +9,14 @@ static typing.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypeAlias, Type
-import os
 import datetime as dt
+import os
 import pathlib
+from typing import TYPE_CHECKING, Type, TypeAlias
 
 if TYPE_CHECKING:
     # Imports only for static type checkers — avoid runtime circular imports
-    from .age import AgeHours, AgeMinutes, AgeDays, AgeYears  # noqa: F401
+    from .age import AgeDays, AgeHours, AgeMinutes, AgeYears  # noqa: F401
     from .size import Size  # noqa: F401
 
 

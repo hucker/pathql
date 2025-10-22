@@ -9,16 +9,19 @@ This module provides reusable fixtures for testing PathQL's file query and filte
 
 All fixtures use pytest's tmp_path for automatic cleanup and cross-platform compatibility.
 """
-import sys
+
 import os
 import pathlib
+import sys
 import time
 from typing import Any, Dict, Iterator
 
 import pytest
 
 
-def _set_permissions(path: pathlib.Path, readable: bool, writable: bool, executable: bool):
+def _set_permissions(
+    path: pathlib.Path, readable: bool, writable: bool, executable: bool
+):
     if sys.platform == "win32":
         # On Windows, .exe extension for executable
         if executable:
@@ -26,8 +29,15 @@ def _set_permissions(path: pathlib.Path, readable: bool, writable: bool, executa
             path.write_bytes(path.read_bytes())
         # Read/write: Windows doesn't use chmod, but we can try
         # Note: os.chmod may not work as expected on Windows
-        mode = 0o666 if readable and writable else 0o444 \
-                     if readable else 0o222 if writable else 0o000
+        mode = (
+            0o666
+            if readable and writable
+            else 0o444
+            if readable
+            else 0o222
+            if writable
+            else 0o000
+        )
         try:
             os.chmod(path, mode)
         except OSError:
@@ -43,6 +53,7 @@ def _set_permissions(path: pathlib.Path, readable: bool, writable: bool, executa
             mode |= 0o100
         os.chmod(path, mode)
     return path
+
 
 @pytest.fixture(scope="function")
 def access_matrix(tmp_path: pathlib.Path) -> Iterator[Dict[str, pathlib.Path]]:
@@ -75,8 +86,9 @@ def access_matrix(tmp_path: pathlib.Path) -> Iterator[Dict[str, pathlib.Path]]:
         except OSError:
             pass
 
+
 @pytest.fixture(scope="function")
-def size_test_folder(tmp_path:pathlib.Path):
+def size_test_folder(tmp_path: pathlib.Path):
     """
     Create a folder with two files: 100.txt (100 bytes), 200.txt (200 bytes)
     """
@@ -85,10 +97,13 @@ def size_test_folder(tmp_path:pathlib.Path):
     f1.write_bytes(b"A" * 100)
     f2.write_bytes(b"B" * 200)
     return tmp_path
+
+
 ## Removed unused/redundant imports
 
+
 @pytest.fixture(scope="function")
-def rich_filesystem(tmp_path:pathlib.Path):
+def rich_filesystem(tmp_path: pathlib.Path):
     """
     Create a rich file system structure for testing:
     - root/
@@ -120,7 +135,7 @@ def rich_filesystem(tmp_path:pathlib.Path):
     (root / "c" / "f").mkdir(exist_ok=True)
     # Write files
     for f in files:
-        size = int(''.join(filter(str.isdigit, f.name)))
+        size = int("".join(filter(str.isdigit, f.name)))
         f.write_bytes(b"X" * size)
     # Symlink (if supported)
     try:
@@ -130,7 +145,7 @@ def rich_filesystem(tmp_path:pathlib.Path):
     # Set times: age in seconds = file size
     now = time.time()
     for f in files:
-        size = int(''.join(filter(str.isdigit, f.name)))
+        size = int("".join(filter(str.isdigit, f.name)))
         os.utime(f, (now - size, now - size))
     return root, now
 
@@ -141,7 +156,8 @@ def _create_test_files(tmp_path: pathlib.Path, files: dict[str, int]):
     """
     for name, size in files.items():
         p = tmp_path / name
-        p.write_bytes(b'x' * size)
+        p.write_bytes(b"x" * size)
+
 
 @pytest.fixture
 def test_result_files(tmp_path: pathlib.Path) -> list[pathlib.Path]:
@@ -169,6 +185,7 @@ def test_result_files(tmp_path: pathlib.Path) -> list[pathlib.Path]:
     _create_test_files(tmp_path, files)
     return [tmp_path / name for name in files]
 
+
 @pytest.fixture
 def test_result_folder(tmp_path: pathlib.Path) -> pathlib.Path:
     """
@@ -193,10 +210,13 @@ def test_result_folder(tmp_path: pathlib.Path) -> pathlib.Path:
         "middle.txt": 175,
     }
     # Ensure all files have the .txt suffix
-    files = {f"{name}.txt" if not name.endswith(".txt")\
-              else name: size for name, size in files.items()}
+    files = {
+        f"{name}.txt" if not name.endswith(".txt") else name: size
+        for name, size in files.items()
+    }
     _create_test_files(tmp_path, files)
     return tmp_path
+
 
 @pytest.fixture
 def test_result_files_with_mtime(tmp_path: pathlib.Path) -> list[pathlib.Path]:
@@ -222,8 +242,8 @@ def test_result_files_with_mtime(tmp_path: pathlib.Path) -> list[pathlib.Path]:
     now = time.time()
     for file in files:
         p: pathlib.Path = tmp_path / file["name"]
-        p.write_bytes(b'x' * file["size"])
-        mtime:float = now - (file["modification_days_offset"] * 86400)
+        p.write_bytes(b"x" * file["size"])
+        mtime: float = now - (file["modification_days_offset"] * 86400)
         os.utime(p, (mtime, mtime))
         paths.append(p)
     return paths

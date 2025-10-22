@@ -4,16 +4,18 @@ Query engine for pathql: threaded producer-consumer file search and filtering.
 This module defines the Query class, which uses a producer thread to walk the filesystem
 and a consumer (main thread) to filter files using pathql filters.
 """
+
+import datetime as dt
 import os
 import pathlib
-import threading
 import queue
-import datetime as dt
+import threading
 from typing import Iterator
 
+from .filters.alias import DatetimeOrNone, StatResultOrNone
 from .filters.base import Filter
-from .filters.alias import  StatResultOrNone, DatetimeOrNone
 from .result_set import ResultSet
+
 
 class Query(Filter):
     """
@@ -38,7 +40,7 @@ class Query(Filter):
         self,
         path: pathlib.Path,
         now: DatetimeOrNone = None,
-        stat_result: StatResultOrNone = None
+        stat_result: StatResultOrNone = None,
     ) -> bool:
         """
         Check if a single path matches the filter expression.
@@ -130,7 +132,7 @@ class Query(Filter):
         t = threading.Thread(target=producer, daemon=True)
         t.start()
         while True:
-            item:tuple[pathlib.Path,os.stat_result]|None = q.get()
+            item: tuple[pathlib.Path, os.stat_result] | None = q.get()
             if item is None:
                 break
             p, stat_result = item
@@ -176,7 +178,7 @@ class Query(Filter):
         files: bool = True,
         now: DatetimeOrNone = None,
         threaded: bool = False,
-    )->ResultSet:
+    ) -> ResultSet:
         """
         Select files into a ResultSet list of files matching the filter expression. This list
         is eagerly generated to support most aggregations.
@@ -189,4 +191,5 @@ class Query(Filter):
             threaded (bool): If True, use threaded producer-consumer model. If False,
             use single-threaded.
         """
+        return ResultSet(self.files(path, recursive, files, now, threaded))
         return ResultSet(self.files(path, recursive, files, now, threaded))

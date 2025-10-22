@@ -1,14 +1,15 @@
 """Query tests on a richer filesystem (size, suffix, stem, age, type)."""
 
-from typing import Tuple
 import datetime as dt
 from pathlib import Path
-from pathql.query import Query
-from pathql.filters.size import Size
-from pathql.filters.suffix import Suffix
-from pathql.filters.stem import Stem
+from typing import Tuple
+
 from pathql.filters.age import AgeSeconds
+from pathql.filters.size import Size
+from pathql.filters.stem import Stem
+from pathql.filters.suffix import Suffix
 from pathql.filters.type import Type
+from pathql.query import Query
 
 
 def test_all_files_bigger_than_50(

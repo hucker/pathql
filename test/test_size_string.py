@@ -2,11 +2,12 @@
 
 Follows AI_CONTEXT.md: AAA structure and clear Arrange/Act/Assert sections.
 """
+
 import pathlib
 
 import pytest
 
-from pathql.filters.size import parse_size, Size
+from pathql.filters.size import Size, parse_size
 
 
 @pytest.mark.parametrize(
@@ -25,20 +26,20 @@ from pathql.filters.size import parse_size, Size
         ("1.5 kb", int(1.5 * 1000)),
         ("2MB", 2 * 1000 * 1000),
         ("2 mb", 2 * 1000 * 1000),
-        ("1 m", 1000 ** 2),
-        ("1 g", 1000 ** 3),
-        ("1 t", 1000 ** 4),
-        ("1 p", 1000 ** 5),
+        ("1 m", 1000**2),
+        ("1 g", 1000**3),
+        ("1 t", 1000**4),
+        ("1 p", 1000**5),
         # IEC units (binary)
         ("1 KiB", 1024),
         ("1 KiB ", 1024),
         ("1 kib", 1024),
         ("1.5 KiB", int(1.5 * 1024)),
         ("3 MiB", 3 * 1024 * 1024),
-        ("1 mib", 1024 ** 2),
-        ("1 gib", 1024 ** 3),
-        ("1 tib", 1024 ** 4),
-        ("1 pib", 1024 ** 5),
+        ("1 mib", 1024**2),
+        ("1 gib", 1024**3),
+        ("1 tib", 1024**4),
+        ("1 pib", 1024**5),
         # no unit means bytes
         ("42", 42),
     ],
@@ -59,11 +60,11 @@ def test_parse_valid_values(
 @pytest.mark.parametrize(
     "inp,expected",
     [
-        ("1 PB", 1 * 1000 ** 5),
-        ("1 PiB", 1 * 1024 ** 5),
-        ("1 EB", 1 * 1000 ** 6),
+        ("1 PB", 1 * 1000**5),
+        ("1 PiB", 1 * 1024**5),
+        ("1 EB", 1 * 1000**6),
         # very large floats
-        ("1.5 PB", int(1.5 * 1000 ** 5)),
+        ("1.5 PB", int(1.5 * 1000**5)),
     ],
 )
 def test_parse_very_large_units(

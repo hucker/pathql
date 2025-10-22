@@ -4,13 +4,14 @@ These tests set file mtimes precisely using `os.utime` with timestamps computed
 from a fixed `now` datetime and exercise AgeMinutes, AgeHours, AgeDays, and
 AgeYears for the boundary values 0 and 1 unit.
 """
-import os
+
 import datetime as dt
+import os
 import pathlib
 
 import pytest
 
-from pathql.filters.age import AgeMinutes, AgeHours, AgeDays, AgeYears
+from pathql.filters.age import AgeDays, AgeHours, AgeMinutes, AgeYears
 
 
 def set_mtime(path: pathlib.Path, when: dt.datetime) -> None:
@@ -27,7 +28,9 @@ def set_mtime(path: pathlib.Path, when: dt.datetime) -> None:
         (AgeYears, 86400 * 365.25),
     ],
 )
-def test_age_boundaries(tmp_path: pathlib.Path, filter_cls: type, unit_seconds: float) -> None:
+def test_age_boundaries(
+    tmp_path: pathlib.Path, filter_cls: type, unit_seconds: float
+) -> None:
     f = tmp_path / "b.txt"
     f.write_text("x")
     now = dt.datetime.now()

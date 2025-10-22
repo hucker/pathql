@@ -1,9 +1,10 @@
 """Filter for matching filenames using shell-style glob patterns."""
 
-import pathlib
 import fnmatch
-from .base import Filter
+import pathlib
+
 from .alias import DatetimeOrNone, StatResultOrNone
+from .base import Filter
 
 
 class File(Filter):
@@ -30,3 +31,4 @@ class File(Filter):
         """Return True if the filename matches the configured pattern."""
         fname = path.name.lower() if self.ignore_case else path.name
         return fnmatch.fnmatch(fname, self.pattern)
+        

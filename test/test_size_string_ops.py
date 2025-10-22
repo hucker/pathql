@@ -1,7 +1,9 @@
 """Tests that ensure the Size operators accept string-like sizes and behave
 the same as numeric operands.
 """
+
 import pathlib
+
 import pytest
 
 from pathql.filters.size import Size, parse_size
@@ -39,4 +41,5 @@ def test_parse_size_unsupported_type_raises() -> None:
 
     # Act and Assert
     with pytest.raises(TypeError):
+        parse_size(bad_value)
         parse_size(bad_value)

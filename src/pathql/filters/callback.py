@@ -5,14 +5,15 @@ additional positional/keyword arguments. The returned object can be used as a
 factory (bind args via __call__) and the instance docstring includes the
 wrapped function's docstring plus the bound arguments.
 """
+
 from __future__ import annotations
 
 import inspect
 import pathlib
 from typing import Any, Callable
 
-from .base import Filter
 from .alias import DatetimeOrNone, StatResultOrNone
+from .base import Filter
 
 PathCallable = Callable[..., bool]
 
@@ -62,13 +63,19 @@ class PathCallback(Filter):
         pos_params = [
             p
             for p in params
-            if p.kind in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
+            if p.kind
+            in (
+                inspect.Parameter.POSITIONAL_ONLY,
+                inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            )
         ]
         var_positional = any(p.kind == inspect.Parameter.VAR_POSITIONAL for p in params)
         var_keyword = any(p.kind == inspect.Parameter.VAR_KEYWORD for p in params)
 
         if not pos_params and not var_positional:
-            raise TypeError("callback must accept at least one positional argument for the path")
+            raise TypeError(
+                "callback must accept at least one positional argument for the path"
+            )
 
         # Do not require all positional parameters to be bound now (factory pattern).
         # Only ensure we haven't bound too many positional args.
@@ -83,16 +90,20 @@ class PathCallback(Filter):
         allowed_kw = {
             p.name
             for p in params
-            if p.kind in (inspect.Parameter.POSITIONAL_OR_KEYWORD, inspect.Parameter.KEYWORD_ONLY)
+            if p.kind
+            in (inspect.Parameter.POSITIONAL_OR_KEYWORD, inspect.Parameter.KEYWORD_ONLY)
         }
         required_kwonly = [
             p.name
             for p in params
-            if p.kind == inspect.Parameter.KEYWORD_ONLY and p.default is inspect.Parameter.empty
+            if p.kind == inspect.Parameter.KEYWORD_ONLY
+            and p.default is inspect.Parameter.empty
         ]
         missing_kwonly = [k for k in required_kwonly if k not in self.kwargs]
         if missing_kwonly:
-            raise TypeError(f"{func!r} missing required keyword-only args: {missing_kwonly}")
+            raise TypeError(
+                f"{func!r} missing required keyword-only args: {missing_kwonly}"
+            )
         for key in self.kwargs:
             if key not in allowed_kw and not var_keyword:
                 raise TypeError(f"{func!r} got unexpected keyword argument '{key}'")
@@ -154,12 +165,18 @@ class MatchCallback(PathCallback):
         pos_params = [
             p
             for p in params
-            if p.kind in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
+            if p.kind
+            in (
+                inspect.Parameter.POSITIONAL_ONLY,
+                inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            )
         ]
 
         # Need to ensure there are at least 3 positional slots for path, now, stat
         if not var_positional and len(pos_params) < 3:
-            raise TypeError("callback must accept at least three positional args: path, now, stat_result")
+            raise TypeError(
+                "callback must accept at least three positional args: path, now, stat_result"
+            )
 
         # Delegate the rest of the validation/binding to PathCallback
         super().__init__(func, *args, **kwargs)

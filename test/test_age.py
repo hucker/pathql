@@ -1,15 +1,17 @@
 """Tests for Age filters: minutes, hours, days, and years."""
 
-import os
 import datetime as dt
 import operator
+import os
 import pathlib
 from typing import Callable
+
 import pytest
 
 from pathql.filters.age import AgeDays, AgeHours, AgeMinutes, AgeYears
-from pathql.filters.base import Filter
 from pathql.filters.alias import DatetimeOrNone
+from pathql.filters.base import Filter
+
 
 def set_mtime_minutes_ago(
     path: pathlib.Path,
@@ -23,6 +25,7 @@ def set_mtime_minutes_ago(
     ts = ago.timestamp()
     os.utime(path, (ts, ts))
 
+
 def set_mtime_hours_ago(
     path: pathlib.Path,
     hours: float,
@@ -35,6 +38,7 @@ def set_mtime_hours_ago(
     ts = ago.timestamp()
     os.utime(path, (ts, ts))
 
+
 def set_mtime_days_ago(
     path: pathlib.Path,
     days: float,
@@ -46,6 +50,7 @@ def set_mtime_days_ago(
     ago = now - dt.timedelta(days=days)
     ts = ago.timestamp()
     os.utime(path, (ts, ts))
+
 
 def set_mtime_years_ago(
     path: pathlib.Path,
@@ -61,8 +66,6 @@ def set_mtime_years_ago(
     os.utime(path, (ts, ts))
 
 
-
-
 # Parameterized test for all age filters and operators
 @pytest.mark.parametrize(
     "filter_cls,setter,unit",
@@ -71,7 +74,7 @@ def set_mtime_years_ago(
         (AgeHours, set_mtime_hours_ago, 1),
         (AgeDays, set_mtime_days_ago, 1),
         (AgeYears, set_mtime_years_ago, 1),
-    ]
+    ],
 )
 @pytest.mark.parametrize(
     "op,expected_below,expected_exact,expected_above",
@@ -81,7 +84,7 @@ def set_mtime_years_ago(
         (operator.le, True, True, True),
         (operator.ge, False, True, True),
         (operator.gt, False, False, False),
-    ]
+    ],
 )
 def test_age_thresholds(
     tmp_path: pathlib.Path,
@@ -125,7 +128,7 @@ def test_age_thresholds(
         (AgeHours, set_mtime_hours_ago, 1),
         (AgeDays, set_mtime_days_ago, 1),
         (AgeYears, set_mtime_years_ago, 1),
-    ]
+    ],
 )
 def test_age_filter_eq_ne_behaviour(
     tmp_path: pathlib.Path,
@@ -149,5 +152,7 @@ def test_age_filter_eq_ne_behaviour(
 
     # Exactly at 1 unit -> unit_age == 1
     setter(f, unit, now)
+    assert operator.eq(filter_cls(), 1).match(f, now=now)
+    assert not operator.ne(filter_cls(), 1).match(f, now=now)
     assert operator.eq(filter_cls(), 1).match(f, now=now)
     assert not operator.ne(filter_cls(), 1).match(f, now=now)

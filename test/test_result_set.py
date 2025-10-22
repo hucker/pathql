@@ -1,10 +1,12 @@
 """Tests for ResultSet aggregations (min/max/top_n/sort/average/median/count)."""
 
 import pathlib
+
 import pytest
-from pathql.result_set import ResultSet, ResultField
-from pathql.query import Query
+
 from pathql.filters.suffix import Suffix
+from pathql.query import Query
+from pathql.result_set import ResultField, ResultSet
 
 
 @pytest.mark.usefixtures("test_result_files")

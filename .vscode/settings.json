@@ -27,11 +27,20 @@
         "relativedelta",
         "shieldsio",
         "timedelta"
-    ]
-    ,
+    ],
     "python.analysis.extraPaths": [
         "src"
     ],
     "python.terminal.activateEnvironment": true,
-    "python.linting.pylintArgs": ["--rcfile=pylint.ini"]
+    "python.linting.pylintArgs": [
+        "--rcfile=pylint.ini"
+    ],
+    "[python]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit",
+            "source.organizeImports": "explicit"
+        }
+    }
 }

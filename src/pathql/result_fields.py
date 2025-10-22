@@ -5,6 +5,7 @@ from enum import Enum, auto
 
 class ResultField(Enum):
     """Named result fields that can be projected in query output."""
+
     SIZE = auto()
     MTIME = auto()
     CTIME = auto()

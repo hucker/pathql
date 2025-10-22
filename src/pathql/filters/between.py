@@ -1,10 +1,9 @@
 """Filters to match values between two bounds (lower inclusive, upper exclusive)."""
+
 import pathlib
-from .alias import DatetimeOrNone, StatResultOrNone
+
+from .alias import DatetimeOrNone, NumericFilterType, StatResultOrNone
 from .base import Filter
-from .alias import NumericFilterType
-
-
 
 
 class Between(Filter):
@@ -16,6 +15,7 @@ class Between(Filter):
 
     This matches values x such that lower <= x < upper.
     """
+
     def __init__(
         self,
         filter_cls: NumericFilterType,  # Not all Filters support comparisons

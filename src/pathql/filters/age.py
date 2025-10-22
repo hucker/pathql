@@ -27,13 +27,13 @@ better on Windows than on Unix-like systems.
 
 import datetime as dt
 import math
+import numbers
 import operator
 import pathlib
 from typing import Callable
-import numbers
 
+from .alias import DatetimeOrNone, IntOrFloat, IntOrFloatOrNone, StatResultOrNone
 from .base import Filter
-from .alias import DatetimeOrNone, StatResultOrNone, IntOrFloat, IntOrFloatOrNone
 from .datetime_parts import normalize_attr
 
 
@@ -84,39 +84,63 @@ class AgeBase(Filter):
     def __le__(self, other: IntOrFloat):
         # Require an instance for comparisons (disallow `AgeDays <= 5`)
         if isinstance(self, type):
-            raise TypeError(f"{self.__name__} must be instantiated before comparison; use {self.__name__}() <= value")
+            raise TypeError(
+                f"{self.__name__} must be instantiated before comparison; use {self.__name__}() <= value"
+            )
         cls_obj = self.__class__
-        return cls_obj(op=operator.le, value=other, attr=getattr(self, "attr", "modified"))
+        return cls_obj(
+            op=operator.le, value=other, attr=getattr(self, "attr", "modified")
+        )
 
     def __lt__(self, other: IntOrFloat):
         if isinstance(self, type):
-            raise TypeError(f"{self.__name__} must be instantiated before comparison; use {self.__name__}() < value")
+            raise TypeError(
+                f"{self.__name__} must be instantiated before comparison; use {self.__name__}() < value"
+            )
         cls_obj = self.__class__
-        return cls_obj(op=operator.lt, value=other, attr=getattr(self, "attr", "modified"))
+        return cls_obj(
+            op=operator.lt, value=other, attr=getattr(self, "attr", "modified")
+        )
 
     def __ge__(self, other: IntOrFloat):
         if isinstance(self, type):
-            raise TypeError(f"{self.__name__} must be instantiated before comparison; use {self.__name__}() >= value")
+            raise TypeError(
+                f"{self.__name__} must be instantiated before comparison; use {self.__name__}() >= value"
+            )
         cls_obj = self.__class__
-        return cls_obj(op=operator.ge, value=other, attr=getattr(self, "attr", "modified"))
+        return cls_obj(
+            op=operator.ge, value=other, attr=getattr(self, "attr", "modified")
+        )
 
     def __gt__(self, other: IntOrFloat):
         if isinstance(self, type):
-            raise TypeError(f"{self.__name__} must be instantiated before comparison; use {self.__name__}() > value")
+            raise TypeError(
+                f"{self.__name__} must be instantiated before comparison; use {self.__name__}() > value"
+            )
         cls_obj = self.__class__
-        return cls_obj(op=operator.gt, value=other, attr=getattr(self, "attr", "modified"))
+        return cls_obj(
+            op=operator.gt, value=other, attr=getattr(self, "attr", "modified")
+        )
 
     def __eq__(self, other: IntOrFloat):  # type: ignore[override]
         if isinstance(self, type):
-            raise TypeError(f"{self.__name__} must be instantiated before comparison; use {self.__name__}() == value")
+            raise TypeError(
+                f"{self.__name__} must be instantiated before comparison; use {self.__name__}() == value"
+            )
         cls_obj = self.__class__
-        return cls_obj(op=operator.eq, value=other, attr=getattr(self, "attr", "modified"))
+        return cls_obj(
+            op=operator.eq, value=other, attr=getattr(self, "attr", "modified")
+        )
 
     def __ne__(self, other: IntOrFloat):  # type: ignore[override]
         if isinstance(self, type):
-            raise TypeError(f"{self.__name__} must be instantiated before comparison; use {self.__name__}() != value")
+            raise TypeError(
+                f"{self.__name__} must be instantiated before comparison; use {self.__name__}() != value"
+            )
         cls_obj = self.__class__
-        return cls_obj(op=operator.ne, value=other, attr=getattr(self, "attr", "modified"))
+        return cls_obj(
+            op=operator.ne, value=other, attr=getattr(self, "attr", "modified")
+        )
 
     def match(
         self,
@@ -161,6 +185,7 @@ class AgeMinutes(AgeBase):
         AgeMinutes == 0   # files younger than 1 minute
         AgeMinutes <= 5   # files up to 5 minutes old (0..5)
     """
+
     unit_seconds = 60.0
 
 
@@ -173,6 +198,7 @@ class AgeSeconds(AgeBase):
         AgeSeconds == 0   # files younger than 1 second
         AgeSeconds > 20   # files older than 20 seconds
     """
+
     unit_seconds = 1.0
 
 
@@ -185,6 +211,7 @@ class AgeHours(AgeBase):
         AgeHours == 0   # files younger than 1 hour
         AgeHours >= 24  # files at least 24 hours old
     """
+
     unit_seconds = 3600.0
 
 
@@ -197,6 +224,7 @@ class AgeDays(AgeBase):
         AgeDays == 0   # files younger than 1 day
         AgeDays > 365  # files older than 365 days
     """
+
     unit_seconds = 60.0 * 60.0 * 24.0
 
 
@@ -207,4 +235,5 @@ class AgeYears(AgeBase):
     integer year count before comparison. Use for coarse-grained year-based
     queries (not for precise calendrical arithmetic).
     """
+
     unit_seconds = 60.0 * 60.0 * 24.0 * 365.25

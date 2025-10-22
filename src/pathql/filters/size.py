@@ -2,16 +2,16 @@
 
 from __future__ import annotations
 
-import re
 import pathlib
-from typing import Callable, Mapping, Final, Pattern
+import re
 from types import NotImplementedType
+from typing import Callable, Final, Mapping, Pattern
+
 from .alias import DatetimeOrNone, IntOrNone, StatResultOrNone
 from .base import Filter
 
-
 # Accept ints, floats, or strings like "1.5 kb". Default to binary units (KB=1024).
-_SIZE_RE_STRING =r"^\s*([0-9]+(?:\.[0-9]+)?)\s*([kmgtpe]?i?b?|b)?\s*$"
+_SIZE_RE_STRING = r"^\s*([0-9]+(?:\.[0-9]+)?)\s*([kmgtpe]?i?b?|b)?\s*$"
 _SIZE_RE: Final[Pattern[str]] = re.compile(_SIZE_RE_STRING, re.IGNORECASE)
 
 
@@ -22,25 +22,25 @@ _UNIT_MULTIPLIERS: Final[Mapping[str, int]] = {
     # SI (decimal) for plain suffixes
     "k": 1000,
     "kb": 1000,
-    "m": 1000 ** 2,
-    "mb": 1000 ** 2,
-    "g": 1000 ** 3,
-    "gb": 1000 ** 3,
-    "t": 1000 ** 4,
-    "tb": 1000 ** 4,
-    "p": 1000 ** 5,
-    "pb": 1000 ** 5,
-    "e": 1000 ** 6,
-    "eb": 1000 ** 6,
-    "zb": 1000 ** 9,
+    "m": 1000**2,
+    "mb": 1000**2,
+    "g": 1000**3,
+    "gb": 1000**3,
+    "t": 1000**4,
+    "tb": 1000**4,
+    "p": 1000**5,
+    "pb": 1000**5,
+    "e": 1000**6,
+    "eb": 1000**6,
+    "zb": 1000**9,
     # IEC (binary) for explicit "i" suffixes
     "kib": 1024,
-    "mib": 1024 ** 2,
-    "gib": 1024 ** 3,
-    "tib": 1024 ** 4,
-    "pib": 1024 ** 5,
-    "eib": 1024 ** 6,
-    "zib": 1024 ** 9,
+    "mib": 1024**2,
+    "gib": 1024**3,
+    "tib": 1024**4,
+    "pib": 1024**5,
+    "eib": 1024**6,
+    "zib": 1024**9,
 }
 
 
@@ -90,6 +90,7 @@ def parse_size(value: object) -> int:
 
 class Size(Filter):
     """Filter for file size (in bytes)."""
+
     def __init__(
         self,
         op: Callable[[int, int], bool] | None = None,
@@ -101,6 +102,7 @@ class Size(Filter):
         """
         self.op: Callable[[int, int], bool] | None = op
         self.value: IntOrNone = value
+
     def match(
         self,
         path: pathlib.Path,

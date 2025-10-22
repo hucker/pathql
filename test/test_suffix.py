@@ -4,13 +4,12 @@ import pathlib
 from typing import Type
 
 import pytest
-from pathql.filters.suffix import Suffix, Ext
+
 from pathql.filters.base import Filter
+from pathql.filters.suffix import Ext, Suffix
 
 
-
-
-@pytest.mark.parametrize("suffix_class",[Suffix, Ext])
+@pytest.mark.parametrize("suffix_class", [Suffix, Ext])
 def test_suffix_eq(suffix_class: Type[Filter]) -> None:
     """Equality matching for Suffix/Ext filters."""
     # Arrange
@@ -20,7 +19,8 @@ def test_suffix_eq(suffix_class: Type[Filter]) -> None:
     assert suffix_class("txt").match(f)
     assert not suffix_class("md").match(f)
 
-@pytest.mark.parametrize("suffix_class",[Suffix, Ext])
+
+@pytest.mark.parametrize("suffix_class", [Suffix, Ext])
 def test_suffix_multiple(suffix_class: Type[Filter]) -> None:
     """Multiple extension matching works for Suffix/Ext."""
     # Arrange
@@ -32,7 +32,8 @@ def test_suffix_multiple(suffix_class: Type[Filter]) -> None:
     assert suffix_filter.match(f1)
     assert suffix_filter.match(f2)
 
-@pytest.mark.parametrize("suffix_class",[Suffix, Ext])
+
+@pytest.mark.parametrize("suffix_class", [Suffix, Ext])
 def test_suffix_case_insensitive(suffix_class: Type[Filter]) -> None:
     """Suffix and Ext are case-insensitive by default."""
     # Arrange
@@ -43,7 +44,7 @@ def test_suffix_case_insensitive(suffix_class: Type[Filter]) -> None:
     assert suffix_class("TXT").match(f)
 
 
-@pytest.mark.parametrize("suffix_class",[Suffix, Ext])
+@pytest.mark.parametrize("suffix_class", [Suffix, Ext])
 def test_suffix_no_extension(suffix_class: Type[Filter]) -> None:
     """No extension file does not match suffix filters."""
     # Arrange
@@ -53,7 +54,7 @@ def test_suffix_no_extension(suffix_class: Type[Filter]) -> None:
     assert not suffix_class("txt").match(f)
 
 
-@pytest.mark.parametrize("suffix_class",[Suffix, Ext])
+@pytest.mark.parametrize("suffix_class", [Suffix, Ext])
 def test_suffix_whitespace_split(suffix_class: Type[Filter]) -> None:
     """Whitespace-separated patterns match multiple extensions."""
     # Arrange
@@ -67,7 +68,7 @@ def test_suffix_whitespace_split(suffix_class: Type[Filter]) -> None:
     assert not suffix_filter.match(pathlib.Path("baz.md"))
 
 
-@pytest.mark.parametrize("suffix_class",[Suffix, Ext])
+@pytest.mark.parametrize("suffix_class", [Suffix, Ext])
 def test_suffix_nosplit(suffix_class: Type[Filter]) -> None:
     """Nosplit matches exact multi-word suffixes only when nosplit=True."""
     # Arrange
@@ -80,7 +81,7 @@ def test_suffix_nosplit(suffix_class: Type[Filter]) -> None:
     assert not suffix_filter2.match(f)
 
 
-@pytest.mark.parametrize("suffix_class",[Suffix, Ext])
+@pytest.mark.parametrize("suffix_class", [Suffix, Ext])
 def test_suffix_dot_prefix_equivalence(suffix_class: Type[Suffix | Ext]) -> None:
     """Dot-prefixed and non-prefixed extensions are equivalent."""
     # Arrange
@@ -105,7 +106,7 @@ def test_suffix_dot_prefix_equivalence(suffix_class: Type[Suffix | Ext]) -> None
     assert not suffix_class([".png"]).match(f)
 
 
-@pytest.mark.parametrize("suffix_class",[Suffix, Ext])
+@pytest.mark.parametrize("suffix_class", [Suffix, Ext])
 def test_suffix_multi_part_extensions(suffix_class) -> None:
     """Multi-part extension matching behaves as expected for Suffix/Ext."""
     # Arrange

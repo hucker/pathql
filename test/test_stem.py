@@ -1,8 +1,10 @@
 """Tests for Stem and Name filters (equality, multiple, and wildcard)."""
 
 import pathlib
+
 import pytest
-from pathql.filters.stem import Stem, Name
+
+from pathql.filters.stem import Name, Stem
 
 
 @pytest.mark.parametrize("cls", [Stem, Name])
@@ -84,5 +86,7 @@ def test_stem_fnmatch_patterns(cls: type) -> None:
     assert not cls("*1").match(f5)
     assert cls("bar").match(f6)
     assert not cls("bar").match(f7)
+    assert cls("[a-z][a-z][a-z]", ignore_case=False).match(f8)
+    assert not cls("[a-z][a-z][a-z]", ignore_case=False).match(f9)
     assert cls("[a-z][a-z][a-z]", ignore_case=False).match(f8)
     assert not cls("[a-z][a-z][a-z]", ignore_case=False).match(f9)

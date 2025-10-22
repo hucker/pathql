@@ -3,26 +3,27 @@
 This checks SI (1000**n) and IEC (1024**n) units across a range of magnitudes and
 verifies both integer and decimal inputs behave as expected.
 """
+
 import pathlib
+
 import pytest
 
 from pathql.filters.size import Size, parse_size
-
 
 SIZES = [
     # (string form, numeric bytes)
     ("b", 1),
     ("kb", 1000),
-    ("mb", 1000 ** 2),
+    ("mb", 1000**2),
     ("KiB", 1024),
-    ("MiB", 1024 ** 2),
+    ("MiB", 1024**2),
 ]
 
 
 @pytest.mark.parametrize("unit,multiplier", SIZES)
-def test_numeric_and_string_equivalents(tmp_path: pathlib.Path,
-                                        unit: str,
-                                        multiplier: int) -> None:
+def test_numeric_and_string_equivalents(
+    tmp_path: pathlib.Path, unit: str, multiplier: int
+) -> None:
     """Verify that numeric and string size representations are equivalent for Size filter."""
     # integer equality: 1 <unit> == multiplier bytes
     p = tmp_path / f"one_{unit}.bin"
@@ -59,7 +60,9 @@ def test_large_unit_ranges(tmp_path: pathlib.Path):
 
 
 @pytest.mark.parametrize("unit,multiplier", SIZES)
-def test_decimal_string_values_truncate(tmp_path: pathlib.Path, unit: str, multiplier: int) -> None:
+def test_decimal_string_values_truncate(
+    tmp_path: pathlib.Path, unit: str, multiplier: int
+) -> None:
     # Create a file of size int(1.5 * multiplier)
     size = int(1.5 * multiplier)
     p = tmp_path / f"one_half_{unit}.bin"

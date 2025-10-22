@@ -1,13 +1,16 @@
 """Classes for filtering files by type: file, directory, link, or unknown."""
+
 import pathlib
 import stat
+
+from .alias import DatetimeOrNone, StatResultOrNone
 from .base import Filter
-from .alias import StatResultOrNone, DatetimeOrNone
 
 
 class _TypeMeta(type):
     def __eq__(cls, other):
         return Type(other)
+
     def __or__(cls, other):
         if isinstance(other, Type):
             return Type({other})
@@ -17,6 +20,7 @@ class _TypeMeta(type):
             return Type(other)
         else:
             return NotImplemented
+
     def __ror__(cls, other):
         if isinstance(other, Type):
             return Type({other})
@@ -26,6 +30,7 @@ class _TypeMeta(type):
             return Type(other)
         else:
             return NotImplemented
+
 
 class Type(Filter, metaclass=_TypeMeta):
     """
@@ -39,6 +44,7 @@ class Type(Filter, metaclass=_TypeMeta):
     Args:
         type_name (str | set[str] | None): File type(s) to match. Use Type.FILE, Type.DIRECTORY.
     """
+
     FILE: str = "file"
     DIRECTORY: str = "directory"
     LINK: str = "link"
@@ -52,20 +58,21 @@ class Type(Filter, metaclass=_TypeMeta):
             type_name (str | set[str] | None): File type(s) to match. Use Type.FILE, Type.DIRECTORY.
         """
         if isinstance(type_name, set):
-            type_names:set[str] = set(type_name)
+            type_names: set[str] = set(type_name)
         elif type_name is not None:
             type_names = {type_name}
         else:
             type_names = set()
         self.type_names: set[str] = type_names  # Defined only once here
 
-
     # WARNING: Symlink and broken symlink handling is platform-dependent and not well
     #          tested across all OSes and edge cases.
-    def match(self,
-              path: pathlib.Path,
-              now: DatetimeOrNone = None,
-              stat_result: StatResultOrNone = None) -> bool:
+    def match(
+        self,
+        path: pathlib.Path,
+        now: DatetimeOrNone = None,
+        stat_result: StatResultOrNone = None,
+    ) -> bool:
         """
         Check if the path matches any of the specified types.
         Args:
@@ -102,13 +109,11 @@ class Type(Filter, metaclass=_TypeMeta):
             # If lstat fails for any reason, treat as unknown if requested
             return Type.UNKNOWN in self.type_names
 
-
-    def __eq__(self, other: object) -> 'Type':
+    def __eq__(self, other: object) -> "Type":
         """Return a Type filter for equality comparison."""
         return Type(other)
 
-
-    def __or__(self, other: object) -> 'Type':
+    def __or__(self, other: object) -> "Type":
         """Return a Type filter for set union."""
         if isinstance(other, Type):
             return Type(self.type_names | other.type_names)
@@ -119,8 +124,7 @@ class Type(Filter, metaclass=_TypeMeta):
         else:
             return NotImplemented
 
-
-    def __ror__(self, other: object) -> 'Type':
+    def __ror__(self, other: object) -> "Type":
         """Return a Type filter for set union (reversed)."""
         if isinstance(other, Type):
             return Type(self.type_names | other.type_names)
@@ -135,6 +139,6 @@ class Type(Filter, metaclass=_TypeMeta):
         """Check if a type string is in the filter's type set."""
         return item in self.type_names
 
-    def __in__(self, items: set[str]) -> 'Type':
+    def __in__(self, items: set[str]) -> "Type":
         """Return a Type filter for set membership."""
         return Type(items)
