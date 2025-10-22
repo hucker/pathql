@@ -75,6 +75,9 @@ for f in Query(r"C:/logs", DayFilter(base=dt.datetime(year=2020,month=1,day=1)):
   - [Age Filters](#age-filters)
     - [Examples](#examples-1)
     - [More Examples: Yesterday, Last Month, and Relative Dates](#more-examples-yesterday-last-month-and-relative-dates)
+    - [File Actions](#file-actions)
+    - [Exception Handling in File Actions](#exception-handling-in-file-actions)
+  - [Zip Actions](#zip-actions)
   - [Usage Examples](#usage-examples)
     - [1. Find all PNG or BMP images under 1MB, modified in the last 10 minutes](#1-find-all-png-or-bmp-images-under-1mb-modified-in-the-last-10-minutes)
     - [2. Find all files with stem starting with "report\_" (case-insensitive)](#2-find-all-files-with-stem-starting-with-report_-case-insensitive)
@@ -486,7 +489,72 @@ for path in Query("/data", query):
 
 Ideally, if you have a datetime value in your code you will never need to deal with time spans or deltas or complex data calculations.
 
----
+
+### File Actions
+
+PathQL provides utilities for batch file operations on lists of `pathlib.Path` objects (or `ResultSet`).
+You can use a query to select files, then copy, move, or delete them:
+
+```python
+from pathql.actions import copy_files, move_files, delete_files
+from pathql.query import Query
+from pathql.filters import Suffix
+
+# Select all .txt files recursively from 'src'
+files = Query(Suffix() == "txt").select(src, recursive=True)
+destination = Path("dst")
+
+copy_files(files, destination)
+move_files(files, destination)
+delete_files(files)
+```
+
+### Exception Handling in File Actions
+
+All file actions (`copy_files`, `move_files`, `delete_files`) in PathQL are designed for robust batch processing. When you perform an action on a list of files:
+
+- **Exceptions are caught per file**: If an error occurs (such as `IOError`, `PermissionError`, `OSError`, `FileNotFoundError`, or `NotADirectoryError`), it is caught for that specific file.
+- **Result reporting**: The return value is a `FileActionResult` object, which contains:
+  - `success`: a list of files that were processed successfully.
+  - `failed`: a list of files that failed to process.
+  - `errors`: a dictionary mapping each failed file to the exception that was raised.
+  - `status`: True if `failed` list is empty.
+- **No silent failures**: By default, exceptions are caught and reported in the result object. If you set `ignore_access_exception=False`, the first exception encountered will be raised immediately.
+- **Status property**: You can check `result.status` to see if all files were processed successfully (`True` if no failures).
+
+**Example:**
+```python
+result = copy_files(files, destination)
+if not result.status:
+    print("Some files failed:")
+    for path, exc in result.errors.items():
+        print(f"{path}: {exc}")
+```
+
+This design ensures you always know which files succeeded, which failed, and why—making batch file operations safe and transparent.
+
+> **Note:** If you perform a combined action (such as `zip_move_files`), the returned `FileActionResult` will reflect the status for both the zip and the move actions. The `success`, `failed`, and `errors` fields will include results from all underlying operations.
+
+## Zip Actions
+
+You can create zip archives from lists of files, with options to preserve directory structure and chain actions (zip+delete, zip+move, zip+copy):
+
+```python
+from pathql.actions import zip_files, zip_delete_files
+from pathql.query import Query
+from pathql.filters import Suffix
+
+# Select all .txt files recursively from 'src'
+files = Query(Suffix() == "txt").select(src, recursive=True)
+root = Path("src")
+target_zip = Path("archive.zip")
+
+# Zip files to a target folder
+zip_files(files, root, target_zip, preserve_dir_structure=True)
+
+# Zip files to target folder and delete files left behind.
+zip_delete_files(files, root, target_zip)
+```
 
 ## Usage Examples
 

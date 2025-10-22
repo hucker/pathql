@@ -36,6 +36,8 @@ class Query(Filter):
         """
         self.filter_expr = filter_expr
 
+        self.results = []
+
     def match(
         self,
         path: pathlib.Path,
@@ -191,5 +193,5 @@ class Query(Filter):
             threaded (bool): If True, use threaded producer-consumer model. If False,
             use single-threaded.
         """
-        return ResultSet(self.files(path, recursive, files, now, threaded))
-        return ResultSet(self.files(path, recursive, files, now, threaded))
+        self.results = self.files(path, recursive, files, now, threaded)
+        return ResultSet(self.results)
