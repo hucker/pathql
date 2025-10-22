@@ -18,7 +18,7 @@ Print backup files older than 1 year:
 ```py
 from pathql import AgeYears, Ext, Query
 
-for f in Query("C:/logs",  (AgeYears > 1) & Ext(".bak")):
+for f in Query("C:/logs",  (AgeYears() > 1) & Ext(".bak")):
     print(f"Files to delete - {f.resolve()}")
 ```
 
@@ -28,7 +28,7 @@ Print files created today and larger than 10MB in C:\\logs: using threaded crawl
 from pathql import AgeDays, Size, Type
 
 
-for f in Query(r"C:/logs", (AgeDays == 0) & (Size() > "10 mb") & Ext("log"),threaded=True):
+for f in Query(r"C:/logs", (AgeDays() == 0) & (Size() > "10 mb") & Ext("log"),threaded=True):
     print(f"Files to zip - {f.resolve()}")
 ```
 
@@ -109,8 +109,14 @@ PathQL is a declarative, composable, and efficient query language for filesystem
 Filters are composable objects that match files based on attributes such as size, age, suffix, stem, or type. Each filter can be combined using boolean operators:
 
 **Note on Age Filters:**
-Age filters (`AgeDays`, `AgeYears`, `AgeHours`, `AgeMinutes`) only support `>=` and `<=` comparisons. The `<` and `>` operators are treated as inclusive (`<=` and `>=`).
-Equality (`==`) and inequality (`!=`) comparisons are not supported and will raise an error.
+Age filters (`AgeDays`, `AgeYears`, `AgeHours`, `AgeMinutes`) must be instantiated before applying comparisons. Use the instance form to construct configured filters. For example:
+
+- `AgeMinutes() > 10` — files older than 10 whole minutes.
+- `AgeDays() == 0` — files younger than one day (unit-age equals 0).
+
+Do not use class-level comparisons such as `AgeMinutes > 10`. Instead instantiate the filter (e.g. `AgeMinutes() > 10`). This ensures any instance-level configuration (like `attr="created"`) is preserved when the comparison is made.
+
+These filters operate on integer unit ages: the file age (in seconds) is divided by the unit size (minutes/hours/days/years) and floored to an integer before comparison.
 
 - `&` (AND)
 - `|` (OR)
@@ -226,7 +232,7 @@ from pathql.query import Query
 from pathql.filters import Suffix, AgeDays
 
 # Lazy, single-threaded: iterate matches as they are found
-q = Query(Suffix('.log') & (AgeDays > 30))
+q = Query(Suffix('.log') & (AgeDays() > 30))
 for p in q.files(pathlib.Path('/var/log'), threaded=False):
         print(p)
 
@@ -412,15 +418,15 @@ Examples:
 from pathql import AgeDays, AgeHours, AgeYears,Query
 
 # Files older than 30 days
-for p in Query("/var/log", AgeDays > 30):
+for p in Query("/var/log", AgeDays() > 30):
     print(p)
 
 # Files modified in the last 2 hours
-for p in Query("/tmp", AgeHours < 2):
+for p in Query("/tmp", AgeHours() < 2):
     print(p)
 
 # Files older than one year
-for p in Query("/archive", AgeYears >= 1):
+for p in Query("/archive", AgeYears() >= 1):
     print(p)
 
 
@@ -490,7 +496,7 @@ Ideally, if you have a datetime value in your code you will never need to deal w
 from pathql.filters import Suffix, Size, AgeMinutes
 from pathql.query import Query
 
-query = (Suffix({".png", ".bmp"}) & (Size() <= 1_000_000) & (AgeMinutes < 10))
+query = (Suffix({".png", ".bmp"}) & (Size() <= 1_000_000) & (AgeMinutes() < 10))
 for path in Query("/some/dir", query):
    print(path)
 ```
@@ -512,7 +518,7 @@ for path in Query("/data/reports", query):
 from pathql.filters import Type, AgeYears
 from pathql.query import Query
 
-query = Type("dir") & (AgeYears > 1)
+query = Type("dir") & (AgeYears() > 1)
 for path in Query("/archive", query):
    print(path)
 ```

@@ -77,9 +77,10 @@ def set_mtime_years_ago(
     "op,expected_below,expected_exact,expected_above",
     [
         (operator.lt, True, False, False),
-        (operator.le, True, True, False),
+        # With integer unit rounding, 'just above' the threshold floors to the same unit as exact
+        (operator.le, True, True, True),
         (operator.ge, False, True, True),
-        (operator.gt, False, False, True),
+        (operator.gt, False, False, False),
     ]
 )
 def test_age_thresholds(
@@ -117,8 +118,6 @@ def test_age_thresholds(
     assert result_above is expected_above
 
 
-# Test that == and != raise TypeError for age filters
-# Fixed the test to correctly check for TypeError when using == or != with filter_cls()
 @pytest.mark.parametrize(
     "filter_cls,setter,unit",
     [
@@ -128,20 +127,27 @@ def test_age_thresholds(
         (AgeYears, set_mtime_years_ago, 1),
     ]
 )
-@pytest.mark.parametrize("op", [operator.eq, operator.ne])
-def test_age_filter_eq_ne_typeerror(
+def test_age_filter_eq_ne_behaviour(
     tmp_path: pathlib.Path,
-    filter_cls: type,
+    filter_cls: type[Filter],
     setter: Callable[[pathlib.Path, float, DatetimeOrNone], None],
     unit: float,
-    op: Callable[[Filter, float], bool],
 ) -> None:
-    """Age filter equality and inequality operators raise TypeError."""
+    """Equality and inequality compare integer unit-aged values (rounded/floored).
+
+    For example, AgeDays == 0 matches files with age >= 0 and < 1 day.
+    """
     # Arrange
     f: pathlib.Path = tmp_path / "test.txt"
     f.write_text("X")
     now: DatetimeOrNone = dt.datetime.now()
+
+    # Newly created file -> unit_age == 0
+    setter(f, 0, now)
+    assert operator.eq(filter_cls(), 0).match(f, now=now)
+    assert not operator.ne(filter_cls(), 0).match(f, now=now)
+
+    # Exactly at 1 unit -> unit_age == 1
     setter(f, unit, now)
-    # Act & Assert
-    with pytest.raises(TypeError):
-        op(filter_cls(), unit)  # Removed .match() call, as op returns a bool
+    assert operator.eq(filter_cls(), 1).match(f, now=now)
+    assert not operator.ne(filter_cls(), 1).match(f, now=now)

@@ -7,7 +7,7 @@ from pathql.query import Query
 from pathql.filters.size import Size
 from pathql.filters.suffix import Suffix
 from pathql.filters.stem import Stem
-from pathql.filters.age import AgeMinutes
+from pathql.filters.age import AgeSeconds
 from pathql.filters.type import Type
 
 
@@ -38,7 +38,7 @@ def test_txt_files_older_than_20_seconds(
     root, now = rich_filesystem
     root_path = Path(root)
     now_dt = dt.datetime.fromtimestamp(now)
-    q = Query((Suffix == "txt") & (AgeMinutes() > (20/60)))
+    q = Query((Suffix == "txt") & (AgeSeconds() > 20))
 
     # Act
     files = list(q.files(root_path, recursive=True, files=True, now=now_dt))
@@ -58,7 +58,7 @@ def test_bmp_files_size_and_age(
     root, now = rich_filesystem
     root_path = Path(root)
     now_dt = dt.datetime.fromtimestamp(now)
-    q = Query((Suffix == "bmp") & (Size() > 30) & (AgeMinutes() > 0.01))
+    q = Query((Suffix == "bmp") & (Size() > 30) & (AgeSeconds() > 1))
 
     # Act
     files = list(q.files(root_path, recursive=True, files=True, now=now_dt))
@@ -97,7 +97,7 @@ def test_complex_combination(
     root, now = rich_filesystem
     root_path = Path(root)
     now_dt = dt.datetime.fromtimestamp(now)
-    q = Query((Suffix == "txt") & (Size() > 20) & (AgeMinutes() > (10/60)) & Stem(r"d"))
+    q = Query((Suffix == "txt") & (Size() > 20) & (AgeSeconds() > 10) & Stem(r"d"))
 
     # Act
     files = list(q.files(root_path, recursive=True, files=True, now=now_dt))

@@ -38,8 +38,12 @@ ATTR_MAP: dict[str, str] = {
 }
 
 
-def _normalize_attr(attr: str) -> str:
-    """Return canonical stat attribute name or raise ValueError if unknown."""
+def normalize_attr(attr: str) -> str:
+    """Return canonical stat attribute name or raise ValueError if unknown.
+
+    This function is public and normalizes friendly names like 'modified',
+    'created', 'accessed' or raw stat attribute names like 'st_mtime'.
+    """
     if attr in ATTR_MAP:
         return ATTR_MAP[attr]
     raise ValueError(
@@ -63,7 +67,7 @@ class YearFilter(Filter):
         self.year = year
         self.month = base.month
         self.day = base.day
-        self.attr = _normalize_attr(attr)
+        self.attr = normalize_attr(attr)
     def match(
         self,
         path: pathlib.Path,
@@ -92,7 +96,7 @@ class MonthFilter(Filter):
         self.year = base.year
         self.month = self._normalize_month(month)
         self.day = base.day
-        self.attr = _normalize_attr(attr)
+        self.attr = normalize_attr(attr)
 
     def _normalize_month(self, v: int | str) -> int:
         key = v.strip().lower() if isinstance(v, str) else v
@@ -128,7 +132,7 @@ class DayFilter(Filter):
         self.year = base.year
         self.month = base.month
         self.day = day
-        self.attr = _normalize_attr(attr)
+        self.attr = normalize_attr(attr)
     def match(
         self,
         path: pathlib.Path,
@@ -162,7 +166,7 @@ class HourFilter(Filter):
         self.month = base.month
         self.day = base.day
         self.hour = hour
-        self.attr = _normalize_attr(attr)
+        self.attr = normalize_attr(attr)
     def match(
         self,
         path: pathlib.Path,
@@ -198,7 +202,7 @@ class MinuteFilter(Filter):
         self.day = base.day
         self.hour = base.hour
         self.minute = minute
-        self.attr = _normalize_attr(attr)
+        self.attr = normalize_attr(attr)
     def match(
         self,
         path: pathlib.Path,
@@ -236,7 +240,8 @@ class SecondFilter(Filter):
         self.hour = base.hour
         self.minute = base.minute
         self.second = second
-        self.attr = _normalize_attr(attr)
+        self.attr = normalize_attr(attr)
+
     def match(
         self,
         path: pathlib.Path,

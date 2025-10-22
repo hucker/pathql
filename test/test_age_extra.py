@@ -6,6 +6,20 @@ import pytest
 from pathql.filters.age import AgeDays, AgeYears, AgeHours, AgeMinutes
 from pathql.filters import Filter
 
+def test_fractional_thresholds_disallowed_class_comparison():
+    with pytest.raises(TypeError):
+        _ = AgeDays() > 2.5
+
+
+def test_fractional_thresholds_disallowed_instance_comparison():
+    with pytest.raises(TypeError):
+        _ = AgeHours() > 1.5
+
+
+def test_fractional_thresholds_disallowed_direct_init():
+    with pytest.raises(TypeError):
+        _ = AgeMinutes(op=operator.gt, value=3.5)
+
 def make_file(tmp_path: pathlib.Path) -> pathlib.Path:
     """Create a temporary file for age filter tests."""
     file = tmp_path / "a_file.txt"
@@ -26,9 +40,9 @@ def test_age_error(
     # Missing required arguments should raise TypeError
     with pytest.raises(TypeError):
         filter_cls().match(file)
-
-    # Unsupported operators should raise TypeError at construction
-    with pytest.raises(TypeError):
-        filter_cls(operator.eq, 1)  # type: ignore[arg-type]
-    with pytest.raises(TypeError):
-        filter_cls(operator.ne, 1)  # type: ignore[arg-type]
+    # Now equality/inequality are supported (they construct filters), so ensure
+    # construction does not raise for eq/ne but match still respects semantics.
+    eq_f = filter_cls(op=operator.eq, value=0)
+    ne_f = filter_cls(op=operator.ne, value=1)
+    assert isinstance(eq_f, filter_cls)
+    assert isinstance(ne_f, filter_cls)

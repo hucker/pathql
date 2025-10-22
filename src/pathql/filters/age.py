@@ -26,73 +26,97 @@ better on Windows than on Unix-like systems.
 """
 
 import datetime as dt
+import math
 import operator
 import pathlib
 from typing import Callable
+import numbers
+
 from .base import Filter
 from .alias import DatetimeOrNone, StatResultOrNone, IntOrFloat, IntOrFloatOrNone
+from .datetime_parts import normalize_attr
 
 
-# Metaclass for class-level operator overloading
+class AgeBase(Filter):
+    """Base for unit-rounded age filters.
 
-
-class AgeDays(Filter):
+    Subclasses must set `unit_seconds` to the number of seconds in the unit
+    (minutes=60, hours=3600, days=86400, years≈365.25*86400). The filter
+    computes the file age in seconds, converts to an integer unit count by
+    floor(age_seconds / unit_seconds), and applies the comparison operator
+    against the integer unit age.
     """
-    Filter for file age in days (since last modification).
 
-    Allows declarative queries on file age using operator overloads:
-        AgeDays < 10
-        AgeDays >= 365
-
-    Args:
-        op (callable, optional): Operator function (e.g., operator.lt, operator.ge).
-        value (float, optional): Value to compare file age (in days) against.
-    """
+    unit_seconds: float = 1.0
 
     def __init__(
         self,
         op: Callable[[float, float], bool] = operator.lt,
         value: IntOrFloatOrNone = None,
+        *,
+        attr: str = "modified",
     ) -> None:
-        """
-        Initialize an AgeDays filter.
-
-        Args:
-            op (Callable[[float, float], bool], optional): Operator function (e.g., operator.lt).
-            value (float, optional): Value to compare file age (in days) against.
-
-        Note: Only < and > operators are supported, and both are treated as inclusive (<= and >=).
-        == and != are not supported and will raise TypeError. This should be documented in
-        the README.
-        """
-        if op in (operator.eq, operator.ne):
-            raise TypeError(
-                "== and != not supported for this filter. Use < or > (inclusive) only."
-            )
+        # comparisons operate on integer unit ages
         self.op = op
-        self.value: float | None = float(value) if value is not None else None
+        # Disallow fractional thresholds. If callers need fractional time
+        # they should express the same threshold in a smaller unit (e.g. 2.5
+        # hours -> 150 minutes).
+        if value is None:
+            self.value: int | None = None
+        else:
+            if not isinstance(value, numbers.Integral):
+                raise TypeError(
+                    "Fractional age thresholds are not allowed; "
+                    "use an integer threshold or express the value in a smaller unit "
+                    "(e.g. 2.5 hours -> 150 minutes)."
+                )
+            self.value = int(value)
+        # which stat attribute to use (st_mtime/st_atime/st_ctime)
+        # default is 'modified' -> st_mtime. Use the canonical normalizer from datetime_parts.
+        self.attr = attr
+        self._stat_field = normalize_attr(attr)
+
+    def _unit_age(self, now: dt.datetime, mtime_ts: float) -> int:
+        age_seconds = (now - dt.datetime.fromtimestamp(mtime_ts)).total_seconds()
+        # floor division semantics: 0..unit_seconds-1 -> 0, unit_seconds..2*unit_seconds-1 -> 1, etc.
+        return int(math.floor(age_seconds / self.unit_seconds))
 
     def __le__(self, other: IntOrFloat):
-        """Return a new AgeDays filter for <= comparison."""
-        return AgeDays(operator.le, other)
+        # Require an instance for comparisons (disallow `AgeDays <= 5`)
+        if isinstance(self, type):
+            raise TypeError(f"{self.__name__} must be instantiated before comparison; use {self.__name__}() <= value")
+        cls_obj = self.__class__
+        return cls_obj(op=operator.le, value=other, attr=getattr(self, "attr", "modified"))
 
     def __lt__(self, other: IntOrFloat):
-        """Return a new AgeDays filter for < comparison."""
-        return AgeDays(operator.lt, other)
+        if isinstance(self, type):
+            raise TypeError(f"{self.__name__} must be instantiated before comparison; use {self.__name__}() < value")
+        cls_obj = self.__class__
+        return cls_obj(op=operator.lt, value=other, attr=getattr(self, "attr", "modified"))
 
     def __ge__(self, other: IntOrFloat):
-        """Return a new AgeDays filter for >= comparison."""
-        return AgeDays(operator.ge, other)
+        if isinstance(self, type):
+            raise TypeError(f"{self.__name__} must be instantiated before comparison; use {self.__name__}() >= value")
+        cls_obj = self.__class__
+        return cls_obj(op=operator.ge, value=other, attr=getattr(self, "attr", "modified"))
 
     def __gt__(self, other: IntOrFloat):
-        """Return a new AgeDays filter for > comparison."""
-        return AgeDays(operator.gt, other)
+        if isinstance(self, type):
+            raise TypeError(f"{self.__name__} must be instantiated before comparison; use {self.__name__}() > value")
+        cls_obj = self.__class__
+        return cls_obj(op=operator.gt, value=other, attr=getattr(self, "attr", "modified"))
 
-    def __eq__(self, other: object) -> bool:
-        raise TypeError("== not supported for this filter.")
+    def __eq__(self, other: IntOrFloat):  # type: ignore[override]
+        if isinstance(self, type):
+            raise TypeError(f"{self.__name__} must be instantiated before comparison; use {self.__name__}() == value")
+        cls_obj = self.__class__
+        return cls_obj(op=operator.eq, value=other, attr=getattr(self, "attr", "modified"))
 
-    def __ne__(self, other: object) -> bool:
-        raise TypeError("!= not supported for this filter.")
+    def __ne__(self, other: IntOrFloat):  # type: ignore[override]
+        if isinstance(self, type):
+            raise TypeError(f"{self.__name__} must be instantiated before comparison; use {self.__name__}() != value")
+        cls_obj = self.__class__
+        return cls_obj(op=operator.ne, value=other, attr=getattr(self, "attr", "modified"))
 
     def match(
         self,
@@ -100,268 +124,87 @@ class AgeDays(Filter):
         now: DatetimeOrNone = None,
         stat_result: StatResultOrNone = None,
     ) -> bool:
+        """Evaluate the filter against a path.
+
+        Semantics: compute the file age in seconds relative to `now` (defaults to
+        current time), convert to the configured unit (via `unit_seconds`) and
+        floor to an integer unit count. The operator is applied to the integer
+        unit age and the integer form of the configured threshold. For example:
+
+            - For `AgeDays`: unit_age == 0 means file age < 1 day.
+            - `AgeDays == 0` matches files with age >= 0 and < 1 day.
+            - `AgeHours <= 2` matches files with unit_age 0, 1, or 2 (i.e., < 3 hours).
+
+        Returns True if the comparison holds, False on any stat/io error.
         """
-        Determine if the file's age in days matches the filter criteria.
-
-        Args:
-            path: The pathlib.Path to check.
-            now: Reference datetime for age calculation.
-            stat_result: Optional os.stat_result for file metadata.
-
-        Returns:
-            bool: True if the file matches the age filter, False otherwise.
-        """
-
         if self.op is None or self.value is None:
-            raise TypeError("AgeDays filter not fully specified.")
+            raise TypeError(f"{self.__class__.__name__} filter not fully specified.")
         try:
             if now is None:
                 now = dt.datetime.now()
             st = stat_result if stat_result is not None else path.stat()
-            mtime_dt = dt.datetime.fromtimestamp(st.st_mtime)
-            age_d = (now - mtime_dt).total_seconds() / (60 * 60 * 24)
-            return self.op(age_d, self.value)
+            # resolve which stat field to use
+            stat_field = getattr(self, "_stat_field", "st_mtime")
+            mtime_ts = getattr(st, stat_field)
+            unit_age = self._unit_age(now, mtime_ts)
+            return bool(self.op(unit_age, int(self.value)))
         except (OSError, ValueError):
             return False
 
 
-class AgeYears(Filter):
+class AgeMinutes(AgeBase):
+    """Filter matching file age in whole minutes.
+
+    The file's age is converted to minutes and floored to an integer value.
+    Comparisons operate on that integer minute count. Example usage:
+
+        AgeMinutes == 0   # files younger than 1 minute
+        AgeMinutes <= 5   # files up to 5 minutes old (0..5)
     """
-    Filter for file age in years (since last modification).
+    unit_seconds = 60.0
 
-    Allows declarative queries on file age using operator overloads:
-        AgeYears < 1
-        AgeYears >= 5
 
-    Args:
-        op (callable, optional): Operator function (e.g., operator.lt, operator.ge).
-        value (float, optional): Value to compare file age (in years) against.
+class AgeSeconds(AgeBase):
+    """Filter matching file age in whole seconds.
+
+    The file's age is converted to seconds and floored to an integer value.
+    Comparisons operate on that integer second count. Example usage:
+
+        AgeSeconds == 0   # files younger than 1 second
+        AgeSeconds > 20   # files older than 20 seconds
     """
-
-    def __init__(
-        self,
-        op: Callable[[float, float], bool] = operator.lt,
-        value: IntOrFloatOrNone = None,
-    ) -> None:
-        """
-        Initialize an AgeYears filter.
-
-        Args:
-            op (Callable[[float, float], bool], optional): Operator function (e.g., operator.lt).
-            value (float, optional): Value to compare file age (in years) against.
-
-        Note: Only < and > operators are supported, and both are treated as inclusive (<= and >=).
-        == and != are not supported and will raise TypeError. This should be documented
-        in the README.
-        """
-        if op in (operator.eq, operator.ne):
-            raise TypeError(
-                "== and != not supported for this filter. Use < or > (inclusive) only."
-            )
-        self.op = op
-        self.value: float | None = float(value) if value is not None else None
-
-    def __le__(self, other: IntOrFloat):
-        """Return a new AgeYears filter for <= comparison."""
-        return AgeYears(operator.le, other)
-
-    def __lt__(self, other: IntOrFloat):
-        """Return a new AgeYears filter for < comparison."""
-        return AgeYears(operator.lt, other)
-
-    def __ge__(self, other: IntOrFloat):
-        """Return a new AgeYears filter for >= comparison."""
-        return AgeYears(operator.ge, other)
-
-    def __gt__(self, other: IntOrFloat):
-        """Return a new AgeYears filter for > comparison."""
-        return AgeYears(operator.gt, other)
-
-    def __eq__(self, other: object) -> bool:
-        """Equality operator is not supported for AgeYears."""
-        raise TypeError("== not supported for this filter.")
-
-    def __ne__(self, other: object) -> bool:
-        """Inequality operator is not supported for AgeYears."""
-        raise TypeError("!= not supported for this filter.")
-
-    def match(
-        self,
-        path: pathlib.Path,
-        now: DatetimeOrNone = None,
-        stat_result: StatResultOrNone = None,
-    ) -> bool:
-        """
-        Determine if the file's age in years matches the filter criteria.
-
-        Args:
-            path: The pathlib.Path to check.
-            now: Reference datetime for age calculation.
-            stat_result: Optional os.stat_result for file metadata.
-
-        Returns:
-            bool: True if the file matches the age filter, False otherwise.
-        """
-        if self.op is None or self.value is None:
-            raise TypeError("AgeYears filter not fully specified.")
-        try:
-            if now is None:
-                now = dt.datetime.now()
-            st = stat_result if stat_result is not None else path.stat()
-            mtime_dt = dt.datetime.fromtimestamp(st.st_mtime)
-            # Calculate age in years approximately using days/365.25
-            age_y = (now - mtime_dt).total_seconds() / (60 * 60 * 24 * 365.25)
-            return self.op(age_y, self.value)
-        except (OSError, ValueError):
-            return False
+    unit_seconds = 1.0
 
 
-class AgeMinutes(Filter):
+class AgeHours(AgeBase):
+    """Filter matching file age in whole hours.
+
+    The file's age is converted to hours and floored to an integer value.
+    Comparisons operate on that integer hour count. Example usage:
+
+        AgeHours == 0   # files younger than 1 hour
+        AgeHours >= 24  # files at least 24 hours old
     """
-    Filter for file age in minutes (since last modification).
+    unit_seconds = 3600.0
 
-    Allows declarative queries on file age using operator overloads:
-        AgeMinutes < 60
-        AgeMinutes >= 120
 
-    Args:
-        op (callable, optional): Operator function (e.g., operator.lt, operator.ge).
-        value (float, optional): Value to compare file age (in minutes) against.
+class AgeDays(AgeBase):
+    """Filter matching file age in whole days.
+
+    The file's age is converted to days and floored to an integer value.
+    Comparisons operate on that integer day count. Example usage:
+
+        AgeDays == 0   # files younger than 1 day
+        AgeDays > 365  # files older than 365 days
     """
-
-    def __init__(
-        self,
-        op: Callable[[float, float], bool] = operator.lt,
-        value: IntOrFloatOrNone = None,
-    ) -> None:
-        """
-        Initialize an AgeMinutes filter.
-
-        Args:
-            op (Callable[[float, float], bool], optional): Operator function (e.g., operator.lt).
-            value (float, optional): Value to compare file age (in minutes) against.
-
-        Note: Only < and > operators are supported, and both are treated as inclusive (<= and >=).
-        == and != are not supported and will raise TypeError. This should be documented
-        in the README.
-        """
-        if op in (operator.eq, operator.ne):
-            raise TypeError(
-                "== and != not supported for this filter. Use < or > (inclusive) only."
-            )
-        self.op = op
-        self.value: float | None = float(value) if value is not None else None
-
-    def match(
-        self,
-        path: pathlib.Path,
-        now: DatetimeOrNone = None,
-        stat_result: StatResultOrNone = None,
-    ) -> bool:
-        """Determine if the file's age in minutes matches the filter criteria."""
-        if self.op is None or self.value is None:
-            raise TypeError("AgeMinutes filter not fully specified.")
-        try:
-            if now is None:
-                now = dt.datetime.now()
-            elif isinstance(now, (int, float)):
-                now = dt.datetime.fromtimestamp(now)  # Convert timestamp to datetime
-
-            st = stat_result if stat_result is not None else path.stat()
-            mtime_dt = dt.datetime.fromtimestamp(st.st_mtime)
-            age_m = (now - mtime_dt).total_seconds() / 60
-            return self.op(age_m, self.value)
-        except Exception as e:
-            raise ValueError(f"Error matching AgeMinutes filter: {e}") from e
-
-    def __le__(self, other: IntOrFloat):
-        """Return a new AgeMinutes filter for <= comparison."""
-        return AgeMinutes(operator.le, other)
-
-    def __lt__(self, other: IntOrFloat):
-        """Return a new AgeMinutes filter for < comparison."""
-        return AgeMinutes(operator.lt, other)
-
-    def __ge__(self, other: IntOrFloat):
-        """Return a new AgeMinutes filter for >= comparison."""
-        return AgeMinutes(operator.ge, other)
-
-    def __gt__(self, other: IntOrFloat):
-        """Return a new AgeMinutes filter for > comparison."""
-        return AgeMinutes(operator.gt, other)
-
-    def __eq__(self, other: object) -> bool:
-        """Equality operator is not supported for AgeMinutes."""
-        raise TypeError("== not supported for this filter.")
-
-    def __ne__(self, other: object) -> bool:
-        """Inequality operator is not supported for AgeMinutes."""
-        raise TypeError("!= not supported for this filter.")
+    unit_seconds = 60.0 * 60.0 * 24.0
 
 
-class AgeHours(Filter):
+class AgeYears(AgeBase):
+    """Filter matching file age in whole years (approximate).
+
+    Years are approximated using 365.25 days per year; age is floored to an
+    integer year count before comparison. Use for coarse-grained year-based
+    queries (not for precise calendrical arithmetic).
     """
-    Filter for file age in hours (since last modification).
-
-    Allows declarative queries on file age using operator overloads:
-        AgeHours < 24
-        AgeHours >= 48
-
-    Args:
-        op (callable, optional): Operator function (e.g., operator.lt, operator.ge).
-        value (float, optional): Value to compare file age (in hours) against.
-    """
-
-    def __init__(
-        self,
-        op: Callable[[float, float], bool] = operator.lt,
-        value: IntOrFloatOrNone = None,
-    ) -> None:
-        if op in (operator.eq, operator.ne):
-            raise TypeError(
-                "== and != not supported for AgeHours filter. Use < or > (inclusive) only."
-            )
-        self.op = op
-        self.value: float | None = float(value) if value is not None else None
-
-    def match(
-        self,
-        path: pathlib.Path,
-        now: DatetimeOrNone = None,
-        stat_result: StatResultOrNone = None,
-    ) -> bool:
-        if self.op is None or self.value is None:
-            raise TypeError("AgeHours filter not fully specified.")
-        try:
-            if now is None:
-                now = dt.datetime.now()
-            st = stat_result if stat_result is not None else path.stat()
-            mtime_dt = dt.datetime.fromtimestamp(st.st_mtime)
-            age_h = (now - mtime_dt).total_seconds() / 3600
-            return self.op(age_h, self.value)
-        except (OSError, ValueError):
-            return False
-
-    def __le__(self, other: IntOrFloat):
-        """Return a new AgeHours filter for <= comparison."""
-        return AgeHours(operator.le, other)
-
-    def __lt__(self, other: IntOrFloat):
-        """Return a new AgeHours filter for < comparison."""
-        return AgeHours(operator.lt, other)
-
-    def __ge__(self, other: IntOrFloat):
-        """Return a new AgeHours filter for >= comparison."""
-        return AgeHours(operator.ge, other)
-
-    def __gt__(self, other: IntOrFloat):
-        """Return a new AgeHours filter for > comparison."""
-        return AgeHours(operator.gt, other)
-
-    def __eq__(self, other: object) -> bool:
-        """Equality operator is not supported for AgeHours."""
-        raise TypeError("== not supported for this filter.")
-
-    def __ne__(self, other: object) -> bool:
-        """Inequality operator is not supported for AgeHours."""
-        raise TypeError("!= not supported for this filter.")
+    unit_seconds = 60.0 * 60.0 * 24.0 * 365.25
