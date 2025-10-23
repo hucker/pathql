@@ -50,6 +50,7 @@ for f in Query(r"C:/logs", DayFilter(base=dt.datetime(year=2020,month=1,day=1)):
   - [Features](#features)
   - [Basic Concepts](#basic-concepts)
     - [Filters](#filters)
+- [Boolean Filter Operators: `&`, `|`, `~`](#boolean-filter-operators---)
       - [Example Filters](#example-filters)
     - [Using the `Between` Filter](#using-the-between-filter)
   - [Query (engine)](#query-engine)
@@ -126,13 +127,62 @@ Do not use class-level comparisons such as `AgeMinutes > 10`. Instead instantiat
 
 These filters operate on integer unit ages: the file age (in seconds) is divided by the unit size (minutes/hours/days/years) and floored to an integer before comparison.
 
-- `&` (AND)
-- `|` (OR)
-- `~` (NOT)
+# Boolean Filter Operators: `&`, `|`, `~`
 
-If you are familiar with `pandas` you will notice that instead of using python `and` `or` and `not` operators we use the ones shown above in order to build
-up arbitrary boolean expressions in code.  This is actually a limitation of `python` (or a reach on my part to make this work).  Operators that short circuit do
-not have double underscore methods and can not be "overridden" from code so we are stuck using the mathematical equivalent operators.
+PathQL allows you to compose complex queries using the `&` (AND), `|` (OR), and `~` (NOT) operators. These operators work analogously to Python's built-in `and`, `or`, and `not`, but are implemented using operator overloading to allow chaining and composition of filter objects.
+
+- `&` (AND): Combines two filters so that both must match for a file to be included.
+- `|` (OR): Combines two filters so that either filter matching will include the file.
+- `~` (NOT): Inverts the result of a filter, matching files that do **not** satisfy the filter.
+
+**Short-Circuiting Behavior**
+
+PathQL's filter composition is designed to short-circuit, just like Python's boolean operators:
+
+- For `A & B`, if filter `A` does not match, filter `B` is **not** evaluated.
+- For `A | B`, if filter `A` matches, filter `B` is **not** evaluated.
+- For chained filters (e.g., `A & B & C`), evaluation stops at the first filter that fails for AND, or the first that succeeds for OR.
+
+This means that if you have expensive filters (such as those that read file contents or perform slow operations), they will be skipped whenever possible, improving performance.
+
+**Example:**
+
+```python
+from pathql.filters.base import Filter, AndFilter, OrFilter
+
+class ExpensiveFilter(Filter):
+    def match(self, path, now=None, stat_result=None):
+        # Simulate a slow operation
+        import time
+        time.sleep(1)
+        return True
+
+class TrueFilter(Filter):
+    def match(self, path, now=None, stat_result=None):
+        return True
+
+class FalseFilter(Filter):
+    def match(self, path, now=None, stat_result=None):
+        return False
+
+# ExpensiveFilter will NOT be called because CheapFilter fails
+combined = FalseFilter & ExpensiveFilter()
+result = combined.match(pathlib.Path("somefile.txt"))  # Fast, no delay
+
+# ExpensiveFilter will NOT be called because CheapFilter succeeds
+combined = TrueFilter() | ExpensiveFilter()
+result = combined.match(pathlib.Path("somefile.txt"))  # Fast, no delay
+```
+
+**Note:**
+Filters should be pure functions without side effects, as short-circuiting means some filters may not be executed depending on the logic.
+While most filters that come with `pathql` run fairly quickly, real world use cases involve opening files and scanning contents for
+state information.  Eliminating these checks can be VERY valuable.
+
+**Summary:**
+- Use `&`, `|`, and `~` to build complex queries.
+- Short-circuiting ensures efficient evaluation and skips unnecessary work.
+- Place expensive filters down stream in your logic chains.
 
 #### Example Filters
 
@@ -677,7 +727,7 @@ You can generate filenames in two ways:
 1. **Using explicit integer date components:**
    Pass `year`, `month`, `day`, and `hour` as needed. The width is inferred from which components are provided.
 
-2. **Using a `datetime` object:**
+2. **Using `&` `datetime` object:**
    Pass a `datetime` and specify the desired width (`"year"`, `"month"`, `"day"`, `"hour"`). All date components are taken from the `datetime`.
 
 ### Function Signatures and Formats

@@ -62,6 +62,11 @@ class Filter:
 class AndFilter(Filter):
     """
     Filter that matches if both left and right filters match.
+
+    Note:
+        Short-circuiting is used: if the left filter does not match, the right filter
+        is not evaluated. This means that if filters have side effects, those side effects
+        may not be executed. Filters should be pure functions without side effects.
     """
 
     def __init__(self, left: Filter, right: Filter):
@@ -90,8 +95,12 @@ class AndFilter(Filter):
 class OrFilter(Filter):
     """
     Filter that matches if either left or right filter matches.
-    """
 
+    Note:
+        Short-circuiting is used: if the left filter matches, the right filter
+        is not evaluated. This means that if filters have side effects, those side effects
+        may not be executed. Filters should be pure functions without side effects.
+    """
     def __init__(self, left: Filter, right: Filter):
         """Initialize with two filters to combine with logical OR."""
         self.left: Filter = left
