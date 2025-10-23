@@ -62,7 +62,7 @@ class AgeBase(Filter):
         # they should express the same threshold in a smaller unit (e.g. 2.5
         # hours -> 150 minutes).
         if value is None:
-            self.value: int | None = None
+            self.value: IntOrNone = None
         else:
             if not isinstance(value, numbers.Integral):
                 raise TypeError(
@@ -236,4 +236,5 @@ class AgeYears(AgeBase):
     queries (not for precise calendrical arithmetic).
     """
 
+    unit_seconds = 60.0 * 60.0 * 24.0 * 365.25
     unit_seconds = 60.0 * 60.0 * 24.0 * 365.25

@@ -75,6 +75,8 @@ for f in Query(r"C:/logs", DayFilter(base=dt.datetime(year=2020,month=1,day=1)):
   - [Age Filters](#age-filters)
     - [Examples](#examples-1)
     - [More Examples: Yesterday, Last Month, and Relative Dates](#more-examples-yesterday-last-month-and-relative-dates)
+  - [File Age Filters](#file-age-filters)
+    - [Filename-based Age Filters](#filename-based-age-filters)
     - [File Actions](#file-actions)
     - [Exception Handling in File Actions](#exception-handling-in-file-actions)
   - [Zip Actions](#zip-actions)
@@ -83,6 +85,9 @@ for f in Query(r"C:/logs", DayFilter(base=dt.datetime(year=2020,month=1,day=1)):
     - [2. Find all files with stem starting with "report\_" (case-insensitive)](#2-find-all-files-with-stem-starting-with-report_-case-insensitive)
     - [3. Find all directories older than 1 year](#3-find-all-directories-older-than-1-year)
     - [4. Customize with functions (recommended)](#4-customize-with-functions-recommended)
+  - [Filename Builders](#filename-builders)
+    - [Function Signatures and Formats](#function-signatures-and-formats)
+    - [Usage Examples](#usage-examples-1)
   - [Developer \& Release Conventions](#developer--release-conventions)
   - [Release Summary (v0.0.3, 2025-10-20)](#release-summary-v003-2025-10-20)
     - [Highlights](#highlights)
@@ -490,6 +495,37 @@ for path in Query("/data", query):
 Ideally, if you have a datetime value in your code you will never need to deal with time spans or deltas or complex data calculations.
 
 
+## File Age Filters
+
+PathQL supports filtering files by age using either filesystem timestamps or the date encoded in the filename. Using filename dating
+allows for a more reliable way to target creation time in log files.  Instead of using the operating system timing data we use
+the file nameing convention where the file name starts with YYYY-MM-DD-HH-, YYYY-MM-DD_, YY-MM_, YY_
+
+Using this time can get around issues with creation tme not being reliable accross oeprating systems, modification times being
+changed by mistake.  System clocks not be correct.
+
+For the purpose of matching if a valid file date is not found the match does not occur, it is not an error.
+
+### Filename-based Age Filters
+
+These filters use the date encoded in the filename (e.g. `YYYY-MM-DD_HH_{ArchiveName}.{EXT}`):
+- `FilenameAgeMinutes`
+- `FilenameAgeHours`
+- `FilenameAgeDays`
+- `FilenameAgeYears`
+
+**Example usage:**
+```python
+from pathql.filters.fileage import FilenameAgeDays
+
+# Find files whose filename date is less than 10 days old
+filt = FilenameAgeDays(operator.lt, 10)
+filt.match("2024-05-01_report.txt")
+```
+
+Filename-based filters allow you to query files based on their logical age, independent of filesystem metadata.
+
+
 ### File Actions
 
 PathQL provides utilities for batch file operations on lists of `pathlib.Path` objects (or `ResultSet`).
@@ -630,6 +666,58 @@ for ifile in Query('./images',Suffix(".jpg") & canon_filter()):
 
 Using functions is quick and readable for small custom checks. For more complex
 stateful logic it's still fine to write a `Filter` subclass.
+
+## Filename Builders
+
+PathQL provides utility functions for generating standardized, sortable filenames with date/time prefixes.
+These file names are compatible with the `FileAge*` classes that allow for infering age from file names.
+You can either pass explicit date components (year, month, day, hour) or a `datetime` object (`now_`).
+If you pass a `datetime` object, all date components are taken from it; if you pass explicit components,
+you must provide all required values for the desired format.
+
+### Function Signatures and Formats
+
+- `y_filename(name, ext, year=None, now_=None)`
+  Format: `YYYY-{ArchiveName}.{EXT}`
+
+- `ym_filename(name, ext, year=None, now_=None)`
+  Format: `YYYY-MM_{ArchiveName}.{EXT}`
+
+- `ymdh_filename(name, ext="", date_width="year", year=None, month=None, day=None, hour=None, now_=None)`
+  Formats (based on `date_width`):
+  - `"year"`: `YYYY-{ArchiveName}.{EXT}`
+  - `"month"`: `YYYY-MM_{ArchiveName}.{EXT}`
+  - `"day"`: `YYYY-MM-DD_{ArchiveName}.{EXT}`
+  - `"hour"`: `YYYY-MM-DD_HH_{ArchiveName}.{EXT}`
+
+### Usage Examples
+
+```python
+import datetime
+from pathql.filters.date_filename import y_filename, ym_filename, ymdh_filename
+
+dt = datetime.datetime(2022, 7, 15, 13)
+
+# Using explicit components
+print(y_filename("archive", "zip", year=2022))  # 2022-archive.zip
+print(ymdh_filename("archive", "zip", date_width="day", year=2022, month=7, day=15))  # 2022-07-15_archive.zip
+print(ymdh_filename("archive", "zip", date_width="hour", year=2022, month=7, day=15, hour=13))  # 2022-07-15_13_archive.zip
+
+# Using a datetime object (now_)
+print(y_filename("archive", "zip", now_=dt))  # 2022-archive.zip
+print(ym_filename("archive", "zip", now_=dt))  # 2022-07_archive.zip
+print(ymdh_filename("archive", "zip", date_width="day", now_=dt))  # 2022-07-15_archive.zip
+print(ymdh_filename("archive", "zip", date_width="hour", now_=dt))  # 2022-07-15_13_archive.zip
+
+# Exception thrown
+print(ym_filename("archive", "zip", year=2022, now_=dt))  # Exception dt & year.
+
+```
+
+**Note:**
+- If you provide explicit date components, you must provide all required fields for the chosen format.
+- If you provide `now_`, do not provide any manual date components.
+- If `ext` is an empty string, no dot is added to the filename.
 
 
 ## Developer & Release Conventions
