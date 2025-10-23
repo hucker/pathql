@@ -41,6 +41,23 @@ def _mini_fs(tmp_path: pathlib.Path) -> pathlib.Path:  # pyright: ignore[reportU
     return tmp_path
 
 
+@pytest.mark.parametrize(
+    "recursive,expected_files",
+    [
+        (True, set(["foo.txt", "bar.md", "baz.txt", "qux.txt"])),
+        (False, set(["foo.txt", "bar.md", "baz.txt"])),
+    ]
+)
+def test_query_no_filter_param(mini_fs: pathlib.Path, recursive: bool, expected_files: set[str]) -> None:
+    """Test Query with no filter (matches all files), both recursive and non-recursive."""
+    # Arrange
+    q = Query()
+    # Act
+    files = q.select(mini_fs, recursive=recursive, files=True, threaded=False)
+    actual_files = set(f.name for f in files)
+    # Assert
+    assert actual_files == expected_files
+
 def test_query_size_and_suffix(mini_fs: pathlib.Path) -> None:
     """Test Query with size and suffix filters."""
     # Arrange

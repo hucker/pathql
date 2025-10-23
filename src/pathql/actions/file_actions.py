@@ -124,6 +124,51 @@ def copy_files(
         files, _copy_action, dest_dir, ignore_access_exception, exceptions
     )
 
+def _fast_copy_action(src: pathlib.Path, dest_dir: pathlib.Path | None) -> None:
+    """
+    Copy a source file to the destination directory only if the destination file
+    does not exist, or if its size or modification time differs from the source.
+    """
+    if dest_dir is None:
+        return
+    dest_file = dest_dir / src.name
+    if dest_file.exists():
+        src_stat = src.stat()
+        dest_stat = dest_file.stat()
+        # Compare size and modification time
+        if (
+            src_stat.st_size == dest_stat.st_size
+            and int(src_stat.st_mtime) == int(dest_stat.st_mtime)
+        ):
+            return  # Skip copy, files are the same
+    shutil.copy2(str(src), str(dest_file))
+
+def fast_copy_files(
+    files: list[pathlib.Path],
+    dest_dir: pathlib.Path,
+    ignore_access_exception: bool = False,
+    exceptions: tuple[type[Exception], ...] = EXCEPTIONS,
+) -> FileActionResult:
+    """
+    Fast copy files to dest_dir, skipping files that are already up-to-date, defined
+    as having the same size and modification time.  This is generally faster if there
+    is any overlap in files, but for copying to a new location or are really worried
+    about operating system edge cases where you might not completely trust that
+    stat is accurate, use copy_files instead.
+    
+    Args:
+        files: List of files to copy.
+        dest_dir: Destination directory for copied files.
+        ignore_access_exception: If True, ignore access exceptions; otherwise, raise them.
+        exceptions: Tuple of exception types to catch.
+    Returns:
+        FileActionResult: Object containing lists of successful, failed, and errored files.
+    """
+    return apply_action(
+        files, _fast_copy_action, dest_dir, ignore_access_exception, exceptions
+    )
+
+
 def move_files(
     files: list[pathlib.Path],
     dest_dir: pathlib.Path,

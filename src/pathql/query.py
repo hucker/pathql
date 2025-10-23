@@ -12,10 +12,18 @@ import queue
 import threading
 from typing import Iterator
 
-from .filters.alias import DatetimeOrNone, StatResultOrNone
+from .filters.alias import DatetimeOrNone, StatResultOrNone,StrOrPath
 from .filters.base import Filter
 from .result_set import ResultSet
 
+class MatchAll(Filter):
+    """A filter that matches all files."""
+    def match(
+        self,
+        path: pathlib.Path,
+        now: DatetimeOrNone = None,
+        stat_result: StatResultOrNone = None):
+        return True
 
 class Query(Filter):
     """
@@ -27,14 +35,17 @@ class Query(Filter):
         filter_expr (Filter): The filter expression to apply to files.
     """
 
-    def __init__(self, filter_expr: Filter):
+    def __init__(self, filter_expr: Filter|None=None):
         """
         Initialize Query.
+
+        If you don't provide a filter_expression a MatchAll filter is used
+        and all files in the folder will be match.
 
         Args:
             filter_expr (Filter): The filter expression to apply to files.
         """
-        self.filter_expr = filter_expr
+        self.filter_expr = filter_expr or MatchAll()
 
         self.results = []
 
@@ -66,7 +77,7 @@ class Query(Filter):
 
     def _unthreaded_files(
         self,
-        path: pathlib.Path,
+        path: StrOrPath,
         recursive: bool = True,
         files: bool = True,
         now: DatetimeOrNone = None,
@@ -83,6 +94,9 @@ class Query(Filter):
         Yields:
             pathlib.Path: Files matching the filter expression.
         """
+        if isinstance(path, str):
+            path = pathlib.Path(path)
+
         if now is None:
             now = dt.datetime.now()
         iterator = path.rglob("*") if recursive else path.glob("*")
@@ -98,7 +112,7 @@ class Query(Filter):
 
     def _threaded_files(
         self,
-        path: pathlib.Path,
+        path: StrOrPath,
         recursive: bool = True,
         files: bool = True,
         now: DatetimeOrNone = None,
@@ -115,6 +129,9 @@ class Query(Filter):
         Yields:
             pathlib.Path: Files matching the filter expression.
         """
+        if isinstance(path, str):
+            path = pathlib.Path(path)
+
         if now is None:
             now = dt.datetime.now()
         q: queue.Queue[tuple[pathlib.Path, object | None]] = queue.Queue(maxsize=10)
@@ -144,7 +161,7 @@ class Query(Filter):
 
     def files(
         self,
-        path: pathlib.Path,
+        path: StrOrPath,
         recursive: bool = True,
         files: bool = True,
         now: DatetimeOrNone = None,
@@ -175,7 +192,7 @@ class Query(Filter):
 
     def select(
         self,
-        path: pathlib.Path,
+        path: StrOrPath,
         recursive: bool = True,
         files: bool = True,
         now: DatetimeOrNone = None,

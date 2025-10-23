@@ -1,89 +1,97 @@
+"""
+Tests for FilenameAgeDays, FilenameAgeHours, and FilenameAgeYears filters.
+Verifies correct age calculation and matching for files with date-encoded filenames.
+"""
+
 import datetime as dt
 import operator
 import pathlib
+import pytest
 
-from pathql.filters.date_filename import ymdh_filename
 from pathql.filters.fileage import FilenameAgeDays, FilenameAgeHours, FilenameAgeYears
+from pathql.filters.date_filename import path_from_datetime
 
+def make_file(
+    date: dt.datetime,
+    name: str = "archive",
+    ext: str = "txt",
+    date_width: str = "hour"
+) -> pathlib.Path:
+    """
+    Generate a pathlib.Path with a date-encoded filename for testing.
 
-def make_file(date: dt.datetime, name:str="archive", ext:str="txt", date_width:str="hour"):
-    """Generate a pathlib.Path with a date-encoded filename."""
-    fname = ymdh_filename(name, ext, date_width=date_width, now_=date)
+    Args:
+        date: Datetime object to encode in the filename.
+        name: Archive name.
+        ext: File extension.
+        date_width: Date width ('year', 'month', 'day', 'hour').
+
+    Returns:
+        pathlib.Path: Path object with the encoded filename.
+    """
+    fname: str = path_from_datetime(name, ext, width=date_width, dt_=date)
     return pathlib.Path(fname)
 
-
-
-
-def test_filename_age_hours():
-    now = dt.datetime(2025, 10, 22, 11)
-    file_date = now - dt.timedelta(hours=2)
-    path = make_file(file_date)
-    filt = FilenameAgeHours(operator.lt, 3)
-    assert filt.match(path, now=now)
-    filt = FilenameAgeHours(operator.ge, 2)
-    assert filt.match(path, now=now)
-    filt = FilenameAgeHours(operator.eq, 2)
-    assert filt.match(path, now=now)
-
-
-def test_filename_age_days():
-    now = dt.datetime(2025, 10, 22, 11)
-    file_date = now - dt.timedelta(days=7)
-    path = make_file(file_date, date_width="day")
-    filt = FilenameAgeDays(operator.lt, 10)
-    assert filt.match(path, now=now)
-    filt = FilenameAgeDays(operator.ge, 7)
-    assert filt.match(path, now=now)
-    filt = FilenameAgeDays(operator.eq, 7)
-    assert filt.match(path, now=now)
-
-
-def test_filename_age_years():
-    now = dt.datetime(2025, 1, 1, 0, 0)
-    file_date = now.replace(year=2020)
-    path = make_file(file_date, date_width="year")
-    filt = FilenameAgeYears(operator.ge, 5)
-    assert filt.match(path, now=now)  # Should be True, exactly 5 years
-    filt = FilenameAgeYears(operator.ge, 6)
-    assert not filt.match(path, now=now)
-    filt = FilenameAgeYears(operator.eq, 5)
-    assert filt.match(path, now=now)
-    filt = FilenameAgeYears(operator.eq, 4)
-    assert not filt.match(path, now=now)
-
-
-def test_filename_age_missing_date():
-    now = dt.datetime(2025, 10, 22, 11)
-    path = pathlib.Path("archive.txt")
-    filt = FilenameAgeDays(operator.lt, 10)
-    assert not filt.match(path, now=now)
-
-
-def test_filename_age_years_exact_4_years():
+@pytest.mark.parametrize(
+    "filter_cls, op, threshold, file_date, now, date_width, expected",
+    [
+        # FilenameAgeHours tests
+        (FilenameAgeHours, operator.lt, 3, dt.datetime(2025, 10, 22, 9), dt.datetime(2025, 10, 22, 11), "hour", True),
+        (FilenameAgeHours, operator.ge, 2, dt.datetime(2025, 10, 22, 9), dt.datetime(2025, 10, 22, 11), "hour", True),
+        (FilenameAgeHours, operator.eq, 2, dt.datetime(2025, 10, 22, 9), dt.datetime(2025, 10, 22, 11), "hour", True),
+        # FilenameAgeDays tests
+        (FilenameAgeDays, operator.lt, 10, dt.datetime(2025, 10, 15, 11), dt.datetime(2025, 10, 22, 11), "day", True),
+        (FilenameAgeDays, operator.ge, 7, dt.datetime(2025, 10, 15, 11), dt.datetime(2025, 10, 22, 11), "day", True),
+        (FilenameAgeDays, operator.eq, 7, dt.datetime(2025, 10, 15, 11), dt.datetime(2025, 10, 22, 11), "day", True),
+        # FilenameAgeYears tests
+        (FilenameAgeYears, operator.ge, 5, dt.datetime(2020, 1, 1, 0, 0), dt.datetime(2025, 1, 1, 0, 0), "year", True),
+        (FilenameAgeYears, operator.ge, 6, dt.datetime(2020, 1, 1, 0, 0), dt.datetime(2025, 1, 1, 0, 0), "year", False),
+        (FilenameAgeYears, operator.eq, 5, dt.datetime(2020, 1, 1, 0, 0), dt.datetime(2025, 1, 1, 0, 0), "year", True),
+        (FilenameAgeYears, operator.eq, 4, dt.datetime(2020, 1, 1, 0, 0), dt.datetime(2025, 1, 1, 0, 0), "year", False),
+        # Exact 4-year span
+        (FilenameAgeYears, operator.eq, 4, dt.datetime(2021, 1, 1, 0, 0), dt.datetime(2025, 1, 1, 0, 0), "year", True),
+        (FilenameAgeYears, operator.ge, 4, dt.datetime(2021, 1, 1, 0, 0), dt.datetime(2025, 1, 1, 0, 0), "year", True),
+        (FilenameAgeYears, operator.lt, 5, dt.datetime(2021, 1, 1, 0, 0), dt.datetime(2025, 1, 1, 0, 0), "year", True),
+        (FilenameAgeYears, operator.gt, 4, dt.datetime(2021, 1, 1, 0, 0), dt.datetime(2025, 1, 1, 0, 0), "year", False),
+        (FilenameAgeYears, operator.eq, 5, dt.datetime(2021, 1, 1, 0, 0), dt.datetime(2025, 1, 1, 0, 0), "year", False),
+        # Missing date in filename
+        (FilenameAgeDays, operator.lt, 10, None, dt.datetime(2025, 10, 22, 11), None, False),
+    ]
+)
+def test_filename_age_filters(
+    filter_cls: type,
+    op: object,
+    threshold: int,
+    file_date: dt.datetime | None,
+    now: dt.datetime,
+    date_width: str | None,
+    expected: bool
+) -> None:
     """
-    Test a 4-year span where the age calculation is exact.
+    Parameterized test for FilenameAgeDays, FilenameAgeHours, and FilenameAgeYears filters.
+    Verifies correct matching for various date widths and scenarios.
 
-    This works because 4 years is exactly 4 * 365.25 days = 1461 days,
-    and there are no fractional leap year effects to cause rounding errors.
+    Args:
+        filter_cls: The filter class to use (FilenameAgeDays, FilenameAgeHours, FilenameAgeYears).
+        op: The operator for comparison.
+        threshold: The threshold value for age.
+        file_date: The datetime to encode in the filename (or None for missing date).
+        now: The reference datetime for age calculation.
+        date_width: The width of the date encoding ('year', 'month', 'day', 'hour', or None).
+        expected: The expected boolean result.
     """
-    # Jan 1, 2021 to Jan 1, 2025 is exactly 4 years
-    file_date = dt.datetime(2021, 1, 1, 0, 0)
-    now = dt.datetime(2025, 1, 1, 0, 0)
-    path = make_file(file_date, date_width="year")
-    filt = FilenameAgeYears(operator.eq, 4)
-    assert filt.match(path, now=now)
-    filt = FilenameAgeYears(operator.ge, 4)
-    assert filt.match(path, now=now)
-    filt = FilenameAgeYears(operator.lt, 5)
-    assert filt.match(path, now=now)
-    filt = FilenameAgeYears(operator.gt, 4)
-    assert not filt.match(path, now=now)
-    filt = FilenameAgeYears(operator.eq, 5)
-    assert not filt.match(path, now=now)
-    assert not filt.match(path, now=now)
-    assert not filt.match(path, now=now)
-    assert not filt.match(path, now=now)
-    assert not filt.match(path, now=now)
-    assert not filt.match(path, now=now)
-    assert not filt.match(path, now=now)
-    assert not filt.match(path, now=now)
+    # Arrange
+
+    if file_date is not None:
+        path = make_file(file_date, date_width=date_width)
+    else:
+        path = pathlib.Path("archive.txt")
+
+    # Act
+
+    filt = filter_cls(op, threshold)
+    result = filt.match(path, now=now)
+
+    # Assert
+
+    assert result == expected
