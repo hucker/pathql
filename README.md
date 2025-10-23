@@ -670,21 +670,27 @@ stateful logic it's still fine to write a `Filter` subclass.
 ## Filename Builders
 
 PathQL provides utility functions for generating standardized, sortable filenames with date/time prefixes.
-These file names are compatible with the `FileAge*` classes that allow for infering age from file names.
-You can either pass explicit date components (year, month, day, hour) or a `datetime` object (`now_`).
-If you pass a `datetime` object, all date components are taken from it; if you pass explicit components,
-you must provide all required values for the desired format.
+These filenames are compatible with the `FileAge*` classes, which infer age from file names.
+
+You can generate filenames in two ways:
+
+1. **Using explicit integer date components:**
+   Pass `year`, `month`, `day`, and `hour` as needed. The width is inferred from which components are provided.
+
+2. **Using a `datetime` object:**
+   Pass a `datetime` and specify the desired width (`"year"`, `"month"`, `"day"`, `"hour"`). All date components are taken from the `datetime`.
 
 ### Function Signatures and Formats
 
-- `y_filename(name, ext, year=None, now_=None)`
-  Format: `YYYY-{ArchiveName}.{EXT}`
+- `path_from_dt_ints(name, ext, year, month=None, day=None, hour=None)`
+  Formats (based on provided components):
+  - `year` only: `YYYY-{ArchiveName}.{EXT}`
+  - `year`, `month`: `YYYY-MM_{ArchiveName}.{EXT}`
+  - `year`, `month`, `day`: `YYYY-MM-DD_{ArchiveName}.{EXT}`
+  - `year`, `month`, `day`, `hour`: `YYYY-MM-DD_HH_{ArchiveName}.{EXT}`
 
-- `ym_filename(name, ext, year=None, now_=None)`
-  Format: `YYYY-MM_{ArchiveName}.{EXT}`
-
-- `ymdh_filename(name, ext="", date_width="year", year=None, month=None, day=None, hour=None, now_=None)`
-  Formats (based on `date_width`):
+- `path_from_datetime(name, ext, width, dt)`
+  Formats (based on `width`):
   - `"year"`: `YYYY-{ArchiveName}.{EXT}`
   - `"month"`: `YYYY-MM_{ArchiveName}.{EXT}`
   - `"day"`: `YYYY-MM-DD_{ArchiveName}.{EXT}`
@@ -694,30 +700,26 @@ you must provide all required values for the desired format.
 
 ```python
 import datetime
-from pathql.filters.date_filename import y_filename, ym_filename, ymdh_filename
+from pathql.filters.date_filename import path_from_dt_ints, path_from_datetime
 
+# Using explicit integer components
+print(path_from_dt_ints("archive", "zip", year=2022))  # 2022-archive.zip
+print(path_from_dt_ints("archive", "zip", year=2022, month=7))  # 2022-07_archive.zip
+print(path_from_dt_ints("archive", "zip", year=2022, month=7, day=15))  # 2022-07-15_archive.zip
+print(path_from_dt_ints("archive", "zip", year=2022, month=7, day=15, hour=13))  # 2022-07-15_13_archive.zip
+
+# Using a datetime object and width
 dt = datetime.datetime(2022, 7, 15, 13)
-
-# Using explicit components
-print(y_filename("archive", "zip", year=2022))  # 2022-archive.zip
-print(ymdh_filename("archive", "zip", date_width="day", year=2022, month=7, day=15))  # 2022-07-15_archive.zip
-print(ymdh_filename("archive", "zip", date_width="hour", year=2022, month=7, day=15, hour=13))  # 2022-07-15_13_archive.zip
-
-# Using a datetime object (now_)
-print(y_filename("archive", "zip", now_=dt))  # 2022-archive.zip
-print(ym_filename("archive", "zip", now_=dt))  # 2022-07_archive.zip
-print(ymdh_filename("archive", "zip", date_width="day", now_=dt))  # 2022-07-15_archive.zip
-print(ymdh_filename("archive", "zip", date_width="hour", now_=dt))  # 2022-07-15_13_archive.zip
-
-# Exception thrown
-print(ym_filename("archive", "zip", year=2022, now_=dt))  # Exception dt & year.
+print(path_from_datetime("archive", "zip", "year", dt))   # 2022-archive.zip
+print(path_from_datetime("archive", "zip", "month", dt))  # 2022-07_archive.zip
+print(path_from_datetime("archive", "zip", "day", dt))    # 2022-07-15_archive.zip
+print(path_from_datetime("archive", "zip", "hour", dt))   # 2022-07-15_13_archive.zip
 
 ```
 
 **Note:**
-- If you provide explicit date components, you must provide all required fields for the chosen format.
-- If you provide `now_`, do not provide any manual date components.
 - If `ext` is an empty string, no dot is added to the filename.
+- If `.ext` is provided the `.` is removed internally, thus ".bmp" and "bmp" have the same effect.
 
 
 ## Developer & Release Conventions

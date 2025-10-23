@@ -26,7 +26,8 @@
         "pathql",
         "relativedelta",
         "shieldsio",
-        "timedelta"
+        "timedelta",
+        "ymdh"
     ],
     "python.analysis.extraPaths": [
         "src"

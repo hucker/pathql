@@ -1,26 +1,22 @@
-import datetime
-import pathlib
+import datetime as dt
 import operator
+import pathlib
 
-import pytest
-
-from pathql.filters.fileage import (
-    FilenameAgeHours,
-    FilenameAgeDays,
-    FilenameAgeYears,
-)
 from pathql.filters.date_filename import ymdh_filename
+from pathql.filters.fileage import FilenameAgeDays, FilenameAgeHours, FilenameAgeYears
 
-def make_file(date: datetime.datetime, name="archive", ext="txt", date_width="hour"):
+
+def make_file(date: dt.datetime, name:str="archive", ext:str="txt", date_width:str="hour"):
     """Generate a pathlib.Path with a date-encoded filename."""
     fname = ymdh_filename(name, ext, date_width=date_width, now_=date)
     return pathlib.Path(fname)
 
 
 
+
 def test_filename_age_hours():
-    now = datetime.datetime(2025, 10, 22, 11)
-    file_date = now - datetime.timedelta(hours=2)
+    now = dt.datetime(2025, 10, 22, 11)
+    file_date = now - dt.timedelta(hours=2)
     path = make_file(file_date)
     filt = FilenameAgeHours(operator.lt, 3)
     assert filt.match(path, now=now)
@@ -29,9 +25,10 @@ def test_filename_age_hours():
     filt = FilenameAgeHours(operator.eq, 2)
     assert filt.match(path, now=now)
 
+
 def test_filename_age_days():
-    now = datetime.datetime(2025, 10, 22, 11)
-    file_date = now - datetime.timedelta(days=7)
+    now = dt.datetime(2025, 10, 22, 11)
+    file_date = now - dt.timedelta(days=7)
     path = make_file(file_date, date_width="day")
     filt = FilenameAgeDays(operator.lt, 10)
     assert filt.match(path, now=now)
@@ -40,8 +37,9 @@ def test_filename_age_days():
     filt = FilenameAgeDays(operator.eq, 7)
     assert filt.match(path, now=now)
 
+
 def test_filename_age_years():
-    now = datetime.datetime(2025, 1, 1, 0, 0)
+    now = dt.datetime(2025, 1, 1, 0, 0)
     file_date = now.replace(year=2020)
     path = make_file(file_date, date_width="year")
     filt = FilenameAgeYears(operator.ge, 5)
@@ -53,8 +51,9 @@ def test_filename_age_years():
     filt = FilenameAgeYears(operator.eq, 4)
     assert not filt.match(path, now=now)
 
+
 def test_filename_age_missing_date():
-    now = datetime.datetime(2025, 10, 22, 11)
+    now = dt.datetime(2025, 10, 22, 11)
     path = pathlib.Path("archive.txt")
     filt = FilenameAgeDays(operator.lt, 10)
     assert not filt.match(path, now=now)
@@ -68,8 +67,8 @@ def test_filename_age_years_exact_4_years():
     and there are no fractional leap year effects to cause rounding errors.
     """
     # Jan 1, 2021 to Jan 1, 2025 is exactly 4 years
-    file_date = datetime.datetime(2021, 1, 1, 0, 0)
-    now = datetime.datetime(2025, 1, 1, 0, 0)
+    file_date = dt.datetime(2021, 1, 1, 0, 0)
+    now = dt.datetime(2025, 1, 1, 0, 0)
     path = make_file(file_date, date_width="year")
     filt = FilenameAgeYears(operator.eq, 4)
     assert filt.match(path, now=now)
@@ -80,4 +79,11 @@ def test_filename_age_years_exact_4_years():
     filt = FilenameAgeYears(operator.gt, 4)
     assert not filt.match(path, now=now)
     filt = FilenameAgeYears(operator.eq, 5)
+    assert not filt.match(path, now=now)
+    assert not filt.match(path, now=now)
+    assert not filt.match(path, now=now)
+    assert not filt.match(path, now=now)
+    assert not filt.match(path, now=now)
+    assert not filt.match(path, now=now)
+    assert not filt.match(path, now=now)
     assert not filt.match(path, now=now)
