@@ -27,7 +27,7 @@ class FileDate(Filter):
     """
 
     # This class requires stat data to function
-    requires_stat: bool = True
+    _requires_stat: bool = True
 
     def __init__(self, source: str = "modified"):
         """

@@ -19,10 +19,13 @@ class Filter(ABC):
     implement the match() method.
     """
 
-    # This attribute indicates whether the filter needs file stat information.
-    # Subclasses can set this to True if they require stat data for matching.
-    # This can help optimize queries by avoiding unnecessary stat calls.
-    requires_stat: bool = False
+    # Backing variable for requires_stat property (default: False)
+    _requires_stat: bool = False
+
+    @property
+    def requires_stat(self) -> bool:
+        """Return True if this filter requires stat data."""
+        return self._requires_stat
 
     def __and__(self, other: "Filter"):
         """Return a filter that matches if both filters match."""
@@ -36,15 +39,7 @@ class Filter(ABC):
         """Return a filter that matches if this filter does not match."""
         return NotFilter(self)
 
-    def needs_stat(self) -> bool:
-        """
-        Determine if this filter requires file stat information. This can be
-        used to optimizes queries by avoiding unnecessary stat calls.
-
-        Returns:
-            bool: True if the filter needs stat data, False otherwise.
-        """
-        return self.requires_stat
+    # needs_stat is removed; use requires_stat property instead
 
     def match(
         self,
@@ -106,9 +101,9 @@ class AndFilter(Filter):
             path, now=now, stat_result=stat_result
         ) and self.right.match(path, now=now, stat_result=stat_result)
 
-    def needs_stat(self) -> bool:
-        """Return True if either filter requires stat data."""
-        return self.left.needs_stat() or self.right.needs_stat()
+    @property
+    def requires_stat(self) -> bool:
+        return self.left.requires_stat or self.right.requires_stat
 
 class OrFilter(Filter):
     """
@@ -141,9 +136,9 @@ class OrFilter(Filter):
             path, now=now, stat_result=stat_result
         ) or self.right.match(path, now=now, stat_result=stat_result)
 
-    def needs_stat(self) -> bool:
-        """Return True if either filter requires stat data."""
-        return self.left.needs_stat() or self.right.needs_stat()
+    @property
+    def requires_stat(self) -> bool:
+        return self.left.requires_stat or self.right.requires_stat
 
 
 class NotFilter(Filter):
@@ -151,8 +146,11 @@ class NotFilter(Filter):
     Filter that matches if the operand filter does not match.
     """
 
-    # Does not require stat by to determine output
-    requires_stat: bool = False
+    # Does not require stat by default
+    _requires_stat: bool = False
+    @property
+    def requires_stat(self) -> bool:
+        return self.operand.requires_stat
 
     def __init__(self, operand: Filter):
         """Initialize with a filter to negate."""

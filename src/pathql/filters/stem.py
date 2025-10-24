@@ -30,8 +30,8 @@ class Stem(Filter):
         ignore_case (bool): If True (default), matching is case-insensitive.
     """
 
-    # This class requires stat data to function
-    requires_stat: bool = False
+    # This class does not require stat data to function
+    _requires_stat: bool = False
 
     def __init__(self, patterns: str | list[str], ignore_case: bool = True):
         """

@@ -29,7 +29,7 @@ class Suffix(Filter):
     """
 
     # This class does not require stat data to function
-    requires_stat: bool = False
+    _requires_stat: bool = False
 
     def __init__(
         self,

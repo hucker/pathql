@@ -11,9 +11,8 @@ class File(Filter):
     """Match a file's name using a shell-style glob pattern."""
 
 
-    def needs_stat(self) -> bool:
-        """Return True if either filter requires stat data."""
-        return self.left.needs_stat() or self.right.needs_stat()
+    # This class does not require stat data to function
+    _requires_stat: bool = False
 
     def __init__(
         self,

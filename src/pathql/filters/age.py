@@ -32,7 +32,7 @@ import operator
 import pathlib
 from typing import Callable
 
-from .alias import DatetimeOrNone, IntOrFloat, IntOrFloatOrNone, StatResultOrNone
+from .alias import DatetimeOrNone, IntOrFloat, IntOrFloatOrNone, StatResultOrNone, IntOrNone
 from .base import Filter
 from .datetime_parts import normalize_attr
 
@@ -48,7 +48,7 @@ class AgeBase(Filter):
     """
 
     # All age filters require stat data to function.
-    requires_stat: bool = True
+    _requires_stat: bool = True
 
 
     unit_seconds: float = 1.0
