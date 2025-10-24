@@ -3,30 +3,31 @@ Tests for the requires_stat property of all PathQL filter classes.
 
 Verifies that each filter class correctly reports whether it requires stat data, and that composite filters (And, Or, Not) propagate stat requirements as expected.
 """
-import pathlib
-import pytest
-from pathql.filters.age import AgeMinutes, AgeHours, AgeDays, AgeYears
-from pathql.filters.size import Size
-from pathql.filters.file_type import FileType
-from pathql.filters.suffix import Suffix
-from pathql.filters.stem import Stem
-from pathql.filters.file import File
-from pathql.filters.base import AndFilter, OrFilter, NotFilter
-from pathql.filters.filedate import FileDate
 
-import types
-from pathql.filters.callback import PathCallback, MatchCallback
+import pathlib
+
+import pytest
+
+from pathql.filters.age import AgeDays, AgeHours, AgeMinutes, AgeYears
+from pathql.filters.base import AndFilter, NotFilter, OrFilter
 from pathql.filters.between import Between
+from pathql.filters.callback import MatchCallback, PathCallback
+from pathql.filters.file import File
+from pathql.filters.file_type import FileType
+from pathql.filters.filedate import FileDate
+from pathql.filters.size import Size
+from pathql.filters.stem import Stem
+from pathql.filters.suffix import Suffix
 
 
 def dummy_func(path: pathlib.Path) -> bool:
     """Dummy callback for PathCallback (does not require stat)."""
     return True
 
+
 def dummy_func_stat(path: pathlib.Path, now: object, stat_result: object) -> bool:
     """Dummy callback for MatchCallback (requires stat)."""
     return True
-
 
 
 def test_requires_stat_callback() -> None:
@@ -51,6 +52,7 @@ def test_requires_stat_between() -> None:
     """Test that Between requires stat if the underlying filter does."""
     # Arrange
     from pathql.filters.age import AgeMinutes
+
     b1 = Between(AgeMinutes(), 1, 5)
     # Act & Assert
     assert b1.filter.requires_stat is True
@@ -60,6 +62,7 @@ def test_requires_stat_between_composed() -> None:
     """Test that composed Between filters propagate stat requirements."""
     # Arrange
     from pathql.filters.age import AgeMinutes
+
     b_stat = Between(AgeMinutes(), 1, 5)
     # Act
     andf = b_stat.filter & b_stat.filter
@@ -88,7 +91,9 @@ def test_requires_stat_simple() -> None:
     """Test requires_stat for all simple filters."""
     # Arrange/Act/Assert
     for filt, expected in SIMPLE_FILTERS:
-        assert filt.requires_stat is expected, f"{type(filt).__name__} requires_stat should be {expected}"
+        assert filt.requires_stat is expected, (
+            f"{type(filt).__name__} requires_stat should be {expected}"
+        )
 
 
 def test_requires_stat_not() -> None:
@@ -96,77 +101,137 @@ def test_requires_stat_not() -> None:
     # Arrange/Act/Assert
     for filt, expected in SIMPLE_FILTERS:
         notf = NotFilter(filt)
-        assert notf.requires_stat is expected, f"NotFilter({type(filt).__name__}) requires_stat should be {expected}"
+        assert notf.requires_stat is expected, (
+            f"NotFilter({type(filt).__name__}) requires_stat should be {expected}"
+        )
 
 
 def test_requires_stat_and_or() -> None:
     """Test requires_stat for AndFilter and OrFilter of all filter pairs."""
     # Arrange/Act/Assert
-    for (f1, e1) in SIMPLE_FILTERS:
-        for (f2, e2) in SIMPLE_FILTERS:
+    for f1, e1 in SIMPLE_FILTERS:
+        for f2, e2 in SIMPLE_FILTERS:
             andf = AndFilter(f1, f2)
             orf = OrFilter(f1, f2)
             expected = e1 or e2
-            assert andf.requires_stat is expected, f"AndFilter({type(f1).__name__}, {type(f2).__name__}) requires_stat should be {expected}"
-            assert orf.requires_stat is expected, f"OrFilter({type(f1).__name__}, {type(f2).__name__}) requires_stat should be {expected}"
+            assert andf.requires_stat is expected, (
+                f"AndFilter({type(f1).__name__}, {type(f2).__name__}) requires_stat should be {expected}"
+            )
+            assert orf.requires_stat is expected, (
+                f"OrFilter({type(f1).__name__}, {type(f2).__name__}) requires_stat should be {expected}"
+            )
 
-@pytest.mark.parametrize("expr, expected", [
-    # Single filters
-    (AgeMinutes() < 5, True),
-    (FileType().file, False),
-    # Simple And/Or
-    (AndFilter(AgeMinutes() < 5, FileType().file), True),
-    (OrFilter(FileType().file, Suffix("txt")), False),
-    (OrFilter(FileType().file, AgeMinutes() < 5), True),
-    # Nested
-    (AndFilter(OrFilter(FileType().file, Suffix("txt")), NotFilter(File("*.py"))), False),
-    (AndFilter(OrFilter(FileType().file, AgeMinutes() < 5), NotFilter(File("*.py"))), True),
-    (OrFilter(AndFilter(FileType().file, Suffix("txt")), NotFilter(File("*.py"))), False),
-    (OrFilter(AndFilter(FileType().file, AgeMinutes() < 5), NotFilter(File("*.py"))), True),
-])
 
+@pytest.mark.parametrize(
+    "expr, expected",
+    [
+        # Single filters
+        (AgeMinutes() < 5, True),
+        (FileType().file, False),
+        # Simple And/Or
+        (AndFilter(AgeMinutes() < 5, FileType().file), True),
+        (OrFilter(FileType().file, Suffix("txt")), False),
+        (OrFilter(FileType().file, AgeMinutes() < 5), True),
+        # Nested
+        (
+            AndFilter(
+                OrFilter(FileType().file, Suffix("txt")), NotFilter(File("*.py"))
+            ),
+            False,
+        ),
+        (
+            AndFilter(
+                OrFilter(FileType().file, AgeMinutes() < 5), NotFilter(File("*.py"))
+            ),
+            True,
+        ),
+        (
+            OrFilter(
+                AndFilter(FileType().file, Suffix("txt")), NotFilter(File("*.py"))
+            ),
+            False,
+        ),
+        (
+            OrFilter(
+                AndFilter(FileType().file, AgeMinutes() < 5), NotFilter(File("*.py"))
+            ),
+            True,
+        ),
+    ],
+)
 def test_requires_stat_param(expr: object, expected: bool) -> None:
     """Test requires_stat for parameterized filter expressions."""
     # Act & Assert
     assert expr.requires_stat is expected
 
-@pytest.mark.parametrize("expr, expected", [
-    # Large expressions: if any subfilter requires stat, the whole expression does
-    (AndFilter(
-        OrFilter(FileType().file, Suffix("txt")),
-        AndFilter(File("*.py"), NotFilter(FileType().file))
-    ), False),
-    (AndFilter(
-        OrFilter(FileType().file, AgeMinutes() < 5),
-        AndFilter(File("*.py"), NotFilter(FileType().file))
-    ), True),
-    (OrFilter(
-        AndFilter(FileType().file, Suffix("txt")),
-        AndFilter(File("*.py"), NotFilter(FileType().file))
-    ), False),
-    (OrFilter(
-        AndFilter(FileType().file, AgeMinutes() < 5),
-        AndFilter(File("*.py"), NotFilter(FileType().file))
-    ), True),
-    (AndFilter(
-        OrFilter(FileType().file, Suffix("txt")),
-        AndFilter(File("*.py"), NotFilter(AgeMinutes() < 5))
-    ), True),
-])
 
+@pytest.mark.parametrize(
+    "expr, expected",
+    [
+        # Large expressions: if any subfilter requires stat, the whole expression does
+        (
+            AndFilter(
+                OrFilter(FileType().file, Suffix("txt")),
+                AndFilter(File("*.py"), NotFilter(FileType().file)),
+            ),
+            False,
+        ),
+        (
+            AndFilter(
+                OrFilter(FileType().file, AgeMinutes() < 5),
+                AndFilter(File("*.py"), NotFilter(FileType().file)),
+            ),
+            True,
+        ),
+        (
+            OrFilter(
+                AndFilter(FileType().file, Suffix("txt")),
+                AndFilter(File("*.py"), NotFilter(FileType().file)),
+            ),
+            False,
+        ),
+        (
+            OrFilter(
+                AndFilter(FileType().file, AgeMinutes() < 5),
+                AndFilter(File("*.py"), NotFilter(FileType().file)),
+            ),
+            True,
+        ),
+        (
+            AndFilter(
+                OrFilter(FileType().file, Suffix("txt")),
+                AndFilter(File("*.py"), NotFilter(AgeMinutes() < 5)),
+            ),
+            True,
+        ),
+    ],
+)
 def test_requires_stat_large_param(expr: object, expected: bool) -> None:
     """Test requires_stat for large parameterized filter expressions."""
     # Act & Assert
     assert expr.requires_stat is expected
+
+
 # Additional: test all filter classes in the codebase for requires_stat property
 def test_all_known_filters_have_requires_stat() -> None:
     """Test that all known filter classes have a requires_stat property and it is a bool."""
     # Arrange
     filter_classes = [
-        AgeMinutes, AgeHours, AgeDays, AgeYears,
-        FileDate, Size, FileType, Suffix, Stem,
-        PathCallback, MatchCallback, Between,
-        AndFilter, OrFilter, NotFilter
+        AgeMinutes,
+        AgeHours,
+        AgeDays,
+        AgeYears,
+        FileDate,
+        Size,
+        FileType,
+        Suffix,
+        Stem,
+        PathCallback,
+        MatchCallback,
+        Between,
+        AndFilter,
+        OrFilter,
+        NotFilter,
     ]
     # Act & Assert
     for cls in filter_classes:
@@ -203,6 +268,8 @@ def test_all_known_filters_have_requires_stat() -> None:
         except Exception:
             continue
         # Accepts property or attribute
-        assert hasattr(type(inst), "requires_stat"), f"{cls.__name__} missing requires_stat property"
+        assert hasattr(type(inst), "requires_stat"), (
+            f"{cls.__name__} missing requires_stat property"
+        )
         val = inst.requires_stat
         assert isinstance(val, bool), f"{cls.__name__} requires_stat is not bool"

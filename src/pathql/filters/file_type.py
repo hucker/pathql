@@ -2,8 +2,10 @@
 
 import pathlib
 import stat
+
 from .alias import DatetimeOrNone, StatResultOrNone
 from .base import Filter
+
 
 class FileType(Filter):
     """

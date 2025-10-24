@@ -138,7 +138,6 @@ class PathCallback(Filter):
         return f"PathCallback({name}, args={self.args!r}, kwargs={self.kwargs!r})"
 
 
-
 class MatchCallback(PathCallback):
     """Call a user function with (path, now, stat_result, ...) signature.
 
