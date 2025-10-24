@@ -8,7 +8,7 @@ from pathql.filters.age import AgeSeconds
 from pathql.filters.size import Size
 from pathql.filters.stem import Stem
 from pathql.filters.suffix import Suffix
-from pathql.filters.type import Type
+from pathql.filters.file_type import FileType
 from pathql.query import Query
 
 
@@ -79,7 +79,7 @@ def test_stem_pattern_and_type(
     root, now = rich_filesystem
     root_path = Path(root)
     now_dt = dt.datetime.fromtimestamp(now)
-    q = Query((Stem(r"^g.*") & (Type == Type.FILE)))
+    q = Query((Stem(r"^g.*") & (FileType().file)))
 
     # Act
     files = list(q.files(root_path, recursive=True, files=True, now=now_dt))
@@ -119,7 +119,7 @@ def test_all_files_type_file(
     root, now = rich_filesystem
     root_path = Path(root)
     now_dt = dt.datetime.fromtimestamp(now)
-    q = Query(Type == Type.FILE)
+    q = Query(FileType().file)
 
     # Act
     files = list(q.files(root_path, recursive=True, files=True, now=now_dt))
@@ -137,7 +137,7 @@ def test_all_files_type_directory(
     root, now = rich_filesystem
     root_path = Path(root)
     now_dt = dt.datetime.fromtimestamp(now)
-    q = Query(Type().directory)
+    q = Query(FileType().directory)
 
     # Act
     files = list(q.files(root_path, recursive=True, files=False, now=now_dt))

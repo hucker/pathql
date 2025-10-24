@@ -24,7 +24,7 @@ class Between(Filter):
         upper: int | float| dt.datetime
     ) -> None:
           # Compose the filter using the instance, not the class
-        self.filter = (filter_instance >= lower) & (filter_instance < upper)
+        self.filter:Filter = (filter_instance >= lower) & (filter_instance < upper)
 
     def match(
         self,
@@ -35,8 +35,9 @@ class Between(Filter):
         """Return True if the underlying between filter matches."""
         return self.filter.match(path, now=now, stat_result=stat_result)
 
-    def needs_stat(self) -> bool:
+    @property
+    def requires_stat(self) -> bool:
         """Return True if the underlying filter requires stat data."""
 
         # Between depends on what the underlying filter needs
-        return self.filter.needs_stat()
+        return self.filter.requires_stat

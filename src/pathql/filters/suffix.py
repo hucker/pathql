@@ -18,8 +18,9 @@ and inequality operators for expressive query building.
 import pathlib
 import re
 from typing import List
+
+from .alias import DatetimeOrNone, StatResultOrNone, StrOrListOfStr
 from .base import Filter
-from .alias import StatResultOrNone, StrOrListOfStr, DatetimeOrNone
 
 
 class Suffix(Filter):

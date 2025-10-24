@@ -10,7 +10,6 @@ from .base import Filter
 class File(Filter):
     """Match a file's name using a shell-style glob pattern."""
 
-
     # This class does not require stat data to function
     _requires_stat: bool = False
 

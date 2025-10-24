@@ -21,9 +21,11 @@ PathCallable = Callable[..., bool]
 class PathCallback(Filter):
     """Call a user function with a Path and optional bound args/kwargs."""
 
-    def needs_stat(self) -> bool:
-        """Return False as PathCallback does not require stat data by default."""
-        return False
+    _requires_stat: bool = False
+
+    @property
+    def requires_stat(self) -> bool:
+        return self._requires_stat
 
     def __init__(self, func: PathCallable, *args: Any, **kwargs: Any) -> None:
         """Create a PathCallback that binds positional and keyword args."""
@@ -146,9 +148,11 @@ class MatchCallback(PathCallback):
     this class will prefer callables that accept (path, now, stat_result).
     """
 
-    def needs_stat(self) -> bool:
-        """Return False as PathCallback does not require stat data by default."""
-        return True
+    _requires_stat: bool = True
+
+    @property
+    def requires_stat(self) -> bool:
+        return self._requires_stat
 
     def __init__(self, func: PathCallable, *args: Any, **kwargs: Any) -> None:
         """Create a MatchCallback that binds positional and keyword args.

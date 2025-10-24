@@ -23,7 +23,7 @@ for f in Query("C:/logs",  (AgeYears() > 1) & Ext(".bak")):
 Print files created today and larger than 10MB in C:\\logs: using threaded crawling.
 
 ```py
-from pathql import AgeDays, Size, Type
+from pathql import AgeDays, Size, FileType
 
 
 for f in Query(r"C:/logs", (AgeDays() == 0) & (Size() > "10 mb") & Ext("log"),threaded=True):
@@ -103,7 +103,7 @@ PathQL is a declarative, composable, and efficient query language for filesystem
 ## Features
 
 - **Declarative Query Syntax**: Compose filters using Python operators (`&`, `|`, `~`, etc.)
-- **Pathlib-like Naming**: Filters and queries mimic `pathlib` conventions (e.g., `Stem`, `Suffix`, `Type`)
+- **Pathlib-like Naming**: Filters and queries mimic `pathlib` conventions (e.g., `Stem`, `Suffix`, `FileType`)
 - **Stat Caching**: Each file is stat-ed only once per query for efficiency
 - **Threaded Filesystem Search**: Query engine uses a producer-consumer model with a dedicated thread for filesystem crawling and a main thread for filtering, improving responsiveness and throughput for large directory trees.
 - **Extensible Filters**: Easily add new filters for custom logic
@@ -188,7 +188,7 @@ state information.  Eliminating these checks can be VERY valuable.
 - `Size() <= 1_000_000` — files up to 1MB
 - `Suffix({".png", ".jpg"})` — files with .png or .jpg extension
 - `Stem("report_*")` — files whose stem matches a glob pattern (e.g., starts with "report_")
-- `Type().file` — 'file, 'dir', 'link'
+- `FileType().file` — 'file, 'dir', 'link'
 - `AgeMinutes() < 10` — modified in the last 10 minutes
 - `Between(Size(), 1000, 2000)` — files with size >= 1000 and < 2000 bytes (inclusive lower, exclusive upper)
 - `YearFIlter(2024)`
@@ -626,10 +626,10 @@ for path in Query("/some/dir", query):
 ### 2. Find all files with stem starting with "report_" (case-insensitive)
 
 ```python
-from pathql.filters import Stem, Type
+from pathql.filters import Stem, FileType
 from pathql.query import Query
 
-query = Stem("report_*") & Type("file")
+query = Stem("report_*") & FileType("file")
 for path in Query("/data/reports", query):
    print(path)
 ```
@@ -637,10 +637,10 @@ for path in Query("/data/reports", query):
 ### 3. Find all directories older than 1 year
 
 ```python
-from pathql.filters import Type, AgeYears
+from pathql.filters import FileType, AgeYears
 from pathql.query import Query
 
-query = Type("dir") & (AgeYears() > 1)
+query = FileType("dir") & (AgeYears() > 1)
 for path in Query("/archive", query):
    print(path)
 ```

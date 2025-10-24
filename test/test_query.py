@@ -7,7 +7,7 @@ import pytest
 
 from pathql.filters.size import Size
 from pathql.filters.suffix import Suffix
-from pathql.filters.type import Type
+from pathql.filters.file_type import FileType
 from pathql.query import Query
 
 
@@ -85,8 +85,8 @@ def test_query_or_and(mini_fs: pathlib.Path) -> None:
 def test_query_type_file_and_dir(mini_fs: pathlib.Path) -> None:
     """Test Query for file and directory types."""
     # Arrange
-    q_files = Query(Type().file)
-    q_dirs = Query(Type().directory)
+    q_files = Query(FileType().file)
+    q_dirs = Query(FileType().directory)
     # Act
     files = list(q_files.files(mini_fs, recursive=True, files=True, threaded=False))
     dirs = list(q_dirs.files(mini_fs, recursive=True, files=False, threaded=False))

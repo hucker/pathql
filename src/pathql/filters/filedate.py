@@ -13,11 +13,13 @@ expressive queries such as:
 Use the .created, .modified, .accessed, or .filename properties for source selection.
 """
 
-import pathlib
 import datetime
 import operator
-from typing import Callable, Any
+import pathlib
+from typing import Any, Callable
+
 from pathql.filters.base import Filter
+
 
 class FileDate(Filter):
     """
@@ -38,10 +40,7 @@ class FileDate(Filter):
         self.source = source
 
     def match(
-        self,
-        path: pathlib.Path,
-        now: Any = None,
-        stat_result: Any = None
+        self, path: pathlib.Path, now: Any = None, stat_result: Any = None
     ) -> datetime.datetime | None:
         """
         Return the file's date according to the selected source.
@@ -68,14 +67,19 @@ class FileDate(Filter):
         Return a filter object with a .match() method that compares the file's date
         to 'other' using the operator 'op'.
         """
+
         class DateComparisonFilter(Filter):
             def __init__(self, parent):
                 self.parent = parent
-            def match(self, path: pathlib.Path, now: Any = None, stat_result: Any = None) -> bool:
+
+            def match(
+                self, path: pathlib.Path, now: Any = None, stat_result: Any = None
+            ) -> bool:
                 file_date = self.parent.match(path, now=now, stat_result=stat_result)
                 if file_date is None:
                     return False
                 return op(file_date, other)
+
         return DateComparisonFilter(self)
 
     @property

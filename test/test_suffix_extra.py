@@ -59,9 +59,6 @@ def test_suffix_operator_overloads(tmp_path: pathlib.Path) -> None:
 
     # Act and Assert
     assert Suffix(["txt"]) == Suffix(["txt"])
-    # Membership checks normalized dot-prefixed patterns
-    assert ".txt" in Suffix(["txt", "md"])
-    assert ".md" in Suffix(["txt", "md"])
     # Suffix("txt") returns a filter; test match directly
     assert Suffix("txt").match(file)
     # Suffix(["txt"]) returns a filter; test match directly

@@ -6,7 +6,7 @@ from typing import cast
 
 import pytest
 
-from pathql.filters.type import Type
+from pathql.filters.file_type import FileType
 
 
 def test_type_file(tmp_path: pathlib.Path) -> None:
@@ -16,7 +16,7 @@ def test_type_file(tmp_path: pathlib.Path) -> None:
     f.write_text("A")
 
     # Act and Assert
-    assert (Type == Type.FILE).match(f)
+    assert FileType().file.match(f)
 
 
 def test_type_directory(tmp_path: pathlib.Path) -> None:
@@ -26,7 +26,7 @@ def test_type_directory(tmp_path: pathlib.Path) -> None:
     d.mkdir()
 
     # Act and Assert
-    assert (Type == Type.DIRECTORY).match(d)
+    assert (FileType().directory ).match(d)
 
 
 def test_type_link(tmp_path: pathlib.Path) -> None:
@@ -40,52 +40,10 @@ def test_type_link(tmp_path: pathlib.Path) -> None:
     link.symlink_to(f)
 
     # Act and Assert
-    assert (Type == Type.LINK).match(link)
-    assert not (Type == Type.FILE).match(link)
+    assert (FileType().link).match(link)
+    assert not (FileType().file).match(link)
 
 
-def test_type_union_and_set(tmp_path: pathlib.Path) -> None:
-    """Type filter supports unions and set/string construction."""
-    # Arrange
-    f = tmp_path / "a.txt"
-    f.write_text("A")
-    d = tmp_path / "a_dir"
-    d.mkdir()
-
-    # Act and Assert
-    type_union = {Type.FILE, Type.DIRECTORY}
-    assert (Type == type_union).match(f)
-    assert (Type == type_union).match(d)
-    assert Type("file").match(f)
-    assert Type("directory").match(d)
-    assert Type({"file", "directory"}).match(f)
-    assert Type({"file", "directory"}).match(d)
-
-
-def test_type_contains() -> None:
-    """Type filter supports membership testing via `in`."""
-    # Arrange
-    t = Type({Type.FILE, Type.DIRECTORY})
-
-    # Act and Assert
-    assert Type.FILE in t
-    assert Type.DIRECTORY in t
-    assert Type.LINK not in t
-
-
-def test_type_or_and_ror() -> None:
-    """OR operations produce a union of types."""
-    # Arrange
-    t1 = Type(Type.FILE)
-    t2 = Type(Type.DIRECTORY)
-
-    # Act
-    t3 = t1 | t2
-    t4 = t2.__ror__(t1)
-
-    # Assert
-    assert Type.FILE in t3.type_names and Type.DIRECTORY in t3.type_names
-    assert t3.type_names == t4.type_names
 
 
 def test_type_error_handling(
@@ -115,18 +73,21 @@ def test_type_error_handling(
 
     # Act and Assert
     # Cast to satisfy type checkers; BadPath implements only minimal Path-like API
-    assert Type(Type.UNKNOWN).match(cast(pathlib.Path, bad))
-    assert not Type(Type.FILE).match(cast(pathlib.Path, bad))
+    assert FileType().unknown.match(cast(pathlib.Path, bad))
+    assert not FileType().file.match(cast(pathlib.Path, bad))
     if sys.platform.startswith("win"):
         pytest.skip("Symlink tests are skipped on Windows.")
+
     broken = tmp_path / "broken_link"
     # Ensure we don't error if the link/file already exists (tests may be re-run)
     if broken.exists() or broken.is_symlink():
         broken.unlink(missing_ok=True)
     broken.symlink_to(tmp_path / "does_not_exist.txt")
-    assert (Type == Type.LINK).match(broken)
+
+    assert (FileType().link).match(broken)
+
     broken = tmp_path / "broken_link"
     if broken.exists() or broken.is_symlink():
         broken.unlink(missing_ok=True)
     broken.symlink_to(tmp_path / "does_not_exist.txt")
-    assert (Type == Type.LINK).match(broken)
+    assert (FileType().link).match(broken)

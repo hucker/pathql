@@ -6,7 +6,7 @@ from typing import cast
 
 import pytest
 
-from pathql.filters.type import Type
+from pathql.filters.file_type import FileType
 
 
 def test_type_file(tmp_path: pathlib.Path) -> None:
@@ -16,7 +16,7 @@ def test_type_file(tmp_path: pathlib.Path) -> None:
     f.write_text("A")
 
     # Act and Assert
-    assert (Type().file).match(f)
+    assert (FileType().file).match(f)
 
 
 def test_type_directory(tmp_path: pathlib.Path) -> None:
@@ -26,7 +26,7 @@ def test_type_directory(tmp_path: pathlib.Path) -> None:
     d.mkdir()
 
     # Act and Assert
-    assert (Type().directory).match(d)
+    assert (FileType().directory).match(d)
 
 
 def test_type_link(tmp_path: pathlib.Path) -> None:
@@ -40,8 +40,8 @@ def test_type_link(tmp_path: pathlib.Path) -> None:
     link.symlink_to(f)
 
     # Act and Assert
-    assert (Type().link ).match(link)
-    assert not (Type().file).match(link)
+    assert (FileType().link ).match(link)
+    assert not (FileType().file).match(link)
 
 
 
@@ -50,7 +50,7 @@ def test_type_no_type_name_raises(tmp_path):
     """Type filter with no type_name should not match anything and should not raise."""
     f = tmp_path / "foo.txt"
     f.write_text("x")
-    t = Type()
+    t = FileType()
     # Should always return False for any file type
     assert not t.match(f)
     assert not t.match(tmp_path)
@@ -59,7 +59,7 @@ def test_type_invalid_type_name(tmp_path):
     """Type filter with an invalid type_name should never match and should not raise."""
     f = tmp_path / "foo.txt"
     f.write_text("x")
-    t = Type("not_a_type")
+    t = FileType("not_a_type")
     # Should always return False for any file type
     assert not t.match(f)
     assert not t.match(tmp_path)
@@ -67,7 +67,7 @@ def test_type_invalid_type_name(tmp_path):
 def test_type_unknown_on_missing_file(tmp_path):
     """Type().unknown should match missing files, others should not."""
     missing = tmp_path / "does_not_exist.txt"
-    assert Type().unknown.match(missing)
-    assert not Type().file.match(missing)
-    assert not Type().directory.match(missing)
-    assert not Type().link.match(missing)
+    assert FileType().unknown.match(missing)
+    assert not FileType().file.match(missing)
+    assert not FileType().directory.match(missing)
+    assert not FileType().link.match(missing)

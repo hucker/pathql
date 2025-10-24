@@ -4,8 +4,9 @@ Base filter classes for PathQL.
 Defines the abstract Filter class and logical combinators (AndFilter, OrFilter,
 NotFilter) for building composable filesystem queries.
 """
-from abc import ABC, abstractmethod
+
 import pathlib
+from abc import ABC
 from types import NotImplementedType
 
 from .alias import DatetimeOrNone, StatResultOrNone
@@ -39,7 +40,6 @@ class Filter(ABC):
         """Return a filter that matches if this filter does not match."""
         return NotFilter(self)
 
-    # needs_stat is removed; use requires_stat property instead
 
     def match(
         self,
@@ -105,6 +105,7 @@ class AndFilter(Filter):
     def requires_stat(self) -> bool:
         return self.left.requires_stat or self.right.requires_stat
 
+
 class OrFilter(Filter):
     """
     Filter that matches if either left or right filter matches.
@@ -114,6 +115,7 @@ class OrFilter(Filter):
         is not evaluated. This means that if filters have side effects, those side effects
         may not be executed. Filters should be pure functions without side effects.
     """
+
     def __init__(self, left: Filter, right: Filter):
         """Initialize with two filters to combine with logical OR."""
         self.left: Filter = left
@@ -148,6 +150,7 @@ class NotFilter(Filter):
 
     # Does not require stat by default
     _requires_stat: bool = False
+
     @property
     def requires_stat(self) -> bool:
         return self.operand.requires_stat
