@@ -1,4 +1,3 @@
-
 <!-- Badges: pytest count, coverage (src), mypy errors, ruff status -->
 
 ![pytest](https://img.shields.io/badge/pytest-233-blue)
@@ -9,7 +8,6 @@
 # PathQL Declarative SQL Style Layer For Pathlib.
 
 ---
-
 
 ## Quick Examples
 
@@ -33,6 +31,7 @@ for f in Query(r"C:/logs", (AgeDays() == 0) & (Size() > "10 mb") & Ext("log"),th
 ```
 
 Image files from New Years 2020.
+
 ```py
 from pathql import DayFilter
 import datetime as dt
@@ -43,6 +42,7 @@ for f in Query(r"C:/logs", DayFilter(base=dt.datetime(year=2020,month=1,day=1)):
 ```
 
 ## Table of Contents
+
 - [PathQL Declarative SQL Style Layer For Pathlib.](#pathql-declarative-sql-style-layer-for-pathlib)
   - [Quick Examples](#quick-examples)
   - [Table of Contents](#table-of-contents)
@@ -108,8 +108,6 @@ PathQL is a declarative, composable, and efficient query language for filesystem
 - **Threaded Filesystem Search**: Query engine uses a producer-consumer model with a dedicated thread for filesystem crawling and a main thread for filtering, improving responsiveness and throughput for large directory trees.
 - **Extensible Filters**: Easily add new filters for custom logic
 - **Comprehensive Testing**: Robust, parameterized pytest suite with coverage
-
-
 
 ## Basic Concepts
 
@@ -180,6 +178,7 @@ While most filters that come with `pathql` run fairly quickly, real world use ca
 state information.  Eliminating these checks can be VERY valuable.
 
 **Summary:**
+
 - Use `&`, `|`, and `~` to build complex queries.
 - Short-circuiting ensures efficient evaluation and skips unnecessary work.
 - Place expensive filters down stream in your logic chains.
@@ -195,12 +194,12 @@ state information.  Eliminating these checks can be VERY valuable.
 - `YearFIlter(2024)`
 - `MonthFIlter("May")`
 - `DayFilter(23)`
-- `HourFIlter(12)`
+- `HourFilter(12)`
 - `MinuteFilter(59)`
 - `SecondFilter(40)`
+- `FileDate().modified > dt.datetime(2025,1,1)`
 
 ### Using the `Between` Filter
-
 
 The `Between` filter matches files whose attribute (such as size or age) falls within a specified range: inclusive on the lower bound, exclusive on the upper bound.
 
@@ -210,7 +209,7 @@ The `Between` filter matches files whose attribute (such as size or age) falls w
 from pathql.filters import Between, Size
 from pathql.query import Query
 
-for path in Query("/some/dir", Between(Size(), 1000, 2000)):
+for path in Query("/some/dir", Between(Size(), 1000, 2000) & Between(FileDate(),dt.datetime(2024,1,1),dt.datetime(2024,2,1))):
    print(path)
 else:
    print("No files were found")
@@ -218,70 +217,44 @@ else:
 
 ## Query (engine)
 
-The `Query` class is the driver for PathQL. It walks the filesystem, gathers
-stat metadata, and applies filter expressions to decide which files to yield.
-It exposes a small, well-documented API and supports both single-threaded and
-producer/consumer (threaded) modes for flexible performance characteristics.
+The `Query` class is the driver for PathQL. It walks the filesystem, gathers stat metadata, and applies filter expressions to decide which files to yield.
+It exposes a small, well-documented API and supports both single-threaded and producer/consumer (threaded) modes for flexible performance characteristics.
 
 ### Overview
 
-- Purpose: efficiently find filesystem entries that match a filter expression.
-- Model: the filesystem walk (producer) is separated from filtering/consumption
-    (consumer) so IO-bound directory traversal can proceed concurrently with CPU
-    bound filter evaluation.
+- Purpose: efficiently find filesystem entries that match a filter expression. - Model: the filesystem walk (producer) is separated from filtering/consumption (consumer) so IO-bound directory traversal can proceed concurrently with CPU bound filter evaluation.
 - Key features: stat caching, optional threading, recursion control, and
-    eager or lazy collection via `select` and `files` respectively.
+  eager or lazy collection via `select` and `files` respectively.
 
 ### Public API
 
 - `Query(filter_expr)` — construct a Query with a filter expression (any `Filter`).
-- `Query.match(path, now=None, stat_result=None)` — run the filter expression
-    against a single `path`. Useful for programmatic checks or tests. `now`
-    defaults to the current datetime; `stat_result` can be provided to avoid an
-    additional `stat()` call.
-- `Query.files(path, recursive=True, files=True, now=None, threaded=False)` —
-    lazily yield matching `pathlib.Path` objects. Set `threaded=True` to enable
-    the producer/consumer mode.
+- `Query.match(path, now=None, stat_result=None)` — run the filter expression against a single `path`. Useful for programmatic checks or tests. `now` defaults to the current datetime `stat_result` can be provided to avoid an additional `stat()` call.
+- `Query.files(path, recursive=True, files=True, now=None, threaded=False)` — lazily yield matching `pathlib.Path` objects. Set `threaded=True` to enable  the producer/consumer mode.
 - `Query.select(path, ...)` — eagerly collect matches into a `ResultSet`.
 
 ### Threaded vs single-threaded
 
-- Single-threaded (`threaded=False`) walks the tree and filters each entry in a
-    single loop. Simpler and predictable; good for small trees or when threading
-    is not desired.
-- Threaded (`threaded=True`) starts a daemon producer thread that walks the
-    filesystem and pushes `(path, stat_result)` tuples into a bounded `queue.Queue`
-    (default maxsize: 10). The consumer (caller) reads from the queue and runs
-    the filter expression. This can improve throughput when the filesystem is
-    slow or when filter evaluation is relatively expensive.
-- The producer places a `None` sentinel on the queue when traversal completes;
-    the consumer stops after seeing the sentinel and joins the producer thread.
+- Single-threaded (`threaded=False`) walks the tree and filters each entry in a single loop. Simpler and predictable; good for small trees or when threading
+  is not desired.
+- Threaded (`threaded=True`) starts a daemon producer thread that walks the filesystem and pushes `(path, stat_result)` tuples into a bounded `queue.Queue` (default maxsize: 10). The consumer (caller) reads from the queue and runs the filter expression. This can improve throughput when the filesystem is slow or when filter evaluation is relatively expensive.
+- The producer places a `None` sentinel on the queue when traversal completes; the consumer stops after seeing the sentinel and joins the producer thread.
 
 ### Stat caching and `stat_result`
 
-- The producer (threaded mode) or the single-threaded walker performs `path.stat()`
-    once per file and passes the `stat_result` along with the path to the filters.
-    Filters should accept and prefer the provided `stat_result` to avoid extra
-    system calls.
-- All filters in PathQL accept optional `now` and `stat_result` parameters so
-    that a single `now` timestamp can be used for consistent comparisons and
-    so callers can reuse stat results.
+- The producer (threaded mode) or the single-threaded walker performs `path.stat()` once per file and passes the `stat_result` along with the path to the filters. Filters should accept and refer the provided `stat_result` to avoid extra system calls.
+- All filters in PathQL accept optional `now` and `stat_result` parameters so that a single `now` timestamp can be used for consistent comparisons and
+  so callers can reuse stat results.
 
 ### Recursion, files vs directories
 
-- `recursive=True` (default) uses `rglob("*")` to walk the tree; set
-    `recursive=False` to restrict to the top-level directory via `glob("*")`.
-- `files=True` (default) filters out non-files; set `files=False` to include
-    directories in the results.
+- `recursive=True` (default) uses `rglob("*")` to walk the tree; set `recursive=False` to restrict to the top-level directory via `glob("*")`.
+- `files=True` (default) filters out non-files; set `files=False` to include directories in the results.
 
 ### Result collection
 
-- `files(...)` is lazy and yields matches as they are found. Use this when you
-    want streaming behavior or to process very large trees without building a
-    large in-memory list.
-- `select(...)` eagerly collects matches into a `ResultSet` (which wraps the
-    iterator into a list-like object). Use `select` for aggregations or when an
-    in-memory snapshot is required.
+- `files(...)` is lazy and yields matches as they are found. Use this when you want streaming behavior or to process very large trees without building a large in-memory list.
+- `select(...)` eagerly collects matches into a `ResultSet` (which wraps the iterator into a list-like object). Use `select` for aggregations or when an in-memory snapshot is required.
 
 ### Examples
 
@@ -306,22 +279,20 @@ if q.match(pathlib.Path('notes.txt')):
 
 ### Edge cases and notes
 
-- The default queue max size (10) is a tradeoff between memory and producer
-    progress; tuning may help for very large or very slow filesystems.
-- Filters should avoid calling `stat()` themselves when a `stat_result` is
-    provided. PathQL already passes the `stat_result` to filters when available.
+- The default queue max size (10) is a tradeoff between memory and producer progress; tuning may help for very large or very slow filesystems.
+- Filters should avoid calling `stat()` themselves when a `stat_result` is provided. PathQL already passes the `stat_result` to filters when available.
 - When using `now`, pass a fixed datetime in tests to make results deterministic.
 
-If you need more control (parallel consumers, custom traversal ordering, or
-different queueing semantics) you can implement your own driver that reuses
-the filter primitives exposed by PathQL.
+If you need more control (parallel consumers, custom traversal ordering, or different queueing semantics) you can implement your own driver that reuses the filter primitives exposed by PathQL.
 
 ## File and Suffix Filter Semantics
 
 ### File Filter
+
 The `File` filter matches the full filename using shell-style glob patterns (via `fnmatch`). This means you can use wildcards like `*`, `?`, and character sets, but **curly-brace expansion** (e.g., `foo.{jpg,png}`) is **not supported**. Matching is case-insensitive.
 
 **Examples:**
+
 ```python
 File("*.jpg")         # matches "photo.jpg", "archive.backup.jpg"
 File("foo.*")         # matches "foo.jpg", "foo.png", "foo.bmp"
@@ -333,6 +304,7 @@ File("*report*")      # matches any file with "report" in the name
 **Note:** Patterns like `foo.{jpg,png}` will NOT expand to match multiple extensions. Use wildcards or run multiple queries if you need to match several extensions.
 
 ### Suffix Filter
+
 The `Suffix` and `Ext` filters match file extensions by checking if the filename ends with the full extension, including the dot. Patterns like 'bmp' or '.bmp' are both accepted, but are normalized internally to '.bmp'.
 
 - Any leading dot in the extension pattern is added if missing, so 'bmp' and '.bmp' are treated identically.
@@ -341,6 +313,7 @@ The `Suffix` and `Ext` filters match file extensions by checking if the filename
 - Wildcards (e.g., `*`, `?`) are supported in Suffix patterns via `fnmatch`.
 
 **Examples:**
+
 ```python
 Suffix(".jpg")         # matches "photo.jpg", "archive.backup.jpg"
 Suffix("jpg")          # also matches "photo.jpg", "archive.backup.jpg"
@@ -351,17 +324,14 @@ Suffix(".foo")         # matches "bar.foo", "baz.bar.foo"
 Suffix("*.gz")         # matches any file ending in ".gz"
 ```
 
-Note on curly-brace expansion: `Suffix` supports simple brace expansion inside a
-single string. For example, `Suffix("{tif,jpg}")` expands to the two patterns
-`".tif"` and `".jpg"` (you can also include a base, e.g. `".{tif,jpg}"`).
-This is a convenience for common multi-extension cases. By contrast, the
-`File` filter does NOT perform curly-brace expansion (it uses `fnmatch` on the
-entire filename) — use multiple `Suffix` filters or explicit patterns for
-complex filename matching.
+Note on curly-brace expansion: `Suffix` supports simple brace expansion inside a single string. For example, `Suffix("{tif,jpg}")` expands to the two patterns
+`".tif"` and `".jpg"` (you can also include a base, e.g. `".{tif,jpg}"`). This is a convenience for common multi-extension cases. By contrast, the
+`File` filter does NOT perform curly-brace expansion (it uses `fnmatch` on the entire filename) — use multiple `Suffix` filters or explicit patterns for complex filename matching.
 
 Multi-part extensions like '.tar.gz' or '.tif.back' are supported and will match files ending with those exact strings. Wildcards are supported for flexible matching.
 
 For more advanced extension filtering, you can combine `Suffix` with other filters:
+
 ```python
 from pathql.query import Query
 for path in Query("/photos", Suffix('.jpg') & CameraMakeFilter("Canon")):
@@ -399,15 +369,17 @@ for p in Query("/project", keyword_filter & Suffix(".py")):
 PathQL provides powerful filters for matching files based on specific parts of their modification, creation, or access datetime. These filters allow precise queries for year, month, day, hour, minute, and second.
 
 ### Key Idea
+
 You almost never need to interact with the raw `datetime` objects if you are dealing with time scales relative to today. The filter constructors and defaults are designed so that typical queries (by year, month, day, etc.) will just work. You specify the part you care about (e.g., `YearFilter(2025)`, `MonthFilter("may")`), and PathQL will filter data in that time period. If that time period is in the future (you ask for May and it is April)
 
-
 ### How `base`, `offset`, and `attr` Work
+
 - **base**: The reference datetime for the filter. By default, this is the current date/time, but you can set it to any `datetime` object. This is useful for queries like "files from the same month last year" or "files from a specific day."
 - **offset**: An integer that shifts the `base` by the specified number of years, months, days, etc., depending on the filter. For example, `offset=-1` with a `MonthFilter` and the default base will match last month.
 - **attr**: Which file timestamp to use. Accepts user-friendly names (`"modified"`, `"created"`, `"accessed"`) or raw stat attribute names (`"st_mtime"`, etc.). This lets you filter by modification, creation, or access time as needed.
 
 ### Available Filters
+
 - `YearFilter(year, base=None, offset=0, attr="modified")`
 - `MonthFilter(month, base=None, offset=0, attr="created")`
 - `DayFilter(day, base=None, offset=0, attr="accessed")`
@@ -416,25 +388,28 @@ You almost never need to interact with the raw `datetime` objects if you are dea
 - `SecondFilter(second, base=None, offset=0, attr="modified")`
 
 ### Arguments
+
 - **value** (`int` or `str`): The part to match (e.g., year=2025, month="may" or 5, day=16, etc.)
 - **base** (`datetime`, optional): Reference datetime for offset calculation. Defaults to now.
 - **offset** (`int`, optional): Offset to apply to the base datetime (e.g., offset=1 for next year/month/day).
 - **attr** (`str`, optional): Which stat attribute to use. Accepts "modified", "created", "accessed" or "st_mtime", "st_ctime", "st_atime".
 
 ### Matching Logic
+
 - The filter extracts the relevant part(s) from the file's stat timestamp (using the specified attr).
 - It compares the extracted part(s) to the filter's value(s).
 - For `MonthFilter`, both string names ("may", "january") and integers (1-12) are supported.
 - For `DayFilter`, `HourFilter`, `MinuteFilter`, `SecondFilter`, the filter matches only if all parts (year, month, day, etc.) match exactly.
 
 ### Stat Attribute Mapping
+
 ### Stat Attribute Mapping
 
-| Friendly name | stat attribute | Description |
-|---|---|---|
-| modified | `st_mtime` | File modification time (most commonly used for age calculations) |
-| created  | `st_ctime`  | File creation time (platform-dependent: more reliable on Windows) |
-| accessed | `st_atime`  | Last access time |
+| Friendly name | stat attribute | Description                                                       |
+| ------------- | -------------- | ----------------------------------------------------------------- |
+| modified      | `st_mtime`   | File modification time (most commonly used for age calculations)  |
+| created       | `st_ctime`   | File creation time (platform-dependent: more reliable on Windows) |
+| accessed      | `st_atime`   | Last access time                                                  |
 
 You can also pass the raw stat attribute names (`"st_mtime"`, `"st_ctime"`, `"st_atime"`) to the datetime-part filters directly.
 
@@ -459,16 +434,15 @@ useful for queries like "files older than 30 days" or "files modified in the
 last 2 hours".
 
 Supported filters:
+
 - `AgeMinutes` — age in minutes
 - `AgeHours` — age in hours
 - `AgeDays` — age in days
 - `AgeYears` — age in years
 
 Comparison semantics:
-- Only `<`, `<=`, `>`, and `>=` style comparisons are supported for age
-  filters. The library treats `<` and `>` as inclusive (so they behave like
-  `<=` and `>=` respectively) for convenience. Equality (`==`) and inequality
-  (`!=`) comparisons are intentionally unsupported and will raise `TypeError`.
+
+- Only `<`, `<=`, `>`, and `>=` style comparisons are supported for age filters. The library treats `<` and `>` as inclusive (so they behave like  `<=` and `>=` respectively) for convenience. Equality (`==`) and inequality (`!=`) comparisons are intentionally unsupported and will raise `TypeError`.
 
 Examples:
 
@@ -490,15 +464,14 @@ for p in Query("/archive", AgeYears() >= 1):
 
 ```
 
-Note: age filters use the file modification time (`st_mtime`) and accept an
-optional `now` parameter when used programmatically (useful for reproducible
-tests). They also accept an optional `stat_result` to avoid extra `stat()` calls
-when you already have file metadata.
+Note: age filters use the file modification time (`st_mtime`) and accept an optional `now` parameter when used programmatically (useful for reproducible tests). They also accept an optional  `stat_result` to avoid extra `stat()` calls when you already have file metadata.
+
 - "created"  → `st_ctime`
 - "accessed" → `st_atime`
 - You can also use the raw stat attribute names directly.
 
 ### Examples
+
 ```python
 from pathql import YearFilter, MonthFilter, DayFilter, Query
 import datetime as dt
@@ -544,27 +517,23 @@ for path in Query("/data", query):
 
 Ideally, if you have a datetime value in your code you will never need to deal with time spans or deltas or complex data calculations.
 
-
 ## File Age Filters
 
-PathQL supports filtering files by age using either filesystem timestamps or the date encoded in the filename. Using filename dating
-allows for a more reliable way to target creation time in log files.  Instead of using the operating system timing data we use
-the file nameing convention where the file name starts with YYYY-MM-DD-HH-, YYYY-MM-DD_, YY-MM_, YY_
-
-Using this time can get around issues with creation tme not being reliable accross oeprating systems, modification times being
-changed by mistake.  System clocks not be correct.
+PathQL supports filtering files by age using either filesystem timestamps or the date encoded in the filename. Using filename dating allows for a more reliable way to target creation time in log files.  Instead of using the operating system timing data we use the file nameing convention where the file name starts with YYYY-MM-DD-HH-, YYYY-MM-DD_, YY-MM_, YY_ Using this time can get around issues with creation tme not being reliable accross oeprating systems, modification times being changed by mistake.  System clocks not be correct.
 
 For the purpose of matching if a valid file date is not found the match does not occur, it is not an error.
 
 ### Filename-based Age Filters
 
 These filters use the date encoded in the filename (e.g. `YYYY-MM-DD_HH_{ArchiveName}.{EXT}`):
+
 - `FilenameAgeMinutes`
 - `FilenameAgeHours`
 - `FilenameAgeDays`
 - `FilenameAgeYears`
 
 **Example usage:**
+
 ```python
 from pathql.filters.fileage import FilenameAgeDays
 
@@ -575,11 +544,9 @@ filt.match("2024-05-01_report.txt")
 
 Filename-based filters allow you to query files based on their logical age, independent of filesystem metadata.
 
-
 ### File Actions
 
-PathQL provides utilities for batch file operations on lists of `pathlib.Path` objects (or `ResultSet`).
-You can use a query to select files, then copy, move, or delete them:
+PathQL provides utilities for batch file operations on lists of `pathlib.Path` objects (or `ResultSet`). You can use a query to select files, then copy, move, or delete them:
 
 ```python
 from pathql.actions import copy_files, move_files, delete_files
@@ -609,6 +576,7 @@ All file actions (`copy_files`, `move_files`, `delete_files`) in PathQL are desi
 - **Status property**: You can check `result.status` to see if all files were processed successfully (`True` if no failures).
 
 **Example:**
+
 ```python
 result = copy_files(files, destination)
 if not result.status:
@@ -679,9 +647,7 @@ for path in Query("/archive", query):
 
 ### 4. Customize with functions (recommended)
 
-Instead of always defining a new `Filter` subclass, you can create filters from
-plain callables using `PathCallback` (for functions that only need the
-`path`) or `MatchCallback` (for functions that accept `path, now, stat_result`).
+Instead of always defining a new `Filter` subclass, you can create filters from plain callables using `PathCallback` (for functions that only need the `path`) or `MatchCallback` (for functions that accept `path, now, stat_result`).
 
 These helpers perform constructor-time validation (so mistakes surface early)
 and act as factories that let you bind arguments:
@@ -726,7 +692,6 @@ You can generate filenames in two ways:
 
 1. **Using explicit integer date components:**
    Pass `year`, `month`, `day`, and `hour` as needed. The width is inferred from which components are provided.
-
 2. **Using `&` `datetime` object:**
    Pass a `datetime` and specify the desired width (`"year"`, `"month"`, `"day"`, `"hour"`). All date components are taken from the `datetime`.
 
@@ -734,13 +699,14 @@ You can generate filenames in two ways:
 
 - `path_from_dt_ints(name, ext, year, month=None, day=None, hour=None)`
   Formats (based on provided components):
+
   - `year` only: `YYYY-{ArchiveName}.{EXT}`
   - `year`, `month`: `YYYY-MM_{ArchiveName}.{EXT}`
   - `year`, `month`, `day`: `YYYY-MM-DD_{ArchiveName}.{EXT}`
   - `year`, `month`, `day`, `hour`: `YYYY-MM-DD_HH_{ArchiveName}.{EXT}`
-
 - `path_from_datetime(name, ext, width, dt)`
   Formats (based on `width`):
+
   - `"year"`: `YYYY-{ArchiveName}.{EXT}`
   - `"month"`: `YYYY-MM_{ArchiveName}.{EXT}`
   - `"day"`: `YYYY-MM-DD_{ArchiveName}.{EXT}`
@@ -768,9 +734,9 @@ print(path_from_datetime("archive", "zip", "hour", dt))   # 2022-07-15_13_archiv
 ```
 
 **Note:**
+
 - If `ext` is an empty string, no dot is added to the filename.
 - If `.ext` is provided the `.` is removed internally, thus ".bmp" and "bmp" have the same effect.
-
 
 ## Developer & Release Conventions
 
@@ -778,12 +744,12 @@ Project-level conventions, contributor guidance, and release steps are maintaine
 in `AI_CONTEXT.md` in the repository root. Please consult that file for the
 latest instructions on coding style, testing, and release procedures.
 
-
 ---
 
 ## Release Summary (v0.0.3, 2025-10-20)
 
 ### Highlights
+
 - File filter now uses shell-style globbing (fnmatch) on full filenames.
 - Suffix filter supports dot-prefixed, fnmatch-compatible patterns and wildcards.
 - Curly-brace expansion is no longer supported in File filter.
@@ -791,17 +757,19 @@ latest instructions on coding style, testing, and release procedures.
 - Improved documentation and test coverage.
 
 ### Breaking Changes
+
 - File filter does not support curly-brace expansion (e.g., foo.{jpg,png}). Use wildcards or multiple queries.
 - Suffix filter matches using normalized dot-prefixed patterns and supports wildcards.
 - All datetime usage is via `import datetime as dt` per project convention.
 
 ### Test Results
+
 - All tests pass: 233/233
 - Coverage: 100% of src/
 
 ### Static Analysis
+
 - mypy: 13 errors (see details in repository run); run `mypy src/pathql` to reproduce
 - ruff: no linting issues found
 
 This approach works for any custom logic—just implement the `match` method. You can combine your custom filter with built-in filters using `&`, `|`, and `~` for powerful queries.
-
