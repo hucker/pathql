@@ -1,6 +1,8 @@
 import pathlib
 import zipfile
 
+from pathql.filters.stat_proxy import StatProxy
+
 import pytest
 
 from pathql.actions import zip as zip_actions

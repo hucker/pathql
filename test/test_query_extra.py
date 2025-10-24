@@ -4,8 +4,9 @@ import datetime as dt
 import pathlib
 from typing import Any, cast
 
-from pathql.filters.alias import StatResultOrNone
+
 from pathql.filters.base import Filter
+from pathql.filters.stat_proxy import StatProxy
 from pathql.query import Query
 
 
@@ -15,8 +16,8 @@ class AlwaysTrue(Filter):
     def match(
         self,
         path: pathlib.Path,
+        stat_proxy: StatProxy,
         now: dt.datetime | None = None,
-        stat_result: StatResultOrNone = None,
     ) -> bool:
         """Always returns True for any path."""
         return True
@@ -28,8 +29,8 @@ class AlwaysFalse(Filter):
     def match(
         self,
         path: pathlib.Path,
+        stat_proxy: StatProxy,
         now: dt.datetime | None = None,
-        stat_result: StatResultOrNone = None,
     ) -> bool:
         """Always returns False for any path."""
         return False
@@ -99,7 +100,8 @@ def test_query_files_stat_error(tmp_path: pathlib.Path):
     bad = BadPath(tmp_path / "bad.txt")
     q = Query(AlwaysTrue())
     # Act and Assert - should handle stat error and return True
-    assert q.match(cast(Any, bad)) is True
+    # Accessing _p for test purposes
+    assert q.match(cast(Any, bad), StatProxy(bad._p)) is True  # type: ignore[attr-defined]
 
 
 def test_query_match_stat_error(tmp_path: pathlib.Path):
@@ -124,4 +126,5 @@ def test_query_match_stat_error(tmp_path: pathlib.Path):
     bad = BadPath(tmp_path / "bad.txt")
     q = Query(AlwaysFalse())
     # Act and Assert - should not raise, just return False
-    assert q.match(cast(Any, bad)) is False
+    # Accessing _p for test purposes
+    assert q.match(cast(Any, bad), StatProxy(bad._p)) is False  # type: ignore[attr-defined]

@@ -5,6 +5,11 @@ import pytest
 from pathql.filters import PathCallback
 from pathql.filters import MatchCallback
 
+from pathql.filters.stat_proxy import StatProxy
+
+def get_stat_proxy(path):
+    return StatProxy(path)
+
 
 def test_path_callback_positional_binding(tmp_path: pathlib.Path) -> None:
     """PathCallback can bind positional args for user callbacks."""
@@ -20,7 +25,7 @@ def test_path_callback_positional_binding(tmp_path: pathlib.Path) -> None:
     bound = factory("Mfg", "Canon")
 
     # Act / Assert
-    assert bound.match(p)
+    assert bound.match(p, get_stat_proxy(p))
 
 
 def test_path_callback_keyword_binding(tmp_path: pathlib.Path) -> None:
@@ -37,7 +42,7 @@ def test_path_callback_keyword_binding(tmp_path: pathlib.Path) -> None:
     bound = factory(tag="Mfg", value="Canon")
 
     # Act / Assert
-    assert bound.match(p)
+    assert bound.match(p, get_stat_proxy(p))
 
 
 def test_path_callback_args_and_kwargs_merge(tmp_path: pathlib.Path) -> None:
@@ -53,7 +58,7 @@ def test_path_callback_args_and_kwargs_merge(tmp_path: pathlib.Path) -> None:
     bound = factory("Canon")
 
     # Act / Assert
-    assert bound.match(p)
+    assert bound.match(p, get_stat_proxy(p))
 
 
 def test_path_callback_docstring_includes_func_doc_and_bound_args() -> None:
@@ -101,7 +106,8 @@ def test_keyword_only_required_raises() -> None:
         PathCallback(cb)
 
     # Act / Assert (works when provided)
-    assert PathCallback(cb, flag=True).match(pathlib.Path("."))
+    p = pathlib.Path(".")
+    assert PathCallback(cb, flag=True).match(p, get_stat_proxy(p))
 
 
 def test_varargs_acceptance(tmp_path: pathlib.Path) -> None:
@@ -114,8 +120,8 @@ def test_varargs_acceptance(tmp_path: pathlib.Path) -> None:
         return len(rest) > 0
 
     # Act / Assert
-    assert PathCallback(cb).match(p) is False
-    assert PathCallback(cb, 1).match(p) is True
+    assert PathCallback(cb).match(p, get_stat_proxy(p)) is False
+    assert PathCallback(cb, 1).match(p, get_stat_proxy(p)) is True
 
 
 def test_match_callback_invocation_and_docstring(tmp_path: pathlib.Path) -> None:
@@ -133,7 +139,7 @@ def test_match_callback_invocation_and_docstring(tmp_path: pathlib.Path) -> None
     bound = factory()
 
     # Act / Assert
-    assert bound.match(p, now=None, stat_result=p.stat()) is True
+    assert bound.match(p, get_stat_proxy(p), now=None) is True
     # docstring contains wrapped func doc and class docs
     assert "A callback that inspects now and stat_result." in (bound.__doc__ or "")
     assert "Call the callback with (path, now, stat_result, *bound_args, **bound_kwargs)." in (bound.__doc__ or "")
@@ -166,8 +172,8 @@ def test_path_vs_match_callback_now_and_stat(tmp_path: pathlib.Path) -> None:
         return True
 
     # Act
-    assert PathCallback(path_only).match(p, now=None, stat_result=None) is True
-    assert MatchCallback(full_sig).match(p, now=None, stat_result=p.stat()) is True
+    assert PathCallback(path_only).match(p, get_stat_proxy(p), now=None) is True
+    assert MatchCallback(full_sig).match(p, get_stat_proxy(p), now=None) is True
 
     # Assert
     assert 'path_only' in seen

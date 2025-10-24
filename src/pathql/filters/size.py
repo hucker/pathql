@@ -1,13 +1,13 @@
-"""Utilities and a filter for parsing and matching file sizes."""
-
 from __future__ import annotations
+"""Utilities and a filter for parsing and matching file sizes."""
+from pathql.filters.stat_proxy import StatProxy
 
 import pathlib
 import re
 from types import NotImplementedType
 from typing import Callable, Final, Mapping, Pattern
 
-from .alias import DatetimeOrNone, IntOrNone, StatResultOrNone
+from .alias import DatetimeOrNone, IntOrNone
 from .base import Filter
 
 # Accept ints, floats, or strings like "1.5 kb". Default to binary units (KB=1024).
@@ -92,7 +92,6 @@ class Size(Filter):
     """Filter for file size (in bytes)."""
 
     # This class requires stat data to function
-    _requires_stat: bool = True
 
     def __init__(
         self,
@@ -109,14 +108,16 @@ class Size(Filter):
     def match(
         self,
         path: pathlib.Path,
+        stat_proxy: StatProxy | None = None,
         now: DatetimeOrNone = None,
-        stat_result: StatResultOrNone = None,
     ) -> bool:
         """Return True if the file's size matches the filter criteria."""
         if self.op is None or self.value is None:
             raise TypeError("Size filter not fully specified.")
+        if stat_proxy is None:
+            raise ValueError("Size filter requires stat_proxy, but none was provided.")
         try:
-            st = stat_result if stat_result is not None else path.stat()
+            st = stat_proxy.stat()
             size: int = st.st_size
             return self.op(size, self.value)
         except (OSError, TypeError, ValueError):

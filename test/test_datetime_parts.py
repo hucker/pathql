@@ -7,6 +7,7 @@ from typing import Type
 
 import pytest
 
+
 from pathql.filters.base import Filter
 from pathql.filters.datetime_parts import (
     DayFilter,
@@ -16,6 +17,10 @@ from pathql.filters.datetime_parts import (
     SecondFilter,
     YearFilter,
 )
+from pathql.filters.stat_proxy import StatProxy
+
+def get_stat_proxy(path):
+    return StatProxy(path)
 
 
 def make_file_with_mtime(
@@ -48,7 +53,7 @@ def test_year_filter(
 
     # Act
     filter_ = YearFilter(year)
-    actual = filter_.match(file)
+    actual = filter_.match(file, get_stat_proxy(file))
 
     # Assert
     assert actual is should_match, f"YearFilter({year}) should be {should_match}"
@@ -76,7 +81,7 @@ def test_month_filter(
 
     # Act
     filter_ = MonthFilter(month)
-    actual = filter_.match(file)
+    actual = filter_.match(file, get_stat_proxy(file))
 
     # Assert
     assert actual is should_match, f"MonthFilter({month}) should be {should_match}"
@@ -101,7 +106,7 @@ def test_day_filter(
 
     # Act
     filter_ = DayFilter(day, base=dt_)
-    actual = filter_.match(file)
+    actual = filter_.match(file, get_stat_proxy(file))
 
     # Assert
     assert actual is should_match, f"DayFilter({day}) should be {should_match}"
@@ -126,7 +131,7 @@ def test_hour_filter(
 
     # Act
     filter_ = HourFilter(hour, base=dt_)
-    actual = filter_.match(file)
+    actual = filter_.match(file, get_stat_proxy(file))
 
     # Assert
     assert actual is should_match, f"HourFilter({hour}) should be {should_match}"
@@ -150,7 +155,7 @@ def test_minute_filter(
     file = make_file_with_mtime(tmp_path, dt_)
     # Act
     filter_ = MinuteFilter(minute, base=dt_)
-    actual = filter_.match(file)
+    actual = filter_.match(file, get_stat_proxy(file))
     # Assert
     assert actual is should_match, f"MinuteFilter({minute}) should be {should_match}"
 
@@ -173,7 +178,7 @@ def test_second_filter(
     file = make_file_with_mtime(tmp_path, dt_)
     # Act
     filter_ = SecondFilter(second, base=dt_)
-    actual = filter_.match(file)
+    actual = filter_.match(file, get_stat_proxy(file))
     # Assert
     assert actual is should_match, f"SecondFilter({second}) should be {should_match}"
 

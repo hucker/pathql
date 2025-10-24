@@ -37,11 +37,10 @@ from .alias import (
     IntOrFloat,
     IntOrFloatOrNone,
     IntOrNone,
-    StatResultOrNone,
 )
 from .base import Filter
 from .datetime_parts import normalize_attr
-
+from .stat_proxy import StatProxy
 
 class AgeBase(Filter):
     """Base for unit-rounded age filters.
@@ -54,7 +53,6 @@ class AgeBase(Filter):
     """
 
     # All age filters require stat data to function.
-    _requires_stat: bool = True
 
     unit_seconds: float = 1.0
 
@@ -154,8 +152,8 @@ class AgeBase(Filter):
     def match(
         self,
         path: pathlib.Path,
+        stat_proxy: StatProxy | None = None,
         now: DatetimeOrNone = None,
-        stat_result: StatResultOrNone = None,
     ) -> bool:
         """Evaluate the filter against a path.
 
@@ -172,10 +170,12 @@ class AgeBase(Filter):
         """
         if self.op is None or self.value is None:
             raise TypeError(f"{self.__class__.__name__} filter not fully specified.")
+        if stat_proxy is None:
+            raise ValueError(f"{self.__class__.__name__} filter requires stat_proxy, but none was provided.")
         try:
             if now is None:
                 now = dt.datetime.now()
-            st = stat_result if stat_result is not None else path.stat()
+            st = stat_proxy.stat()
             # resolve which stat field to use
             stat_field = getattr(self, "_stat_field", "st_mtime")
             mtime_ts = getattr(st, stat_field)

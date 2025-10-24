@@ -10,7 +10,7 @@ import pathlib
 
 from dateutil.relativedelta import relativedelta
 
-from .alias import DatetimeOrNone, StatResultOrNone
+from .alias import DatetimeOrNone
 from .base import Filter
 
 MONTH_NAME_TO_NUM: dict[str | int, int] = {
@@ -76,8 +76,7 @@ def normalize_attr(attr: str) -> str:
 
 
 class _DatetimePartFilter(Filter):
-
-    requires_stat: bool = True
+    pass
 
 
 class YearFilter(_DatetimePartFilter):
@@ -101,12 +100,12 @@ class YearFilter(_DatetimePartFilter):
     def match(
         self,
         path: pathlib.Path,
+        stat_proxy: "StatProxy",  # type: ignore[name-defined]
         now: DatetimeOrNone = None,
-        stat_result: StatResultOrNone = None,
     ) -> bool:
         """Return True if the file's year matches the filter's year."""
-        stat_result = stat_result or path.stat()
-        ts = getattr(stat_result, self.attr)
+        st = stat_proxy.stat()
+        ts = getattr(st, self.attr)
         dt_obj = dt.datetime.fromtimestamp(ts)
         return dt_obj.year == self.year
 
@@ -138,12 +137,12 @@ class MonthFilter(Filter):
     def match(
         self,
         path: pathlib.Path,
+        stat_proxy: "StatProxy",  # type: ignore[name-defined]
         now: DatetimeOrNone = None,
-        stat_result: StatResultOrNone = None,
     ) -> bool:
         """Return True if the file's year and month match the filter."""
-        stat_result = stat_result or path.stat()
-        ts = getattr(stat_result, self.attr)
+        st = stat_proxy.stat()
+        ts = getattr(st, self.attr)
         dt_obj = dt.datetime.fromtimestamp(ts)
         return dt_obj.year == self.year and dt_obj.month == self.month
 
@@ -169,12 +168,12 @@ class DayFilter(Filter):
     def match(
         self,
         path: pathlib.Path,
+        stat_proxy: "StatProxy",  # type: ignore[name-defined]
         now: DatetimeOrNone = None,
-        stat_result: StatResultOrNone = None,
     ) -> bool:
         """Return True if the file's year, month and day match the filter."""
-        stat_result = stat_result or path.stat()
-        ts = getattr(stat_result, self.attr)
+        st = stat_proxy.stat()
+        ts = getattr(st, self.attr)
         dt_obj = dt.datetime.fromtimestamp(ts)
         return (
             dt_obj.year == self.year
@@ -205,12 +204,12 @@ class HourFilter(Filter):
     def match(
         self,
         path: pathlib.Path,
+        stat_proxy: "StatProxy",  # type: ignore[name-defined]
         now: DatetimeOrNone = None,
-        stat_result: StatResultOrNone = None,
     ) -> bool:
         """Return True if the file's date/time matches this hour filter."""
-        stat_result = stat_result or path.stat()
-        ts = getattr(stat_result, self.attr)
+        st = stat_proxy.stat()
+        ts = getattr(st, self.attr)
         dt_obj = dt.datetime.fromtimestamp(ts)
         return (
             dt_obj.year == self.year
@@ -243,12 +242,12 @@ class MinuteFilter(Filter):
     def match(
         self,
         path: pathlib.Path,
+        stat_proxy: "StatProxy",  # type: ignore[name-defined]
         now: DatetimeOrNone = None,
-        stat_result: StatResultOrNone = None,
     ) -> bool:
         """Return True if the file's date/time matches this minute filter."""
-        stat_result = stat_result or path.stat()
-        ts = getattr(stat_result, self.attr)
+        st = stat_proxy.stat()
+        ts = getattr(st, self.attr)
         dt_obj = dt.datetime.fromtimestamp(ts)
         return (
             dt_obj.year == self.year
@@ -283,12 +282,12 @@ class SecondFilter(Filter):
     def match(
         self,
         path: pathlib.Path,
+        stat_proxy: "StatProxy",  # type: ignore[name-defined]
         now: DatetimeOrNone = None,
-        stat_result: StatResultOrNone = None,
     ) -> bool:
         """Return True if the file's date/time matches this second filter."""
-        stat_result = stat_result or path.stat()
-        ts = getattr(stat_result, self.attr)
+        st = stat_proxy.stat()
+        ts = getattr(st, self.attr)
         dt_obj = dt.datetime.fromtimestamp(ts)
         return (
             dt_obj.year == self.year

@@ -19,9 +19,10 @@ import pathlib
 import re
 from typing import List
 
-from .alias import DatetimeOrNone, StatResultOrNone, StrOrListOfStr
+from .alias import DatetimeOrNone, StrOrListOfStr
 from .base import Filter
-
+from .stat_proxy import StatProxy
+from .proxy_not_needed import ProxyNotNeededTriggersExceptionOnUsage
 
 class Suffix(Filter):
     """
@@ -29,8 +30,6 @@ class Suffix(Filter):
     Accepts a string or list of extensions and matches files with those extensions.
     """
 
-    # This class does not require stat data to function
-    _requires_stat: bool = False
 
     def __init__(
         self,
@@ -75,13 +74,16 @@ class Suffix(Filter):
     def match(
         self,
         path: pathlib.Path,
+        stat_proxy: StatProxy | None = None,
         now: DatetimeOrNone = None,
-        stat_result: StatResultOrNone = None,
     ) -> bool:
         """
         Return True if the file's name ends with any of the patterns (with dot prefix).
         Supports multi-part extensions.
-        """
+        """        # If stat_proxy is not provided, use a dummy proxy that raises if accessed
+        if stat_proxy is None:
+            stat_proxy = ProxyNotNeededTriggersExceptionOnUsage(path)
+
         filename = path.name.lower() if self.ignore_case else path.name
         for pattern in self.patterns:
             # Ensure pattern starts with a dot

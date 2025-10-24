@@ -7,6 +7,8 @@ import datetime
 import pathlib
 import pytest
 import sys
+
+from pathql.filters.stat_proxy import StatProxy
 from pathql.filters.filedate import FileDate
 from pathql.filters.between import Between
 
@@ -63,12 +65,12 @@ def test_filedate_modified(dummy_times):
 
     # Act
 
-    actual_gt = (fmod > dt1).match(path)
-    actual_ge = (fmod >= dt2).match(path)
-    actual_lt = (fmod < dt1).match(path)
-    actual_le = (fmod <= dt2).match(path)
-    actual_eq = (fmod == dt2).match(path)
-    actual_ne = (fmod != dt1).match(path)
+    actual_gt = (fmod > dt1).match(path, StatProxy(path))
+    actual_ge = (fmod >= dt2).match(path, StatProxy(path))
+    actual_lt = (fmod < dt1).match(path, StatProxy(path))
+    actual_le = (fmod <= dt2).match(path, StatProxy(path))
+    actual_eq = (fmod == dt2).match(path, StatProxy(path))
+    actual_ne = (fmod != dt1).match(path, StatProxy(path))
 
     # Assert
 
@@ -92,11 +94,11 @@ def test_filedate_created(dummy_times):
 
     # Act
 
-    actual_lt = (fcre < dt2).match(path)
-    actual_le = (fcre <= dt1).match(path)
-    actual_eq = (fcre == dt1).match(path)
-    actual_ne = (fcre != dt2).match(path)
-    actual_gt = (fcre > dt2).match(path)
+    actual_lt = (fcre < dt2).match(path, StatProxy(path))
+    actual_le = (fcre <= dt1).match(path, StatProxy(path))
+    actual_eq = (fcre == dt1).match(path, StatProxy(path))
+    actual_ne = (fcre != dt2).match(path, StatProxy(path))
+    actual_gt = (fcre > dt2).match(path, StatProxy(path))
 
     # Assert
 
@@ -119,11 +121,11 @@ def test_filedate_accessed(dummy_times):
 
     # Act
 
-    actual_gt = (facc > dt2).match(path)
-    actual_ge = (facc >= dt3).match(path)
-    actual_eq = (facc == dt3).match(path)
-    actual_ne = (facc != dt2).match(path)
-    actual_lt = (facc < dt2).match(path)
+    actual_gt = (facc > dt2).match(path, StatProxy(path))
+    actual_ge = (facc >= dt3).match(path, StatProxy(path))
+    actual_eq = (facc == dt3).match(path, StatProxy(path))
+    actual_ne = (facc != dt2).match(path, StatProxy(path))
+    actual_lt = (facc < dt2).match(path, StatProxy(path))
 
     # Assert
 
@@ -146,11 +148,11 @@ def test_filedate_filename(dummy_times):
 
     # Act
 
-    actual_gt = (ffile > dt1).match(path)
-    actual_ge = (ffile >= dt2).match(path)
-    actual_eq = (ffile == dt2).match(path)
-    actual_ne = (ffile != dt1).match(path)
-    actual_lt = (ffile < dt1).match(path)
+    actual_gt = (ffile > dt1).match(path, StatProxy(path))
+    actual_ge = (ffile >= dt2).match(path, StatProxy(path))
+    actual_eq = (ffile == dt2).match(path, StatProxy(path))
+    actual_ne = (ffile != dt1).match(path, StatProxy(path))
+    actual_lt = (ffile < dt1).match(path, StatProxy(path))
 
     # Assert
 
@@ -174,10 +176,11 @@ def test_filedate_between(dummy_times):
     # Act
 
     between = (fmod >= dt1) & (fmod < dt3)
-    actual_between = between.match(path)
+
+    actual_between = between.match(path, StatProxy(path))
 
     not_between = (fmod > datetime.datetime(2024, 2, 2)) & (fmod < dt3)
-    actual_not_between = not_between.match(path)
+    actual_not_between = not_between.match(path, StatProxy(path))
 
     # Assert
 
@@ -213,11 +216,11 @@ def test_filedate_between_operator(between_times):
 
     # Should match: dt2 is between dt1 and dt3
     between_filter = Between(fmod, dt1, dt3)
-    actual_between = between_filter.match(path)
+    actual_between = between_filter.match(path, StatProxy(path))
 
     # Should not match: dt2 is not between dt3 and dt4
     not_between_filter = Between(fmod, dt3, dt4)
-    actual_not_between = not_between_filter.match(path)
+    actual_not_between = not_between_filter.match(path, StatProxy(path))
 
     # Assert
 

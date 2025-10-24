@@ -1,3 +1,16 @@
+class TestStatProxy:
+    def __init__(self, path, stat_result):
+        self.path = path
+        self._stat = stat_result
+        self._stat_calls = 0
+
+    def stat(self):
+        self._stat_calls += 1
+        return self._stat
+
+    @property
+    def stat_calls(self):
+        return self._stat_calls
 """Deterministic tests for 1-second age behavior using injected stat_result objects.
 
 These tests avoid filesystem platform differences (ctime semantics) by creating a
@@ -68,4 +81,4 @@ def test_age_seconds_boundaries(attr_name: str, offset: float, expected_age: int
     dummy_path = pathlib.Path('dummy')
 
     # Act & Assert
-    assert f.match(path=dummy_path, now=now, stat_result=st), f"{attr_name}: {msg}"
+    assert f.match(path=dummy_path, now=now, stat_proxy=TestStatProxy(dummy_path, st)), f"{attr_name}: {msg}"

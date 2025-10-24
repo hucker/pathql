@@ -3,15 +3,13 @@
 import fnmatch
 import pathlib
 
-from .alias import DatetimeOrNone, StatResultOrNone
+from .alias import DatetimeOrNone
 from .base import Filter
 
 
 class File(Filter):
     """Match a file's name using a shell-style glob pattern."""
 
-    # This class does not require stat data to function
-    _requires_stat: bool = False
 
     def __init__(
         self,
@@ -28,8 +26,8 @@ class File(Filter):
     def match(
         self,
         path: pathlib.Path,
+            stat_proxy=None,  # Accept and ignore stat_proxy for interface consistency
         now: DatetimeOrNone = None,
-        stat_result: StatResultOrNone = None,
     ) -> bool:
         """Return True if the filename matches the configured pattern."""
         fname = path.name.lower() if self.ignore_case else path.name

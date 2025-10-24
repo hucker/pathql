@@ -4,7 +4,12 @@ import pathlib
 
 import pytest
 
+
 from pathql.filters import File
+from pathql.filters.stat_proxy import StatProxy
+
+def get_stat_proxy(path: pathlib.Path) -> StatProxy:
+    return StatProxy(path)
 
 
 @pytest.mark.parametrize(
@@ -33,7 +38,7 @@ def test_file_curly_brace_suffix(
     f = make_file(tmp_path, filename)
 
     # Act and Assert
-    assert File(str(pattern)).match(f) is should_match
+    assert File(str(pattern)).match(f, get_stat_proxy(f)) is should_match
 
 
 def make_file(tmp_path: pathlib.Path, name: str) -> pathlib.Path:
@@ -82,7 +87,7 @@ def test_file_patterns(
     f = make_file(tmp_path, filename)
 
     # Act and Assert
-    assert File(str(pattern)).match(f) is should_match
+    assert File(str(pattern)).match(f, get_stat_proxy(f)) is should_match
 
 
 ## as_stem_and_suffix is no longer supported in File filter

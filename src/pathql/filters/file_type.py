@@ -3,7 +3,7 @@
 import pathlib
 import stat
 
-from .alias import DatetimeOrNone, StatResultOrNone
+from .alias import DatetimeOrNone
 from .base import Filter
 
 
@@ -18,8 +18,7 @@ class FileType(Filter):
         FileType().unknown
     """
 
-    # This class does not require stat data to function
-    _requires_stat: bool = False
+    # StatProxy-based, no requires_stat logic needed
 
     FILE: str = "file"
     DIRECTORY: str = "directory"
@@ -52,8 +51,8 @@ class FileType(Filter):
     def match(
         self,
         path: pathlib.Path,
+        stat_proxy: "StatProxy",  # type: ignore[name-defined]
         now: DatetimeOrNone = None,
-        stat_result: StatResultOrNone = None,
     ) -> bool:
         """Check if the path matches the specified type."""
         try:
@@ -61,10 +60,11 @@ class FileType(Filter):
                 return path.is_symlink()
             if not path.exists():
                 return self.type_name == FileType.UNKNOWN
-            st = stat_result if stat_result is not None else path.lstat()
+            st = stat_proxy.stat()
             mode = st.st_mode
             if self.type_name == FileType.FILE:
-                return stat.S_ISREG(mode)
+                # Only return True for regular files that are NOT symlinks
+                return stat.S_ISREG(mode) and not path.is_symlink()
             if self.type_name == FileType.DIRECTORY:
                 return stat.S_ISDIR(mode)
             if self.type_name == FileType.UNKNOWN:
@@ -72,5 +72,5 @@ class FileType(Filter):
                     stat.S_ISREG(mode) or stat.S_ISDIR(mode) or stat.S_ISLNK(mode)
                 )
             return False
-        except Exception:
+        except Exception:  # type: ignore[broad-except]
             return self.type_name == FileType.UNKNOWN

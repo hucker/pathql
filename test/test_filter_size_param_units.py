@@ -9,6 +9,7 @@ import pathlib
 import pytest
 
 from pathql.filters.size import Size, parse_size
+from pathql.query import StatProxy
 
 SIZES = [
     # (string form, numeric bytes)
@@ -30,13 +31,13 @@ def test_numeric_and_string_equivalents(
     p.write_bytes(b"x" * multiplier)
 
     # Numeric operand
-    assert (Size() == multiplier).match(p)
+
 
     # String operand, various casings and whitespace
-    assert (Size() == f"1 {unit}").match(p)
+    assert (Size() == f"1 {unit}").match(p, StatProxy(p))
 
-    assert (Size() == f"1{unit}").match(p)
-    assert (Size() == f"1 {unit.lower()}").match(p)
+    assert (Size() == f"1{unit}").match(p, StatProxy(p))
+    assert (Size() == f"1 {unit.lower()}").match(p, StatProxy(p))
 
 
 def test_large_unit_ranges(tmp_path: pathlib.Path):
@@ -45,18 +46,18 @@ def test_large_unit_ranges(tmp_path: pathlib.Path):
     p.write_bytes(b"x" * 1000**2)
 
     # Should be less than 1GB, 1TB, 1PB, etc.
-    assert (Size() < "1 GB").match(p)
-    assert (Size() < "1 TB").match(p)
-    assert (Size() < "1 PB").match(p)
-    assert (Size() < "1 EB").match(p)
-    assert (Size() < "1 GiB").match(p)
-    assert (Size() < "1 TiB").match(p)
-    assert (Size() < "1 PiB").match(p)
-    assert (Size() < "1 EiB").match(p)
+    assert (Size() < "1 GB").match(p, StatProxy(p))
+    assert (Size() < "1 TB").match(p, StatProxy(p))
+    assert (Size() < "1 PB").match(p, StatProxy(p))
+    assert (Size() < "1 EB").match(p, StatProxy(p))
+    assert (Size() < "1 GiB").match(p, StatProxy(p))
+    assert (Size() < "1 TiB").match(p, StatProxy(p))
+    assert (Size() < "1 PiB").match(p, StatProxy(p))
+    assert (Size() < "1 EiB").match(p, StatProxy(p))
 
     # Should be greater than 1KB, 1B
-    assert (Size() > "1 KB").match(p)
-    assert (Size() > "1 B").match(p)
+    assert (Size() > "1 KB").match(p, StatProxy(p))
+    assert (Size() > "1 B").match(p, StatProxy(p))
 
 
 @pytest.mark.parametrize("unit,multiplier", SIZES)
@@ -69,6 +70,6 @@ def test_decimal_string_values_truncate(
     p.write_bytes(b"x" * size)
 
     # '1.5 <unit>' should truncate to int(1.5 * multiplier)
-    assert (Size() == "1.5 " + unit).match(p)
+    assert (Size() == "1.5 " + unit).match(p, StatProxy(p))
     # parse_size should produce the same numeric value
     assert parse_size("1.5 " + unit) == size

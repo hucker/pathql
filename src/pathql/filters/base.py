@@ -9,7 +9,7 @@ import pathlib
 from abc import ABC
 from types import NotImplementedType
 
-from .alias import DatetimeOrNone, StatResultOrNone
+from .alias import DatetimeOrNone
 
 
 class Filter(ABC):
@@ -20,13 +20,6 @@ class Filter(ABC):
     implement the match() method.
     """
 
-    # Backing variable for requires_stat property (default: False)
-    _requires_stat: bool = False
-
-    @property
-    def requires_stat(self) -> bool:
-        """Return True if this filter requires stat data."""
-        return self._requires_stat
 
     def __and__(self, other: "Filter"):
         """Return a filter that matches if both filters match."""
@@ -44,16 +37,16 @@ class Filter(ABC):
     def match(
         self,
         path: pathlib.Path,
+        stat_proxy=None,
         now: DatetimeOrNone = None,
-        stat_result: StatResultOrNone = None,
     ) -> bool:
         """
         Determine if the given path matches the filter criteria.
 
         Args:
             path: The pathlib.Path to check.
+            stat_proxy: StatProxy for lazy stat access, or None. If stat is required and not provided, raise.
             now: Optional reference datetime for time-based filters.
-            stat_result: Optional os.stat_result for file metadata.
 
         Returns:
             bool: True if the path matches, False otherwise.
@@ -93,17 +86,12 @@ class AndFilter(Filter):
     def match(
         self,
         path: pathlib.Path,
+        stat_proxy=None,
         now: DatetimeOrNone = None,
-        stat_result: StatResultOrNone = None,
     ) -> bool:
         """Return True if both filters match the path."""
-        return self.left.match(
-            path, now=now, stat_result=stat_result
-        ) and self.right.match(path, now=now, stat_result=stat_result)
+        return self.left.match(path, stat_proxy, now=now) and self.right.match(path, stat_proxy, now=now)
 
-    @property
-    def requires_stat(self) -> bool:
-        return self.left.requires_stat or self.right.requires_stat
 
 
 class OrFilter(Filter):
@@ -130,17 +118,12 @@ class OrFilter(Filter):
     def match(
         self,
         path: pathlib.Path,
+        stat_proxy=None,
         now: DatetimeOrNone = None,
-        stat_result: StatResultOrNone = None,
     ) -> bool:
         """Return True if either filter matches the path."""
-        return self.left.match(
-            path, now=now, stat_result=stat_result
-        ) or self.right.match(path, now=now, stat_result=stat_result)
+        return self.left.match(path, stat_proxy, now=now) or self.right.match(path, stat_proxy, now=now)
 
-    @property
-    def requires_stat(self) -> bool:
-        return self.left.requires_stat or self.right.requires_stat
 
 
 class NotFilter(Filter):
@@ -149,12 +132,6 @@ class NotFilter(Filter):
     """
 
     # Does not require stat by default
-    _requires_stat: bool = False
-
-    @property
-    def requires_stat(self) -> bool:
-        return self.operand.requires_stat
-
     def __init__(self, operand: Filter):
         """Initialize with a filter to negate."""
         self.operand = operand
@@ -162,9 +139,8 @@ class NotFilter(Filter):
     def match(
         self,
         path: pathlib.Path,
+        stat_proxy=None,
         now: DatetimeOrNone = None,
-        stat_result: StatResultOrNone = None,
     ) -> bool:
         """Return True if the operand filter does not match the path."""
-        return not self.operand.match(path, now=now, stat_result=stat_result)
-        return not self.operand.match(path, now=now, stat_result=stat_result)
+        return not self.operand.match(path, stat_proxy, now=now)

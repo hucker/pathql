@@ -13,6 +13,12 @@ from pathql.filters.alias import DatetimeOrNone
 from pathql.filters.base import Filter
 
 
+from pathql.filters.stat_proxy import StatProxy
+
+def get_stat_proxy(path):
+    return StatProxy(path)
+
+
 def set_mtime_minutes_ago(
     path: pathlib.Path,
     minutes: float,
@@ -104,19 +110,19 @@ def test_age_thresholds(
 
     # Act & Assert: Just below threshold
     setter(f, unit - 0.0001, now)
-    result_below = op(filter_cls(), unit).match(f, now=now)
+    result_below = op(filter_cls(), unit).match(f, get_stat_proxy(f), now=now)
     # Assert
     assert result_below is expected_below
 
     # Act & Assert: Exactly at threshold
     setter(f, unit, now)
-    result_exact = op(filter_cls(), unit).match(f, now=now)
+    result_exact = op(filter_cls(), unit).match(f, get_stat_proxy(f), now=now)
     # Assert
     assert result_exact is expected_exact
 
     # Act & Assert: Just above threshold
     setter(f, unit + 0.0001, now)
-    result_above = op(filter_cls(), unit).match(f, now=now)
+    result_above = op(filter_cls(), unit).match(f, get_stat_proxy(f), now=now)
     # Assert
     assert result_above is expected_above
 
@@ -147,12 +153,12 @@ def test_age_filter_eq_ne_behaviour(
 
     # Newly created file -> unit_age == 0
     setter(f, 0, now)
-    assert operator.eq(filter_cls(), 0).match(f, now=now)
-    assert not operator.ne(filter_cls(), 0).match(f, now=now)
+    assert operator.eq(filter_cls(), 0).match(f, get_stat_proxy(f), now=now)
+    assert not operator.ne(filter_cls(), 0).match(f, get_stat_proxy(f), now=now)
 
     # Exactly at 1 unit -> unit_age == 1
     setter(f, unit, now)
-    assert operator.eq(filter_cls(), 1).match(f, now=now)
-    assert not operator.ne(filter_cls(), 1).match(f, now=now)
-    assert operator.eq(filter_cls(), 1).match(f, now=now)
-    assert not operator.ne(filter_cls(), 1).match(f, now=now)
+    assert operator.eq(filter_cls(), 1).match(f, get_stat_proxy(f), now=now)
+    assert not operator.ne(filter_cls(), 1).match(f, get_stat_proxy(f), now=now)
+    assert operator.eq(filter_cls(), 1).match(f, get_stat_proxy(f), now=now)
+    assert not operator.ne(filter_cls(), 1).match(f, get_stat_proxy(f), now=now)

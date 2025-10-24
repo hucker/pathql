@@ -4,6 +4,8 @@ import pathlib
 import sys
 from typing import cast
 
+from pathql.filters.stat_proxy import StatProxy
+
 import pytest
 
 from pathql.filters.file_type import FileType
@@ -16,7 +18,7 @@ def test_type_file(tmp_path: pathlib.Path) -> None:
     f.write_text("A")
 
     # Act and Assert
-    assert (FileType().file).match(f)
+    assert (FileType().file).match(f, StatProxy(f))
 
 
 def test_type_directory(tmp_path: pathlib.Path) -> None:
@@ -26,7 +28,7 @@ def test_type_directory(tmp_path: pathlib.Path) -> None:
     d.mkdir()
 
     # Act and Assert
-    assert (FileType().directory).match(d)
+    assert (FileType().directory).match(d, StatProxy(d))
 
 
 def test_type_link(tmp_path: pathlib.Path) -> None:
@@ -40,8 +42,8 @@ def test_type_link(tmp_path: pathlib.Path) -> None:
     link.symlink_to(f)
 
     # Act and Assert
-    assert (FileType().link ).match(link)
-    assert not (FileType().file).match(link)
+    assert (FileType().link ).match(link, StatProxy(link))
+    assert not (FileType().file).match(link, StatProxy(link))
 
 
 
@@ -52,8 +54,8 @@ def test_type_no_type_name_raises(tmp_path):
     f.write_text("x")
     t = FileType()
     # Should always return False for any file type
-    assert not t.match(f)
-    assert not t.match(tmp_path)
+    assert not t.match(f, StatProxy(f))
+    assert not t.match(tmp_path, StatProxy(tmp_path))
 
 def test_type_invalid_type_name(tmp_path):
     """Type filter with an invalid type_name should never match and should not raise."""
@@ -61,13 +63,13 @@ def test_type_invalid_type_name(tmp_path):
     f.write_text("x")
     t = FileType("not_a_type")
     # Should always return False for any file type
-    assert not t.match(f)
-    assert not t.match(tmp_path)
+    assert not t.match(f, StatProxy(f))
+    assert not t.match(tmp_path, StatProxy(tmp_path))
 
 def test_type_unknown_on_missing_file(tmp_path):
     """Type().unknown should match missing files, others should not."""
     missing = tmp_path / "does_not_exist.txt"
-    assert FileType().unknown.match(missing)
-    assert not FileType().file.match(missing)
-    assert not FileType().directory.match(missing)
-    assert not FileType().link.match(missing)
+    assert FileType().unknown.match(missing, StatProxy(missing))
+    assert not FileType().file.match(missing, StatProxy(missing))
+    assert not FileType().directory.match(missing, StatProxy(missing))
+    assert not FileType().link.match(missing, StatProxy(missing))

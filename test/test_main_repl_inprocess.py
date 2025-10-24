@@ -11,6 +11,8 @@ import sys
 from typing import Generator, Set
 from unittest.mock import patch
 
+from pathql.filters.stat_proxy import StatProxy
+
 import pytest
 from _pytest.capture import CaptureFixture
 

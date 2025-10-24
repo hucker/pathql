@@ -12,7 +12,7 @@ import inspect
 import pathlib
 from typing import Any, Callable
 
-from .alias import DatetimeOrNone, StatResultOrNone
+from .alias import DatetimeOrNone
 from .base import Filter
 
 PathCallable = Callable[..., bool]
@@ -21,11 +21,6 @@ PathCallable = Callable[..., bool]
 class PathCallback(Filter):
     """Call a user function with a Path and optional bound args/kwargs."""
 
-    _requires_stat: bool = False
-
-    @property
-    def requires_stat(self) -> bool:
-        return self._requires_stat
 
     def __init__(self, func: PathCallable, *args: Any, **kwargs: Any) -> None:
         """Create a PathCallback that binds positional and keyword args."""
@@ -123,8 +118,8 @@ class PathCallback(Filter):
     def match(
         self,
         path: pathlib.Path,
+        stat_proxy: "StatProxy",  # type: ignore[name-defined]
         now: DatetimeOrNone = None,
-        stat_result: StatResultOrNone = None,
     ) -> bool:
         """Call the callback with path and the configured args/kwargs."""
         try:
@@ -147,11 +142,6 @@ class MatchCallback(PathCallback):
     this class will prefer callables that accept (path, now, stat_result).
     """
 
-    _requires_stat: bool = True
-
-    @property
-    def requires_stat(self) -> bool:
-        return self._requires_stat
 
     def __init__(self, func: PathCallable, *args: Any, **kwargs: Any) -> None:
         """Create a MatchCallback that binds positional and keyword args.
@@ -202,12 +192,13 @@ class MatchCallback(PathCallback):
     def match(
         self,
         path: pathlib.Path,
+        stat_proxy: "StatProxy",  # type: ignore[name-defined]
         now: DatetimeOrNone = None,
-        stat_result: StatResultOrNone = None,
     ) -> bool:
         """Call the callback with (path, now, stat_result, *bound_args, **bound_kwargs)."""
         try:
-            return bool(self.func(path, now, stat_result, *self.args, **self.kwargs))
+            # For backward compatibility, pass None for stat_result
+            return bool(self.func(path, now, None, *self.args, **self.kwargs))
         except TypeError as exc:
             name = getattr(self.func, "__name__", repr(self.func))
             raise TypeError(f"Callback {name!r} invocation failed: {exc}") from exc

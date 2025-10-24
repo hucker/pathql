@@ -6,7 +6,7 @@ Provides declarative, pathlib-like queries for filesystem filtering.
 import fnmatch
 import pathlib
 
-from .alias import DatetimeOrNone, StatResultOrNone
+from .alias import DatetimeOrNone
 from .base import Filter
 
 
@@ -30,8 +30,6 @@ class Stem(Filter):
         ignore_case (bool): If True (default), matching is case-insensitive.
     """
 
-    # This class does not require stat data to function
-    _requires_stat: bool = False
 
     def __init__(self, patterns: str | list[str], ignore_case: bool = True):
         """
@@ -52,15 +50,15 @@ class Stem(Filter):
     def match(
         self,
         path: pathlib.Path,
+            stat_proxy=None,  # Accept and ignore stat_proxy for interface consistency
         now: DatetimeOrNone = None,
-        stat_result: StatResultOrNone = None,
     ) -> bool:
         """
         Check if the given path's stem matches any of the filter's glob patterns.
         Args:
             path (pathlib.Path): The file path to check.
             now: Ignored (for compatibility).
-            stat_result: Optional stat result to reuse.
+            stat_proxy: StatProxy (unused for stem).
         Returns:
             bool: True if the stem matches any pattern, else False.
         """

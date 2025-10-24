@@ -3,7 +3,7 @@
 import pathlib
 import datetime as dt
 
-from .alias import DatetimeOrNone, NumericFilterType, StatResultOrNone
+from .alias import DatetimeOrNone
 from .base import Filter
 
 
@@ -29,15 +29,8 @@ class Between(Filter):
     def match(
         self,
         path: pathlib.Path,
+        stat_proxy: "StatProxy",  # type: ignore[name-defined]
         now: DatetimeOrNone = None,
-        stat_result: StatResultOrNone = None,
     ) -> bool:
         """Return True if the underlying between filter matches."""
-        return self.filter.match(path, now=now, stat_result=stat_result)
-
-    @property
-    def requires_stat(self) -> bool:
-        """Return True if the underlying filter requires stat data."""
-
-        # Between depends on what the underlying filter needs
-        return self.filter.requires_stat
+        return self.filter.match(path, stat_proxy=stat_proxy, now=now)

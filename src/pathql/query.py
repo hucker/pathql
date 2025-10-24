@@ -12,7 +12,8 @@ import queue
 import threading
 from typing import Iterator
 
-from .filters.alias import DatetimeOrNone, StatResultOrNone,StrOrPath
+from .filters.alias import DatetimeOrNone, StrOrPath
+from .filters.stat_proxy import StatProxy
 from .filters.base import Filter
 from .result_set import ResultSet
 
@@ -21,8 +22,9 @@ class MatchAll(Filter):
     def match(
         self,
         path: pathlib.Path,
+        stat_proxy: StatProxy,
         now: DatetimeOrNone = None,
-        stat_result: StatResultOrNone = None):
+    ):
         return True
 
 class Query(Filter):
@@ -52,28 +54,15 @@ class Query(Filter):
     def match(
         self,
         path: pathlib.Path,
+        stat_proxy: StatProxy,
         now: DatetimeOrNone = None,
-        stat_result: StatResultOrNone = None,
     ) -> bool:
         """
         Check if a single path matches the filter expression.
-
-        Args:
-            path (pathlib.Path): File or directory to check.
-            now (float, optional): Reference time for filters. Defaults to current time.
-            stat_result (os.stat_result, optional): Cached stat result. If None, will stat the path.
-
-        Returns:
-            bool: True if the path matches the filter, False otherwise.
         """
         if now is None:
             now = dt.datetime.now()
-        if stat_result is None:
-            try:
-                stat_result = path.stat()
-            except Exception:
-                stat_result = None
-        return self.filter_expr.match(path, now=now, stat_result=stat_result)
+        return self.filter_expr.match(path, stat_proxy, now=now)
 
     def _unthreaded_files(
         self,
@@ -84,15 +73,6 @@ class Query(Filter):
     ) -> Iterator[pathlib.Path]:
         """
         Yield files matching filter expression using a single-threaded approach (no queue/thread).
-
-        Args:
-            path (pathlib.Path): Root directory to search.
-            recursive (bool): If True, search recursively. If False, only top-level files.
-            files (bool): If True, yield only files (not directories).
-            now (float, optional): Reference time for filters. Defaults to current time.
-
-        Yields:
-            pathlib.Path: Files matching the filter expression.
         """
         if isinstance(path, str):
             path = pathlib.Path(path)
@@ -103,11 +83,8 @@ class Query(Filter):
         for p in iterator:
             if files and not p.is_file():
                 continue
-            try:
-                stat_result = p.stat()
-            except Exception:
-                stat_result = None
-            if self.filter_expr.match(p, now=now, stat_result=stat_result):
+            stat_proxy = StatProxy(p)
+            if self.filter_expr.match(p, stat_proxy, now=now):
                 yield p
 
     def _threaded_files(
@@ -119,43 +96,30 @@ class Query(Filter):
     ) -> Iterator[pathlib.Path]:
         """
         Yield files matching the filter expression using a threaded producer-consumer model.
-
-        Args:
-            path (pathlib.Path): Root directory to search.
-            recursive (bool): If True, search recursively. If False, only top-level files.
-            files (bool): If True, yield only files (not directories).
-            now (float, optional): Reference time for filters. Defaults to current time.
-
-        Yields:
-            pathlib.Path: Files matching the filter expression.
         """
         if isinstance(path, str):
             path = pathlib.Path(path)
 
         if now is None:
             now = dt.datetime.now()
-        q: queue.Queue[tuple[pathlib.Path, object | None]] = queue.Queue(maxsize=10)
+        q: queue.Queue[pathlib.Path | None] = queue.Queue(maxsize=10)
 
         def producer():
             iterator = path.rglob("*") if recursive else path.glob("*")
             for p in iterator:
                 if files and not p.is_file():
                     continue
-                try:
-                    stat_result = p.stat()
-                except Exception:
-                    stat_result = None
-                q.put((p, stat_result))
+                q.put(p)
             q.put(None)  # Sentinel to signal completion
 
         t = threading.Thread(target=producer, daemon=True)
         t.start()
         while True:
-            item: tuple[pathlib.Path, os.stat_result] | None = q.get()
-            if item is None:
+            p = q.get()
+            if p is None:
                 break
-            p, stat_result = item
-            if self.filter_expr.match(p, now=now, stat_result=stat_result):
+            stat_proxy = StatProxy(p)
+            if self.filter_expr.match(p, stat_proxy, now=now):
                 yield p
         t.join()
 

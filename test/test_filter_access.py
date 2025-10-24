@@ -6,7 +6,9 @@ import typing
 
 import pytest
 
+
 from pathql.filters import Exec, Execute, Filter, RdWt, RdWtEx, Read, Write
+from pathql.query import StatProxy
 
 
 @pytest.fixture
@@ -63,7 +65,7 @@ def test_executable_aliases(
 
     # Act and Assert
     try:
-        assert filter_func().match(file_path)
+        assert filter_func().match(file_path, StatProxy(file_path))
     except PermissionError:
         pytest.skip("Access denied for setting executable permission")
 
@@ -85,7 +87,7 @@ def test_read_write_aliases(
 
     # Act and Assert
     try:
-        assert filter_func().match(file_path)
+        assert filter_func().match(file_path, StatProxy(file_path))
     except PermissionError:
         pytest.skip("Access denied for setting read/write permission")
 
@@ -104,9 +106,9 @@ def test_rdwt(make_file: typing.Callable[[str, bytes, bool], pathlib.Path]) -> N
     # Act and Assert
     try:
         # Instance composite
-        assert RdWt().match(file_path)
+        assert RdWt().match(file_path, StatProxy(file_path))
         # Instance-level AND
-        assert (Read() & Write()).match(file_path)
+        assert (Read() & Write()).match(file_path, StatProxy(file_path))
     except PermissionError:
         pytest.skip("Access denied for setting read/write permission")
 
@@ -125,8 +127,8 @@ def test_rdwt_ex(make_file: typing.Callable[[str, bytes, bool], pathlib.Path]) -
     # Act and Assert
     try:
         # Instance composite
-        assert RdWtEx().match(file_path)
+        assert RdWtEx().match(file_path, StatProxy(file_path))
         # Instance-level AND chaining
-        assert (Read() & Write() & Execute()).match(file_path)
+        assert (Read() & Write() & Execute()).match(file_path, StatProxy(file_path))
     except PermissionError:
         pytest.skip("Access denied for setting permissions")

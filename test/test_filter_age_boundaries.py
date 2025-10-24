@@ -40,19 +40,20 @@ def test_age_boundaries(
     just_below = now - dt.timedelta(seconds=(unit_seconds - small_delta))
     set_mtime(f, just_below)
     # unit_age floors to 0
-    assert (filter_cls() == 0).match(f, now=now)
-    assert not (filter_cls() == 1).match(f, now=now)
+    from pathql.filters.stat_proxy import StatProxy
+    assert (filter_cls() == 0).match(f, stat_proxy=StatProxy(f), now=now)
+    assert not (filter_cls() == 1).match(f, stat_proxy=StatProxy(f), now=now)
 
     # Exactly at 1 unit boundary
     exact = now - dt.timedelta(seconds=unit_seconds)
     set_mtime(f, exact)
     # unit_age == 1
-    assert not (filter_cls() == 0).match(f, now=now)
-    assert (filter_cls() == 1).match(f, now=now)
+    assert not (filter_cls() == 0).match(f, stat_proxy=StatProxy(f), now=now)
+    assert (filter_cls() == 1).match(f, stat_proxy=StatProxy(f), now=now)
 
     # Just above 1 unit (slightly more than 1 unit ago)
     just_above = now - dt.timedelta(seconds=(unit_seconds + small_delta))
     set_mtime(f, just_above)
     # unit_age == 1
-    assert not (filter_cls() == 0).match(f, now=now)
-    assert (filter_cls() == 1).match(f, now=now)
+    assert not (filter_cls() == 0).match(f, stat_proxy=StatProxy(f), now=now)
+    assert (filter_cls() == 1).match(f, stat_proxy=StatProxy(f), now=now)

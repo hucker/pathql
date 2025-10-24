@@ -1,3 +1,4 @@
+from pathql.filters.stat_proxy import StatProxy
 """
 FileDate filter for PathQL.
 
@@ -28,8 +29,6 @@ class FileDate(Filter):
     Use .created, .modified, .accessed, or .filename properties for source selection.
     """
 
-    # This class requires stat data to function
-    _requires_stat: bool = True
 
     def __init__(self, source: str = "modified"):
         """
@@ -40,17 +39,21 @@ class FileDate(Filter):
         self.source = source
 
     def match(
-        self, path: pathlib.Path, now: Any = None, stat_result: Any = None
+        self, path: pathlib.Path, stat_proxy: StatProxy | None = None, now: Any = None
     ) -> datetime.datetime | None:
         """
         Return the file's date according to the selected source.
         """
-        if self.source == "modified":
-            return datetime.datetime.fromtimestamp(path.stat().st_mtime)
-        elif self.source == "created":
-            return datetime.datetime.fromtimestamp(path.stat().st_ctime)
-        elif self.source == "accessed":
-            return datetime.datetime.fromtimestamp(path.stat().st_atime)
+        if self.source in ("modified", "created", "accessed"):
+            if stat_proxy is None:
+                raise ValueError("FileDate filter requires stat_proxy, but none was provided.")
+            st = stat_proxy.stat()
+            if self.source == "modified":
+                return datetime.datetime.fromtimestamp(st.st_mtime)
+            elif self.source == "created":
+                return datetime.datetime.fromtimestamp(st.st_ctime)
+            elif self.source == "accessed":
+                return datetime.datetime.fromtimestamp(st.st_atime)
         elif self.source == "filename":
             # Example: expects YYYY-MM-DD in filename before an underscore
             try:
@@ -73,9 +76,9 @@ class FileDate(Filter):
                 self.parent = parent
 
             def match(
-                self, path: pathlib.Path, now: Any = None, stat_result: Any = None
+                self, path: pathlib.Path, stat_proxy: StatProxy | None = None, now: Any = None
             ) -> bool:
-                file_date = self.parent.match(path, now=now, stat_result=stat_result)
+                file_date = self.parent.match(path, stat_proxy=stat_proxy, now=now)
                 if file_date is None:
                     return False
                 return op(file_date, other)

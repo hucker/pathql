@@ -23,8 +23,8 @@ class DelayFilter(Filter):
     def match(
         self,
         path: pathlib.Path,
-        now: object = None,
-        stat_result: object = None
+        stat_proxy=None,
+        now=None,
     ) -> bool:
         self.called = True
         time.sleep(DELAY)
@@ -35,8 +35,8 @@ class TrueFilter(Filter):
     def match(
         self,
         path: pathlib.Path,
-        now: object = None,
-        stat_result: object = None
+        stat_proxy=None,
+        now=None,
     ) -> bool:
         return True
 
@@ -45,8 +45,8 @@ class FalseFilter(Filter):
     def match(
         self,
         path: pathlib.Path,
-        now: object = None,
-        stat_result: object = None
+        stat_proxy=None,
+        now=None,
     ) -> bool:
         return False
 
@@ -148,8 +148,8 @@ def test_and_filter_chain_short_circuit() -> None:
         def match(
             self,
             path: pathlib.Path,
-            now: object = None,
-            stat_result: object = None
+            stat_proxy=None,
+            now=None,
         ) -> bool:
             self.called = True
             return False

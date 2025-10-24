@@ -25,8 +25,8 @@ class Read(Filter):
     def match(
         self,
         path: pathlib.Path,
+        stat_proxy,
         now: DatetimeOrNone = None,
-        stat_result: StatResultOrNone = None,
     ) -> bool:
         return os.access(path, os.R_OK)
 
@@ -39,8 +39,8 @@ class Write(Filter):
     def match(
         self,
         path: pathlib.Path,
+        stat_proxy,
         now: DatetimeOrNone = None,
-        stat_result: StatResultOrNone = None,
     ) -> bool:
         return os.access(path, os.W_OK)
 
@@ -53,8 +53,8 @@ class Execute(Filter):
     def match(
         self,
         path: pathlib.Path,
+        stat_proxy,
         now: DatetimeOrNone = None,
-        stat_result: StatResultOrNone = None,
     ) -> bool:
         return os.access(path, os.X_OK)
 

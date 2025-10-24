@@ -2,6 +2,8 @@
 
 import pathlib
 
+from pathql.filters.stat_proxy import StatProxy
+
 import pytest
 
 from pathql.filters.size import Size
@@ -20,17 +22,18 @@ def test_size_basic(tmp_path: pathlib.Path) -> None:
     file = make_file(tmp_path, 100)
 
     # Act and Assert
-    assert Size(lambda x, y: x == y, 100).match(file)
-    assert Size(lambda x, y: x < y, 200).match(file)
-    assert not Size(lambda x, y: x > y, 200).match(file)
+    assert Size(lambda x, y: x == y, 100).match(file, StatProxy(file))
+    assert Size(lambda x, y: x < y, 200).match(file, StatProxy(file))
+    assert not Size(lambda x, y: x > y, 200).match(file, StatProxy(file))
 
 
 def test_size_error() -> None:
     """Size filter handles stat errors and missing value types gracefully."""
     # Act and Assert
-    assert Size(lambda x, y: x < y, 1).match(pathlib.Path("a_file.txt")) is False
+    path = pathlib.Path("a_file.txt")
+    assert Size(lambda x, y: x < y, 1).match(path, StatProxy(path)) is False
     with pytest.raises(TypeError):
-        Size().match(pathlib.Path("a_file.txt"))
+        Size().match(path, StatProxy(path))
 
 
 def test_size_operator_overloads(tmp_path: pathlib.Path) -> None:
@@ -45,7 +48,7 @@ def test_size_operator_overloads(tmp_path: pathlib.Path) -> None:
     assert Size() > 1
     assert Size() == 50
     assert Size() != 51
-    assert Size(lambda x, y: x == y, 50).match(file)
+    assert Size(lambda x, y: x == y, 50).match(file, StatProxy(file))
     assert Size() == 50
     assert Size() != 51
-    assert Size(lambda x, y: x == y, 50).match(file)
+    assert Size(lambda x, y: x == y, 50).match(file, StatProxy(file))

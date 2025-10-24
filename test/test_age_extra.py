@@ -3,6 +3,8 @@
 import operator
 import pathlib
 
+from pathql.filters.stat_proxy import StatProxy
+
 import pytest
 
 from pathql.filters import Filter
@@ -43,7 +45,7 @@ def test_age_error(
     # Act and Assert
     # Missing required arguments should raise TypeError
     with pytest.raises(TypeError):
-        filter_cls().match(file)
+        filter_cls().match(file, StatProxy(file))
     # Now equality/inequality are supported (they construct filters), so ensure
     # construction does not raise for eq/ne but match still respects semantics.
     eq_f = filter_cls(op=operator.eq, value=0)
