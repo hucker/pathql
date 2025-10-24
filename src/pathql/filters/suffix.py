@@ -21,15 +21,15 @@ from typing import List
 
 from .alias import DatetimeOrNone, StrOrListOfStr
 from .base import Filter
-from .stat_proxy import StatProxy
 from .proxy_not_needed import ProxyNotNeededTriggersExceptionOnUsage
+from .stat_proxy import StatProxy
+
 
 class Suffix(Filter):
     """
     Filter for matching the file extension (suffix), mimics pathlib.Path.suffix (without dot).
     Accepts a string or list of extensions and matches files with those extensions.
     """
-
 
     def __init__(
         self,
@@ -80,7 +80,7 @@ class Suffix(Filter):
         """
         Return True if the file's name ends with any of the patterns (with dot prefix).
         Supports multi-part extensions.
-        """        # If stat_proxy is not provided, use a dummy proxy that raises if accessed
+        """  # If stat_proxy is not provided, use a dummy proxy that raises if accessed
         if stat_proxy is None:
             stat_proxy = ProxyNotNeededTriggersExceptionOnUsage(path)
 
@@ -127,4 +127,5 @@ class Suffix(Filter):
 
 # Alias for pathlib-like naming
 Ext = Suffix
+Ext.__doc__ = "Alias for Suffix. See Suffix for usage.\n\n" + (Suffix.__doc__ or "")
 Ext.__doc__ = "Alias for Suffix. See Suffix for usage.\n\n" + (Suffix.__doc__ or "")

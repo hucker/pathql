@@ -55,8 +55,8 @@ class FilenameAgeBase:
         return self.__class__(op=operator.le, value=other)
 
     def __lt__(self, other: int):
-                stat_proxy=None,  # Accept and ignore stat_proxy for interface consistency
-                now: dt.datetime | None = None,
+        stat_proxy = (None,)  # Accept and ignore stat_proxy for interface consistency
+        now: dt.datetime | None = (None,)
 
     def __ge__(self, other: int):
         return self.__class__(op=operator.ge, value=other)

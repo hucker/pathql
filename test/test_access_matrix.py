@@ -14,12 +14,13 @@ from typing import Dict, List
 
 import pytest
 
-
 from pathql.filters import Execute, Filter, RdWt, RdWtEx, Read, Write
 from pathql.filters.stat_proxy import StatProxy
 
+
 def get_stat_proxy(path):
     return StatProxy(path)
+
 
 # Platform-specific expected filenames for each filter.
 #
@@ -72,7 +73,9 @@ def test_access_matrix(
 
     # Act
     actual_set = {
-        fname for fname, fpath in access_matrix.items() if filter_obj.match(fpath, get_stat_proxy(fpath))
+        fname
+        for fname, fpath in access_matrix.items()
+        if filter_obj.match(fpath, get_stat_proxy(fpath))
     }
 
     # Assert

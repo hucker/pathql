@@ -30,7 +30,6 @@ class Stem(Filter):
         ignore_case (bool): If True (default), matching is case-insensitive.
     """
 
-
     def __init__(self, patterns: str | list[str], ignore_case: bool = True):
         """
         Initialize a Stem filter using fnmatch for shell-style wildcard matching.
@@ -50,7 +49,7 @@ class Stem(Filter):
     def match(
         self,
         path: pathlib.Path,
-            stat_proxy=None,  # Accept and ignore stat_proxy for interface consistency
+        stat_proxy=None,  # Accept and ignore stat_proxy for interface consistency
         now: DatetimeOrNone = None,
     ) -> bool:
         """

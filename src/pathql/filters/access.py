@@ -13,7 +13,7 @@ is determined by file extension and access, not a permission bit.
 import os
 import pathlib
 
-from .alias import DatetimeOrNone, StatResultOrNone
+from .alias import DatetimeOrNone
 from .base import Filter
 
 

@@ -2,9 +2,9 @@
 
 import pathlib
 
-
 from pathql.filters.size import Size
 from pathql.filters.stat_proxy import StatProxy
+
 
 def get_stat_proxy(path):
     return StatProxy(path)

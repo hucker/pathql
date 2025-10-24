@@ -11,9 +11,8 @@ import pytest
 from pathql.filters.age import AgeDays, AgeHours, AgeMinutes, AgeYears
 from pathql.filters.alias import DatetimeOrNone
 from pathql.filters.base import Filter
-
-
 from pathql.filters.stat_proxy import StatProxy
+
 
 def get_stat_proxy(path):
     return StatProxy(path)

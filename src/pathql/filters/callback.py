@@ -21,7 +21,6 @@ PathCallable = Callable[..., bool]
 class PathCallback(Filter):
     """Call a user function with a Path and optional bound args/kwargs."""
 
-
     def __init__(self, func: PathCallable, *args: Any, **kwargs: Any) -> None:
         """Create a PathCallback that binds positional and keyword args."""
         if not callable(func):
@@ -141,7 +140,6 @@ class MatchCallback(PathCallback):
     The callable may accept fewer if it has var positional parameters, but
     this class will prefer callables that accept (path, now, stat_result).
     """
-
 
     def __init__(self, func: PathCallable, *args: Any, **kwargs: Any) -> None:
         """Create a MatchCallback that binds positional and keyword args.

@@ -3,11 +3,10 @@
 import pathlib
 from typing import Type
 
-from pathql.filters.stat_proxy import StatProxy
-
 import pytest
 
 from pathql.filters.base import Filter
+from pathql.filters.stat_proxy import StatProxy
 from pathql.filters.suffix import Ext, Suffix
 
 
@@ -67,7 +66,9 @@ def test_suffix_whitespace_split(suffix_class: Type[Filter]) -> None:
     # Act and Assert
     assert suffix_filter.match(f1, StatProxy(f1))
     assert suffix_filter.match(f2, StatProxy(f2))
-    assert not suffix_filter.match(pathlib.Path("baz.md"), StatProxy(pathlib.Path("baz.md")))
+    assert not suffix_filter.match(
+        pathlib.Path("baz.md"), StatProxy(pathlib.Path("baz.md"))
+    )
 
 
 @pytest.mark.parametrize("suffix_class", [Suffix, Ext])
@@ -122,9 +123,13 @@ def test_suffix_multi_part_extensions(suffix_class) -> None:
     # Act & Assert
     assert suffix_class(".tar.gz").match(f1, StatProxy(f1))
     assert not suffix_class(".tar.gz").match(f2, StatProxy(f2))
-    assert suffix_class(".tar.gz").match(pathlib.Path("foo.bar.tar.gz"), StatProxy(pathlib.Path("foo.bar.tar.gz")))
+    assert suffix_class(".tar.gz").match(
+        pathlib.Path("foo.bar.tar.gz"), StatProxy(pathlib.Path("foo.bar.tar.gz"))
+    )
     assert suffix_class(".tif.back").match(f2, StatProxy(f2))
-    assert suffix_class(".tif.back").match(pathlib.Path("foo.tif.back"), StatProxy(pathlib.Path("foo.tif.back")))
+    assert suffix_class(".tif.back").match(
+        pathlib.Path("foo.tif.back"), StatProxy(pathlib.Path("foo.tif.back"))
+    )
     assert suffix_class(".txt.back").match(f3, StatProxy(f3))
     assert suffix_class(".back").match(f4, StatProxy(f4))
     assert suffix_class(".back").match(f2, StatProxy(f2))

@@ -5,12 +5,13 @@ Verifies operator overloads and correct extraction of file dates from stat and f
 
 import datetime
 import pathlib
-import pytest
 import sys
 
-from pathql.filters.stat_proxy import StatProxy
-from pathql.filters.filedate import FileDate
+import pytest
+
 from pathql.filters.between import Between
+from pathql.filters.filedate import FileDate
+from pathql.filters.stat_proxy import StatProxy
 
 if sys.platform == "win32":
     BasePath = pathlib.WindowsPath
@@ -225,4 +226,4 @@ def test_filedate_between_operator(between_times):
     # Assert
 
     assert actual_between
-    assert not actual_not_between
+    assert not actual_not_between    assert not actual_not_between

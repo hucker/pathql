@@ -11,6 +11,8 @@ class TestStatProxy:
     @property
     def stat_calls(self):
         return self._stat_calls
+
+
 """Deterministic tests for 1-second age behavior using injected stat_result objects.
 
 These tests avoid filesystem platform differences (ctime semantics) by creating a
@@ -55,7 +57,9 @@ def make_stat(
         (1.000001, 1, "just above 1 second should yield unit_age == 1"),
     ],
 )
-def test_age_seconds_boundaries(attr_name: str, offset: float, expected_age: int, msg: str) -> None:
+def test_age_seconds_boundaries(
+    attr_name: str, offset: float, expected_age: int, msg: str
+) -> None:
     """
     Test AgeSeconds filter at 1-second boundaries using injected stat_result.
 
@@ -78,7 +82,9 @@ def test_age_seconds_boundaries(attr_name: str, offset: float, expected_age: int
     ts = (now - dt.timedelta(seconds=offset)).timestamp()
     st = stat_for_attr(attr_name, ts)
     f = AgeSeconds(attr=attr_name) == expected_age
-    dummy_path = pathlib.Path('dummy')
+    dummy_path = pathlib.Path("dummy")
 
     # Act & Assert
-    assert f.match(path=dummy_path, now=now, stat_proxy=TestStatProxy(dummy_path, st)), f"{attr_name}: {msg}"
+    assert f.match(
+        path=dummy_path, now=now, stat_proxy=TestStatProxy(dummy_path, st)
+    ), f"{attr_name}: {msg}"

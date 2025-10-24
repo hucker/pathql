@@ -2,13 +2,11 @@
 
 import pathlib
 import sys
-from typing import cast
-
-from pathql.filters.stat_proxy import StatProxy
 
 import pytest
 
 from pathql.filters.file_type import FileType
+from pathql.filters.stat_proxy import StatProxy
 
 
 def test_type_file(tmp_path: pathlib.Path) -> None:
@@ -42,10 +40,8 @@ def test_type_link(tmp_path: pathlib.Path) -> None:
     link.symlink_to(f)
 
     # Act and Assert
-    assert (FileType().link ).match(link, StatProxy(link))
+    assert (FileType().link).match(link, StatProxy(link))
     assert not (FileType().file).match(link, StatProxy(link))
-
-
 
 
 def test_type_no_type_name_raises(tmp_path):
@@ -57,6 +53,7 @@ def test_type_no_type_name_raises(tmp_path):
     assert not t.match(f, StatProxy(f))
     assert not t.match(tmp_path, StatProxy(tmp_path))
 
+
 def test_type_invalid_type_name(tmp_path):
     """Type filter with an invalid type_name should never match and should not raise."""
     f = tmp_path / "foo.txt"
@@ -65,6 +62,7 @@ def test_type_invalid_type_name(tmp_path):
     # Should always return False for any file type
     assert not t.match(f, StatProxy(f))
     assert not t.match(tmp_path, StatProxy(tmp_path))
+
 
 def test_type_unknown_on_missing_file(tmp_path):
     """Type().unknown should match missing files, others should not."""

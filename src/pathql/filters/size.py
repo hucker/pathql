@@ -1,11 +1,12 @@
 from __future__ import annotations
-"""Utilities and a filter for parsing and matching file sizes."""
-from pathql.filters.stat_proxy import StatProxy
 
+"""Utilities and a filter for parsing and matching file sizes."""
 import pathlib
 import re
 from types import NotImplementedType
 from typing import Callable, Final, Mapping, Pattern
+
+from pathql.filters.stat_proxy import StatProxy
 
 from .alias import DatetimeOrNone, IntOrNone
 from .base import Filter
@@ -164,4 +165,5 @@ class Size(Filter):
         parsed = _parse_size(other)
         if parsed is NotImplemented:
             return NotImplemented
+        return Size(lambda x, y: x != y, parsed)
         return Size(lambda x, y: x != y, parsed)

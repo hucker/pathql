@@ -4,7 +4,6 @@ import datetime as dt
 import pathlib
 from typing import Any, cast
 
-
 from pathql.filters.base import Filter
 from pathql.filters.stat_proxy import StatProxy
 from pathql.query import Query

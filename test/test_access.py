@@ -6,9 +6,9 @@ import typing
 
 import pytest
 
-
 from pathql.filters import Exec, Execute, Filter, RdWt, RdWtEx, Read, Write
 from pathql.filters.stat_proxy import StatProxy
+
 
 def get_stat_proxy(path):
     return StatProxy(path)
@@ -132,6 +132,8 @@ def test_rdwt_ex(make_file: typing.Callable[[str, bytes, bool], pathlib.Path]) -
         # Instance composite
         assert RdWtEx().match(file_path, get_stat_proxy(file_path))
         # Instance-level AND chaining
-        assert (Read() & Write() & Execute()).match(file_path, get_stat_proxy(file_path))
+        assert (Read() & Write() & Execute()).match(
+            file_path, get_stat_proxy(file_path)
+        )
     except PermissionError:
         pytest.skip("Access denied for setting permissions")

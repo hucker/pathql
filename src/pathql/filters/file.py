@@ -10,7 +10,6 @@ from .base import Filter
 class File(Filter):
     """Match a file's name using a shell-style glob pattern."""
 
-
     def __init__(
         self,
         pattern: str,
@@ -26,7 +25,7 @@ class File(Filter):
     def match(
         self,
         path: pathlib.Path,
-            stat_proxy=None,  # Accept and ignore stat_proxy for interface consistency
+        stat_proxy=None,  # Accept and ignore stat_proxy for interface consistency
         now: DatetimeOrNone = None,
     ) -> bool:
         """Return True if the filename matches the configured pattern."""

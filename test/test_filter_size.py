@@ -7,9 +7,8 @@
 
 import pathlib
 
-from pathql.filters.stat_proxy import StatProxy
-
 from pathql.filters.size import Size
+from pathql.filters.stat_proxy import StatProxy
 
 
 def test_size_eq(size_test_folder: pathlib.Path) -> None:

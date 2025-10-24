@@ -41,6 +41,7 @@ def test_age_boundaries(
     set_mtime(f, just_below)
     # unit_age floors to 0
     from pathql.filters.stat_proxy import StatProxy
+
     assert (filter_cls() == 0).match(f, stat_proxy=StatProxy(f), now=now)
     assert not (filter_cls() == 1).match(f, stat_proxy=StatProxy(f), now=now)
 

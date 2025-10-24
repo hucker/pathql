@@ -1,13 +1,16 @@
 """
 StatProxy: Lazy, cached stat() for PathQL filters, with stat call counting.
 """
-import pathlib
+
 import os
+import pathlib
+
 
 class StatProxy:
     """
     Lazily calls .stat() on a pathlib.Path, caching the result and counting calls.
     """
+
     def __init__(self, path: pathlib.Path):
         self.path = path
         self._stat = None
@@ -29,4 +32,5 @@ class StatProxy:
     @property
     def stat_calls(self) -> int:
         """Return the number of times stat() was called on this proxy."""
+        return self._stat_calls
         return self._stat_calls

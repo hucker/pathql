@@ -7,9 +7,10 @@ This ensures that boolean logic in filter composition is efficient and avoids
 unnecessary computation, especially for expensive filters.
 """
 
-import time
 import pathlib
-from pathql.filters.base import Filter, AndFilter, OrFilter
+import time
+
+from pathql.filters.base import AndFilter, Filter, OrFilter
 
 DELAY = 0.1  # seconds to sleep in DelayFilter
 SHORT_CIRCUIT_THRESHOLD = 0.5 * DELAY  # max time for short-circuiting tests
@@ -191,4 +192,4 @@ def test_and_filter_chain_short_circuit() -> None:
     assert a.called
     assert not getattr(b, "called", False)
     assert not c.called  # c should NOT be called because a fails
-    assert actual_elapsed < SHORT_CIRCUIT_THRESHOLD
+    assert actual_elapsed < SHORT_CIRCUIT_THRESHOLD    assert actual_elapsed < SHORT_CIRCUIT_THRESHOLD

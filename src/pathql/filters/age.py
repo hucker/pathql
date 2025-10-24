@@ -32,15 +32,11 @@ import operator
 import pathlib
 from typing import Callable
 
-from .alias import (
-    DatetimeOrNone,
-    IntOrFloat,
-    IntOrFloatOrNone,
-    IntOrNone,
-)
+from .alias import DatetimeOrNone, IntOrFloat, IntOrFloatOrNone, IntOrNone
 from .base import Filter
 from .datetime_parts import normalize_attr
 from .stat_proxy import StatProxy
+
 
 class AgeBase(Filter):
     """Base for unit-rounded age filters.
@@ -171,7 +167,9 @@ class AgeBase(Filter):
         if self.op is None or self.value is None:
             raise TypeError(f"{self.__class__.__name__} filter not fully specified.")
         if stat_proxy is None:
-            raise ValueError(f"{self.__class__.__name__} filter requires stat_proxy, but none was provided.")
+            raise ValueError(
+                f"{self.__class__.__name__} filter requires stat_proxy, but none was provided."
+            )
         try:
             if now is None:
                 now = dt.datetime.now()

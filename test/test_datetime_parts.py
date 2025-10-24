@@ -7,7 +7,6 @@ from typing import Type
 
 import pytest
 
-
 from pathql.filters.base import Filter
 from pathql.filters.datetime_parts import (
     DayFilter,
@@ -18,6 +17,7 @@ from pathql.filters.datetime_parts import (
     YearFilter,
 )
 from pathql.filters.stat_proxy import StatProxy
+
 
 def get_stat_proxy(path):
     return StatProxy(path)

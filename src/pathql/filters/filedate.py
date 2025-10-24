@@ -1,4 +1,5 @@
 from pathql.filters.stat_proxy import StatProxy
+
 """
 FileDate filter for PathQL.
 
@@ -29,7 +30,6 @@ class FileDate(Filter):
     Use .created, .modified, .accessed, or .filename properties for source selection.
     """
 
-
     def __init__(self, source: str = "modified"):
         """
         Args:
@@ -46,7 +46,9 @@ class FileDate(Filter):
         """
         if self.source in ("modified", "created", "accessed"):
             if stat_proxy is None:
-                raise ValueError("FileDate filter requires stat_proxy, but none was provided.")
+                raise ValueError(
+                    "FileDate filter requires stat_proxy, but none was provided."
+                )
             st = stat_proxy.stat()
             if self.source == "modified":
                 return datetime.datetime.fromtimestamp(st.st_mtime)
@@ -76,7 +78,10 @@ class FileDate(Filter):
                 self.parent = parent
 
             def match(
-                self, path: pathlib.Path, stat_proxy: StatProxy | None = None, now: Any = None
+                self,
+                path: pathlib.Path,
+                stat_proxy: StatProxy | None = None,
+                now: Any = None,
             ) -> bool:
                 file_date = self.parent.match(path, stat_proxy=stat_proxy, now=now)
                 if file_date is None:
@@ -122,4 +127,5 @@ class FileDate(Filter):
         return self._make_filter(operator.eq, other)
 
     def __ne__(self, other: datetime.datetime):
+        return self._make_filter(operator.ne, other)
         return self._make_filter(operator.ne, other)

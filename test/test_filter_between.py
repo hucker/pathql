@@ -2,9 +2,8 @@ import os
 import pathlib
 import time
 
-from pathql.filters.stat_proxy import StatProxy
-
 from pathql.filters import AgeHours, AgeMinutes, Between, Size
+from pathql.filters.stat_proxy import StatProxy
 
 
 def touch(path: pathlib.Path, mtime: float | None = None) -> None:
@@ -29,7 +28,7 @@ def test_between_age_hours(tmp_path: pathlib.Path) -> None:
     assert age_between.match(test_path, StatProxy(test_path)) is True
     age_below = Between(AgeHours(), 1, 2)
     assert age_below.match(test_path, StatProxy(test_path)) is False
-    age_above = Between(AgeHours(),3, 4)
+    age_above = Between(AgeHours(), 3, 4)
     assert age_above.match(test_path, StatProxy(test_path)) is False
 
 

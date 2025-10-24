@@ -6,7 +6,6 @@ import typing
 
 import pytest
 
-
 from pathql.filters import Exec, Execute, Filter, RdWt, RdWtEx, Read, Write
 from pathql.query import StatProxy
 

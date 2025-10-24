@@ -2,10 +2,9 @@ import pathlib
 
 import pytest
 
-
-from pathql.filters import PathCallback
-from pathql.filters import MatchCallback
+from pathql.filters import MatchCallback, PathCallback
 from pathql.filters.stat_proxy import StatProxy
+
 
 def get_stat_proxy(path):
     return StatProxy(path)
@@ -63,6 +62,7 @@ def test_path_callback_args_and_kwargs_merge(tmp_path: pathlib.Path) -> None:
 
 def test_path_callback_docstring_includes_func_doc_and_bound_args() -> None:
     """Instance docstring includes the wrapped function doc and bound args."""
+
     # Arrange
     def exif_callback(path, tag, value) -> bool:
         """Check EXIF tag and value."""
@@ -77,8 +77,12 @@ def test_path_callback_docstring_includes_func_doc_and_bound_args() -> None:
     # function doc should be included
     assert "Check EXIF tag and value." in (factory.__doc__ or "")
     # class __init__ and match docs should be included on instances
-    assert "Create a PathCallback that binds positional and keyword args." in (bound.__doc__ or "")
-    assert "Call the callback with path and the configured args/kwargs." in (bound.__doc__ or "")
+    assert "Create a PathCallback that binds positional and keyword args." in (
+        bound.__doc__ or ""
+    )
+    assert "Call the callback with path and the configured args/kwargs." in (
+        bound.__doc__ or ""
+    )
     # bound args should be present
     assert "Bound arguments" in (bound.__doc__ or "")
     assert "'Mfg'" in (bound.__doc__ or "")
@@ -86,6 +90,7 @@ def test_path_callback_docstring_includes_func_doc_and_bound_args() -> None:
 
 def test_unexpected_keyword_raises() -> None:
     """Supplying an unexpected keyword at construction raises TypeError."""
+
     # Arrange
     def cb(path, tag, value):
         return True
@@ -97,6 +102,7 @@ def test_unexpected_keyword_raises() -> None:
 
 def test_keyword_only_required_raises() -> None:
     """Missing required keyword-only args raise at construction."""
+
     # Arrange
     def cb(path, *, flag):
         return flag
@@ -134,7 +140,9 @@ def test_match_callback_invocation_and_docstring(tmp_path: pathlib.Path) -> None
         """A callback that inspects now and stat_result."""
         # ensure now is present (may be None in tests) and stat_result is an os.stat_result-like
         stat_result = stat_proxy.stat_result if stat_proxy is not None else None
-        return path.exists() and (stat_result is None or hasattr(stat_result, "st_mtime"))
+        return path.exists() and (
+            stat_result is None or hasattr(stat_result, "st_mtime")
+        )
 
     factory = MatchCallback(cb)
     bound = factory()
@@ -143,7 +151,10 @@ def test_match_callback_invocation_and_docstring(tmp_path: pathlib.Path) -> None
     assert bound.match(p, get_stat_proxy(p), now=None) is True
     # docstring contains wrapped func doc and class docs
     assert "A callback that inspects now and stat_result." in (bound.__doc__ or "")
-    assert "Call the callback with (path, now, stat_result, *bound_args, **bound_kwargs)." in (bound.__doc__ or "")
+    assert (
+        "Call the callback with (path, now, stat_result, *bound_args, **bound_kwargs)."
+        in (bound.__doc__ or "")
+    )
 
 
 def test_match_callback_signature_enforcement() -> None:
@@ -165,12 +176,12 @@ def test_path_vs_match_callback_now_and_stat(tmp_path: pathlib.Path) -> None:
     seen = {}
 
     def path_only(path):
-        seen['path_only'] = True
+        seen["path_only"] = True
         return True
 
     def full_sig(path, now, stat_proxy):
         stat_result = stat_proxy.stat_result if stat_proxy is not None else None
-        seen['full_sig'] = (now is None) is False or stat_result is not None
+        seen["full_sig"] = (now is None) is False or stat_result is not None
         return True
 
     # Act
@@ -178,5 +189,5 @@ def test_path_vs_match_callback_now_and_stat(tmp_path: pathlib.Path) -> None:
     assert MatchCallback(full_sig).match(p, get_stat_proxy(p), now=None) is True
 
     # Assert
-    assert 'path_only' in seen
-    assert 'full_sig' in seen
+    assert "path_only" in seen
+    assert "full_sig" in seen

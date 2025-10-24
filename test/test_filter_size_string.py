@@ -125,6 +125,7 @@ def test_size_operator_with_various_units(
 
     # Assert
     from pathql.filters.stat_proxy import StatProxy
+
     assert result_filter.match(f, StatProxy(f)) is expected
 
 

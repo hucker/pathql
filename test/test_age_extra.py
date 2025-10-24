@@ -3,12 +3,11 @@
 import operator
 import pathlib
 
-from pathql.filters.stat_proxy import StatProxy
-
 import pytest
 
 from pathql.filters import Filter
 from pathql.filters.age import AgeDays, AgeHours, AgeMinutes, AgeYears
+from pathql.filters.stat_proxy import StatProxy
 
 
 def test_fractional_thresholds_disallowed_class_comparison():

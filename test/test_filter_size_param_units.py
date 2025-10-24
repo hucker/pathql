@@ -32,7 +32,6 @@ def test_numeric_and_string_equivalents(
 
     # Numeric operand
 
-
     # String operand, various casings and whitespace
     assert (Size() == f"1 {unit}").match(p, StatProxy(p))
 

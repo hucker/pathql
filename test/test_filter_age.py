@@ -105,6 +105,7 @@ def test_age_thresholds(
     # Act & Assert: Just below threshold
     setter(f, unit - 0.0001, now)
     from pathql.filters.stat_proxy import StatProxy
+
     result_below = op(filter_cls(), unit).match(f, stat_proxy=StatProxy(f), now=now)
     assert result_below is expected_below
 
@@ -144,6 +145,7 @@ def test_age_filter_eq_ne_behaviour(
     # Newly created file -> unit_age == 0
     setter(f, 0, now)
     from pathql.filters.stat_proxy import StatProxy
+
     assert operator.eq(filter_cls(), 0).match(f, stat_proxy=StatProxy(f), now=now)
     assert not operator.ne(filter_cls(), 0).match(f, stat_proxy=StatProxy(f), now=now)
 

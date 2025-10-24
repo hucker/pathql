@@ -1,4 +1,5 @@
 import pytest
+
 """
 Tests for StatProxy call counts in PathQL filters.
 
@@ -6,10 +7,11 @@ This module verifies that stat-based filters and their combinators
 call StatProxy.stat() the expected number of times, including cases
 where short-circuiting in OR combinators reduces the number of stat calls.
 """
-from pathql.query import Query
-from pathql.filters.size import Size
 from pathql.filters.age import AgeDays
+from pathql.filters.size import Size
 from pathql.filters.stat_proxy import StatProxy
+from pathql.query import Query
+
 
 @pytest.mark.parametrize(
     "filter_expr,expected_calls",
@@ -17,21 +19,20 @@ from pathql.filters.stat_proxy import StatProxy
         # Single stat-based filter: always one stat call
         (Size() > 10, 1),  # Size filter should call stat once
         (AgeDays() < 5, 1),  # Age filter should call stat once
-
         # AND combinator: both filters are always evaluated, so two stat calls
         ((Size() > 10) & (AgeDays() < 5), 2),  # AND: two stat calls
-
         # OR combinator: short-circuiting means only one stat call if the first filter matches
-        ((Size() > 10) | (AgeDays() < 5), 1),  # OR: only one stat call due to short-circuiting
+        (
+            (Size() > 10) | (AgeDays() < 5),
+            1,
+        ),  # OR: only one stat call due to short-circuiting
         # In this test, Size() > 10 matches, so AgeDays() < 5 is not evaluated
-
         # Nested combinators: AND always evaluates both sides, OR may short-circuit
         ((Size() > 10) & ((AgeDays() < 5) | (Size() < 100)), 2),  # AND: two stat calls
         # Here, the left side (Size() > 10) matches, and the right side is an OR where the first filter (AgeDays() < 5) does not match,
         # so the second filter (Size() < 100) is evaluated, but overall only two stat calls are made
-
         (Size() > 10, 1),  # Repeat for coverage
-    ]
+    ],
 )
 def test_stat_proxy_call_count(tmp_path, filter_expr, expected_calls):
     """
@@ -61,5 +62,8 @@ def test_stat_proxy_call_count(tmp_path, filter_expr, expected_calls):
         f"OR combinators may short-circuit, reducing stat calls if the first filter matches. "
         f"Nested combinators follow these rules recursively."
     )
+
+
+# You can add more parameterized cases for different filter combinations and expected stat_calls.
 
 # You can add more parameterized cases for different filter combinations and expected stat_calls.

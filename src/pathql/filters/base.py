@@ -20,7 +20,6 @@ class Filter(ABC):
     implement the match() method.
     """
 
-
     def __and__(self, other: "Filter"):
         """Return a filter that matches if both filters match."""
         return AndFilter(self, other)
@@ -32,7 +31,6 @@ class Filter(ABC):
     def __invert__(self):
         """Return a filter that matches if this filter does not match."""
         return NotFilter(self)
-
 
     def match(
         self,
@@ -90,8 +88,9 @@ class AndFilter(Filter):
         now: DatetimeOrNone = None,
     ) -> bool:
         """Return True if both filters match the path."""
-        return self.left.match(path, stat_proxy, now=now) and self.right.match(path, stat_proxy, now=now)
-
+        return self.left.match(path, stat_proxy, now=now) and self.right.match(
+            path, stat_proxy, now=now
+        )
 
 
 class OrFilter(Filter):
@@ -122,8 +121,9 @@ class OrFilter(Filter):
         now: DatetimeOrNone = None,
     ) -> bool:
         """Return True if either filter matches the path."""
-        return self.left.match(path, stat_proxy, now=now) or self.right.match(path, stat_proxy, now=now)
-
+        return self.left.match(path, stat_proxy, now=now) or self.right.match(
+            path, stat_proxy, now=now
+        )
 
 
 class NotFilter(Filter):

@@ -2,9 +2,9 @@ import os
 import pathlib
 import time
 
-
 from pathql.filters import AgeHours, AgeMinutes, Between, Size
 from pathql.filters.stat_proxy import StatProxy
+
 
 def get_stat_proxy(path):
     return StatProxy(path)

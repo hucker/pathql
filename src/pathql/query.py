@@ -6,19 +6,20 @@ and a consumer (main thread) to filter files using pathql filters.
 """
 
 import datetime as dt
-import os
 import pathlib
 import queue
 import threading
 from typing import Iterator
 
 from .filters.alias import DatetimeOrNone, StrOrPath
-from .filters.stat_proxy import StatProxy
 from .filters.base import Filter
+from .filters.stat_proxy import StatProxy
 from .result_set import ResultSet
+
 
 class MatchAll(Filter):
     """A filter that matches all files."""
+
     def match(
         self,
         path: pathlib.Path,
@@ -26,6 +27,7 @@ class MatchAll(Filter):
         now: DatetimeOrNone = None,
     ):
         return True
+
 
 class Query(Filter):
     """
@@ -37,7 +39,7 @@ class Query(Filter):
         filter_expr (Filter): The filter expression to apply to files.
     """
 
-    def __init__(self, filter_expr: Filter|None=None):
+    def __init__(self, filter_expr: Filter | None = None):
         """
         Initialize Query.
 
@@ -175,4 +177,5 @@ class Query(Filter):
             use single-threaded.
         """
         self.results = self.files(path, recursive, files, now, threaded)
+        return ResultSet(self.results)
         return ResultSet(self.results)

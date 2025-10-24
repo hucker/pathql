@@ -1,7 +1,7 @@
 """Filters to match values between two bounds (lower inclusive, upper exclusive)."""
 
-import pathlib
 import datetime as dt
+import pathlib
 
 from .alias import DatetimeOrNone
 from .base import Filter
@@ -19,12 +19,12 @@ class Between(Filter):
 
     def __init__(
         self,
-        filter_instance:Filter,  # Not all Filters support comparisons
-        lower: int | float| dt.datetime,
-        upper: int | float| dt.datetime
+        filter_instance: Filter,  # Not all Filters support comparisons
+        lower: int | float | dt.datetime,
+        upper: int | float | dt.datetime,
     ) -> None:
-          # Compose the filter using the instance, not the class
-        self.filter:Filter = (filter_instance >= lower) & (filter_instance < upper)
+        # Compose the filter using the instance, not the class
+        self.filter: Filter = (filter_instance >= lower) & (filter_instance < upper)
 
     def match(
         self,
