@@ -85,8 +85,8 @@ def test_query_or_and(mini_fs: pathlib.Path) -> None:
 def test_query_type_file_and_dir(mini_fs: pathlib.Path) -> None:
     """Test Query for file and directory types."""
     # Arrange
-    q_files = Query(Type == Type.FILE)
-    q_dirs = Query(Type == Type.DIRECTORY)
+    q_files = Query(Type().file)
+    q_dirs = Query(Type().directory)
     # Act
     files = list(q_files.files(mini_fs, recursive=True, files=True, threaded=False))
     dirs = list(q_dirs.files(mini_fs, recursive=True, files=False, threaded=False))

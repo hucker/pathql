@@ -2,47 +2,18 @@
 
 import pathlib
 import stat
-
 from .alias import DatetimeOrNone, StatResultOrNone
 from .base import Filter
 
-
-class _TypeMeta(type):
-    def __eq__(cls, other):
-        return Type(other)
-
-    def __or__(cls, other):
-        if isinstance(other, Type):
-            return Type({other})
-        elif isinstance(other, str):
-            return Type({other})
-        elif isinstance(other, set):
-            return Type(other)
-        else:
-            return NotImplemented
-
-    def __ror__(cls, other):
-        if isinstance(other, Type):
-            return Type({other})
-        elif isinstance(other, str):
-            return Type({other})
-        elif isinstance(other, set):
-            return Type(other)
-        else:
-            return NotImplemented
-
-
-class Type(Filter, metaclass=_TypeMeta):
+class Type(Filter):
     """
     Filter for file type: file, directory, link, or unknown.
 
     Usage:
-        Type == Type.FILE
-        Type in {Type.FILE, Type.DIRECTORY}
-        Type("file")
-
-    Args:
-        type_name (str | set[str] | None): File type(s) to match. Use Type.FILE, Type.DIRECTORY.
+        Type().file
+        Type().directory
+        Type().link
+        Type().unknown
     """
 
     FILE: str = "file"
@@ -50,95 +21,49 @@ class Type(Filter, metaclass=_TypeMeta):
     LINK: str = "link"
     UNKNOWN: str = "unknown"
 
-    def __init__(self, type_name: str | set[str] | None = None) -> None:
-        """
-        Initialize a Type filter.
+    def __init__(self, type_name: str | None = None) -> None:
+        self.type_name = type_name
 
-        Args:
-            type_name (str | set[str] | None): File type(s) to match. Use Type.FILE, Type.DIRECTORY.
-        """
-        if isinstance(type_name, set):
-            type_names: set[str] = set(type_name)
-        elif type_name is not None:
-            type_names = {type_name}
-        else:
-            type_names = set()
-        self.type_names: set[str] = type_names  # Defined only once here
+    @property
+    def file(self) -> "Type":
+        """Return a Type filter for regular files."""
+        return Type(Type.FILE)
 
-    # WARNING: Symlink and broken symlink handling is platform-dependent and not well
-    #          tested across all OSes and edge cases.
+    @property
+    def directory(self) -> "Type":
+        """Return a Type filter for directories."""
+        return Type(Type.DIRECTORY)
+
+    @property
+    def link(self) -> "Type":
+        """Return a Type filter for symlinks."""
+        return Type(Type.LINK)
+
+    @property
+    def unknown(self) -> "Type":
+        """Return a Type filter for unknown types."""
+        return Type(Type.UNKNOWN)
+
     def match(
         self,
         path: pathlib.Path,
         now: DatetimeOrNone = None,
         stat_result: StatResultOrNone = None,
     ) -> bool:
-        """
-        Check if the path matches any of the specified types.
-        Args:
-            path: The pathlib.Path to check.
-            now: Ignored (for interface compatibility).
-            stat_result: Optional stat result to reuse.
-        Returns:
-            True if the path matches one of the types, else False.
-        """
-
+        """Check if the path matches the specified type."""
         try:
-            # Check for symlink first, even if broken
-            if path.is_symlink():
-                if Type.LINK in self.type_names:
-                    return True
-                if Type.UNKNOWN in self.type_names and len(self.type_names) == 1:
-                    return False
+            if self.type_name == Type.LINK:
+                return path.is_symlink()
             if not path.exists():
-                return Type.UNKNOWN in self.type_names
+                return self.type_name == Type.UNKNOWN
             st = stat_result if stat_result is not None else path.lstat()
             mode = st.st_mode
-            type_map = {
-                Type.FILE: stat.S_ISREG(mode),
-                Type.DIRECTORY: stat.S_ISDIR(mode),
-                Type.LINK: stat.S_ISLNK(mode),
-            }
-            for t in self.type_names:
-                if type_map.get(t, False):
-                    return True
-            if Type.UNKNOWN in self.type_names:
-                return not any(type_map.values())
+            if self.type_name == Type.FILE:
+                return stat.S_ISREG(mode)
+            if self.type_name == Type.DIRECTORY:
+                return stat.S_ISDIR(mode)
+            if self.type_name == Type.UNKNOWN:
+                return not (stat.S_ISREG(mode) or stat.S_ISDIR(mode) or stat.S_ISLNK(mode))
             return False
         except Exception:
-            # If lstat fails for any reason, treat as unknown if requested
-            return Type.UNKNOWN in self.type_names
-
-    def __eq__(self, other: object) -> "Type":
-        """Return a Type filter for equality comparison."""
-        return Type(other)
-
-    def __or__(self, other: object) -> "Type":
-        """Return a Type filter for set union."""
-        if isinstance(other, Type):
-            return Type(self.type_names | other.type_names)
-        elif isinstance(other, str):
-            return Type(self.type_names | {other})
-        elif isinstance(other, set):
-            return Type(self.type_names | set(other))
-        else:
-            return NotImplemented
-
-    def __ror__(self, other: object) -> "Type":
-        """Return a Type filter for set union (reversed)."""
-        if isinstance(other, Type):
-            return Type(self.type_names | other.type_names)
-        elif isinstance(other, str):
-            return Type(self.type_names | {other})
-        elif isinstance(other, set):
-            return Type(self.type_names | set(other))
-        else:
-            return NotImplemented
-
-    def __contains__(self, item: str) -> bool:
-        """Check if a type string is in the filter's type set."""
-        return item in self.type_names
-
-    def __in__(self, items: set[str]) -> "Type":
-        """Return a Type filter for set membership."""
-        return Type(items)
+            return self.type_name == Type.UNKNOWN

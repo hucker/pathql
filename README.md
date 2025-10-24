@@ -1,4 +1,4 @@
-<!-- Badges: pytest count, coverage (src), mypy errors, ruff status -->
+ng `<!-- Badges: pytest count, coverage (src), mypy errors, ruff status -->`
 
 ![pytest](https://img.shields.io/badge/pytest-233-blue)
 ![coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)
@@ -51,8 +51,8 @@ for f in Query(r"C:/logs", DayFilter(base=dt.datetime(year=2020,month=1,day=1)):
   - [Basic Concepts](#basic-concepts)
     - [Filters](#filters)
 - [Boolean Filter Operators: `&`, `|`, `~`](#boolean-filter-operators---)
-      - [Example Filters](#example-filters)
-    - [Using the `Between` Filter](#using-the-between-filter)
+  - [Example Filters](#example-filters)
+  - [Using the `Between` Filter](#using-the-between-filter)
   - [Query (engine)](#query-engine)
     - [Overview](#overview)
     - [Public API](#public-api)
@@ -83,7 +83,7 @@ for f in Query(r"C:/logs", DayFilter(base=dt.datetime(year=2020,month=1,day=1)):
   - [Zip Actions](#zip-actions)
   - [Usage Examples](#usage-examples)
     - [1. Find all PNG or BMP images under 1MB, modified in the last 10 minutes](#1-find-all-png-or-bmp-images-under-1mb-modified-in-the-last-10-minutes)
-    - [2. Find all files with stem starting with "report\_" (case-insensitive)](#2-find-all-files-with-stem-starting-with-report_-case-insensitive)
+    - [2. Find all files with stem starting with &#34;report\_&#34; (case-insensitive)](#2-find-all-files-with-stem-starting-with-report_-case-insensitive)
     - [3. Find all directories older than 1 year](#3-find-all-directories-older-than-1-year)
     - [4. Customize with functions (recommended)](#4-customize-with-functions-recommended)
   - [Filename Builders](#filename-builders)
@@ -141,7 +141,7 @@ PathQL's filter composition is designed to short-circuit, just like Python's boo
 - For `A | B`, if filter `A` matches, filter `B` is **not** evaluated.
 - For chained filters (e.g., `A & B & C`), evaluation stops at the first filter that fails for AND, or the first that succeeds for OR.
 
-This means that if you have expensive filters (such as those that read file contents or perform slow operations), they will be skipped whenever possible, improving performance.
+This means that if you have expensive filters (such as those that read file contents or perform slow operations), they will be skipped whenever possible, improving performance. This
 
 **Example:**
 
@@ -188,7 +188,7 @@ state information.  Eliminating these checks can be VERY valuable.
 - `Size() <= 1_000_000` — files up to 1MB
 - `Suffix({".png", ".jpg"})` — files with .png or .jpg extension
 - `Stem("report_*")` — files whose stem matches a glob pattern (e.g., starts with "report_")
-- `Type("file")` — 'file, 'dir', 'link'
+- `Type().file` — 'file, 'dir', 'link'
 - `AgeMinutes() < 10` — modified in the last 10 minutes
 - `Between(Size(), 1000, 2000)` — files with size >= 1000 and < 2000 bytes (inclusive lower, exclusive upper)
 - `YearFIlter(2024)`

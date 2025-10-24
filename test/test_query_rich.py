@@ -137,7 +137,7 @@ def test_all_files_type_directory(
     root, now = rich_filesystem
     root_path = Path(root)
     now_dt = dt.datetime.fromtimestamp(now)
-    q = Query(Type == Type.DIRECTORY)
+    q = Query(Type().directory)
 
     # Act
     files = list(q.files(root_path, recursive=True, files=False, now=now_dt))
