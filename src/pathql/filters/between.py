@@ -34,3 +34,9 @@ class Between(Filter):
     ) -> bool:
         """Return True if the underlying between filter matches."""
         return self.filter.match(path, now=now, stat_result=stat_result)
+
+    def needs_stat(self) -> bool:
+        """Return True if the underlying filter requires stat data."""
+
+        # Between depends on what the underlying filter needs
+        return self.filter.needs_stat()

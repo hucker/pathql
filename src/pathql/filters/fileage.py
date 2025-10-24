@@ -25,6 +25,9 @@ from .date_filename import filename_to_datetime_parts
 class FilenameAgeBase:
     """Base for unit-rounded filename age filters."""
 
+    # This class requires stat data to function
+    requires_stat: bool = True
+
     unit_seconds: float = 1.0
 
     def __init__(

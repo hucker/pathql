@@ -10,6 +10,11 @@ from .base import Filter
 class File(Filter):
     """Match a file's name using a shell-style glob pattern."""
 
+
+    def needs_stat(self) -> bool:
+        """Return True if either filter requires stat data."""
+        return self.left.needs_stat() or self.right.needs_stat()
+
     def __init__(
         self,
         pattern: str,
@@ -31,4 +36,3 @@ class File(Filter):
         """Return True if the filename matches the configured pattern."""
         fname = path.name.lower() if self.ignore_case else path.name
         return fnmatch.fnmatch(fname, self.pattern)
-        

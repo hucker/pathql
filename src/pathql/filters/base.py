@@ -4,20 +4,25 @@ Base filter classes for PathQL.
 Defines the abstract Filter class and logical combinators (AndFilter, OrFilter,
 NotFilter) for building composable filesystem queries.
 """
-
+from abc import ABC, abstractmethod
 import pathlib
 from types import NotImplementedType
 
 from .alias import DatetimeOrNone, StatResultOrNone
 
 
-class Filter:
+class Filter(ABC):
     """
     Abstract base class for all PathQL filters.
 
     Supports logical composition via &, |, and ~ operators. Subclasses must
     implement the match() method.
     """
+
+    # This attribute indicates whether the filter needs file stat information.
+    # Subclasses can set this to True if they require stat data for matching.
+    # This can help optimize queries by avoiding unnecessary stat calls.
+    requires_stat: bool = False
 
     def __and__(self, other: "Filter"):
         """Return a filter that matches if both filters match."""
@@ -30,6 +35,16 @@ class Filter:
     def __invert__(self):
         """Return a filter that matches if this filter does not match."""
         return NotFilter(self)
+
+    def needs_stat(self) -> bool:
+        """
+        Determine if this filter requires file stat information. This can be
+        used to optimizes queries by avoiding unnecessary stat calls.
+
+        Returns:
+            bool: True if the filter needs stat data, False otherwise.
+        """
+        return self.requires_stat
 
     def match(
         self,
@@ -91,6 +106,9 @@ class AndFilter(Filter):
             path, now=now, stat_result=stat_result
         ) and self.right.match(path, now=now, stat_result=stat_result)
 
+    def needs_stat(self) -> bool:
+        """Return True if either filter requires stat data."""
+        return self.left.needs_stat() or self.right.needs_stat()
 
 class OrFilter(Filter):
     """
@@ -123,11 +141,18 @@ class OrFilter(Filter):
             path, now=now, stat_result=stat_result
         ) or self.right.match(path, now=now, stat_result=stat_result)
 
+    def needs_stat(self) -> bool:
+        """Return True if either filter requires stat data."""
+        return self.left.needs_stat() or self.right.needs_stat()
+
 
 class NotFilter(Filter):
     """
     Filter that matches if the operand filter does not match.
     """
+
+    # Does not require stat by to determine output
+    requires_stat: bool = False
 
     def __init__(self, operand: Filter):
         """Initialize with a filter to negate."""

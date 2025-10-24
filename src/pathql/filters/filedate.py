@@ -26,6 +26,9 @@ class FileDate(Filter):
     Use .created, .modified, .accessed, or .filename properties for source selection.
     """
 
+    # This class requires stat data to function
+    requires_stat: bool = True
+
     def __init__(self, source: str = "modified"):
         """
         Args:

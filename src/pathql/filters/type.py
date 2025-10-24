@@ -16,6 +16,10 @@ class Type(Filter):
         Type().unknown
     """
 
+
+    # This class does not require stat data to function
+    requires_stat: bool = False
+
     FILE: str = "file"
     DIRECTORY: str = "directory"
     LINK: str = "link"

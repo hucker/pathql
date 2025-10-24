@@ -47,6 +47,10 @@ class AgeBase(Filter):
     against the integer unit age.
     """
 
+    # All age filters require stat data to function.
+    requires_stat: bool = True
+
+
     unit_seconds: float = 1.0
 
     def __init__(

@@ -30,6 +30,9 @@ class Stem(Filter):
         ignore_case (bool): If True (default), matching is case-insensitive.
     """
 
+    # This class requires stat data to function
+    requires_stat: bool = False
+
     def __init__(self, patterns: str | list[str], ignore_case: bool = True):
         """
         Initialize a Stem filter using fnmatch for shell-style wildcard matching.

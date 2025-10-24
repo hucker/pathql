@@ -28,6 +28,9 @@ class Suffix(Filter):
     Accepts a string or list of extensions and matches files with those extensions.
     """
 
+    # This class does not require stat data to function
+    requires_stat: bool = False
+
     def __init__(
         self,
         patterns: StrOrListOfStr | None = None,

@@ -75,7 +75,12 @@ def normalize_attr(attr: str) -> str:
     )
 
 
-class YearFilter(Filter):
+class _DatetimePartFilter(Filter):
+
+    requires_stat: bool = True
+
+
+class YearFilter(_DatetimePartFilter):
     """Filter files by year (with optional base and offset)."""
 
     def __init__(
