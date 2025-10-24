@@ -189,7 +189,7 @@ state information.  Eliminating these checks can be VERY valuable.
 - `Suffix({".png", ".jpg"})` — files with .png or .jpg extension
 - `Stem("report_*")` — files whose stem matches a glob pattern (e.g., starts with "report_")
 - `Type("file")` — 'file, 'dir', 'link'
-- `AgeMinutes < 10` — modified in the last 10 minutes
+- `AgeMinutes() < 10` — modified in the last 10 minutes
 - `Between(Size(), 1000, 2000)` — files with size >= 1000 and < 2000 bytes (inclusive lower, exclusive upper)
 - `YearFIlter(2024)`
 - `MonthFIlter("May")`

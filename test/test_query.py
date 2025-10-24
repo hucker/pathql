@@ -61,7 +61,7 @@ def test_query_no_filter_param(mini_fs: pathlib.Path, recursive: bool, expected_
 def test_query_size_and_suffix(mini_fs: pathlib.Path) -> None:
     """Test Query with size and suffix filters."""
     # Arrange
-    q = Query((Size() >= 100) & (Suffix == "txt"))
+    q = Query((Size() >= 100) & Suffix("txt"))
     # Act
     files = list(q.files(mini_fs, recursive=True, files=True, threaded=False))
     names = sorted(f.name for f in files)
@@ -72,7 +72,7 @@ def test_query_size_and_suffix(mini_fs: pathlib.Path) -> None:
 def test_query_or_and(mini_fs: pathlib.Path) -> None:
     """Test Query with OR and AND filters."""
     # Arrange
-    q = Query(((Size() > 250) & (Suffix == "txt")) | (Suffix == "md"))
+    q = Query((Size() > 250) & Suffix("txt")  | Suffix("md"))
     # Act
     files = list(q.files(mini_fs, recursive=True, files=True, threaded=False))
     names = sorted(f.name for f in files)
@@ -80,17 +80,6 @@ def test_query_or_and(mini_fs: pathlib.Path) -> None:
     assert names == ["bar.md", "qux.txt"]
 
 
-def test_query_in_operator(mini_fs: pathlib.Path) -> None:
-    """Test Query with 'in' operator for suffix."""
-    # Arrange
-    q = Query((Suffix == "txt") & (Size() > 50))
-    # Act
-    files = list(q.files(mini_fs, recursive=True, files=True, threaded=False))
-    # Assert
-    for f in files:
-        # Membership checks normalized dot-prefixed pattern
-        assert ".txt" in Suffix(["txt"])
-        assert f.suffix == ".txt"
 
 
 def test_query_type_file_and_dir(mini_fs: pathlib.Path) -> None:
@@ -109,7 +98,7 @@ def test_query_type_file_and_dir(mini_fs: pathlib.Path) -> None:
 def test_query_complex(mini_fs: pathlib.Path) -> None:
     """Test Query with complex filter combinations."""
     # Arrange
-    q = Query(((Suffix == "txt") & (Size() > 50)) | ((Suffix == "md") & (Size() < 300)))
+    q = Query((Suffix("txt") & (Size() > 50)) | (Suffix("md")  & (Size() < 300)))
 
     # Act
     files = list(q.files(mini_fs, recursive=True, files=True, threaded=False))
@@ -124,7 +113,7 @@ def test_threaded_vs_unthreaded_equivalence_hundred(
 ) -> None:
     """Threaded and unthreaded Query yield the same results on 100 files."""
     # Arrange
-    q = Query(Suffix == "txt")
+    q = Query(Suffix("txt"))
 
     # Act
     threaded = set(

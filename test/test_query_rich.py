@@ -39,7 +39,7 @@ def test_txt_files_older_than_20_seconds(
     root, now = rich_filesystem
     root_path = Path(root)
     now_dt = dt.datetime.fromtimestamp(now)
-    q = Query((Suffix == "txt") & (AgeSeconds() > 20))
+    q = Query(Suffix('txt') & (AgeSeconds() > 20))
 
     # Act
     files = list(q.files(root_path, recursive=True, files=True, now=now_dt))
@@ -59,7 +59,7 @@ def test_bmp_files_size_and_age(
     root, now = rich_filesystem
     root_path = Path(root)
     now_dt = dt.datetime.fromtimestamp(now)
-    q = Query((Suffix == "bmp") & (Size() > 30) & (AgeSeconds() > 1))
+    q = Query(Suffix("bmp")  & (Size() > 30) & (AgeSeconds() > 1))
 
     # Act
     files = list(q.files(root_path, recursive=True, files=True, now=now_dt))
@@ -98,7 +98,7 @@ def test_complex_combination(
     root, now = rich_filesystem
     root_path = Path(root)
     now_dt = dt.datetime.fromtimestamp(now)
-    q = Query((Suffix == "txt") & (Size() > 20) & (AgeSeconds() > 10) & Stem(r"d"))
+    q = Query(Suffix("txt") & (Size() > 20) & (AgeSeconds() > 10) & Stem(r"d"))
 
     # Act
     files = list(q.files(root_path, recursive=True, files=True, now=now_dt))
