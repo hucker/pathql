@@ -1,14 +1,22 @@
 [project]
 name = "pathql"
 version = "0.0.3"
-description = "A Python project for pathql."
+description = "PathQL: A Python project for declarative file system querying."
 authors = [
-	{name = "Your Name", email = "your.email@example.com"}
+	{name = "Chuck Bass", email = "chuck@acrocad.net"}
 ]
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
 	"python-dateutil"
+]
+
+license = {file = "LICENSE"}
+keywords = ["pathlib", "query", "filesystem"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent"
 ]
 
 [tool.setuptools.packages.find]
@@ -24,6 +32,3 @@ dev = [
 
 [tool.pytest.ini_options]
 addopts = "--cov=src/pathql --cov-report=xml:coverage.xml"
-
-
-

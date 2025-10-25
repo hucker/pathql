@@ -108,3 +108,4 @@ Thumbs.db
 # Git
 .git/
 >>>>>>> feature/dates
+.pypirc
