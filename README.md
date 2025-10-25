@@ -79,12 +79,30 @@ For `A | B`, if `A` matches, `B` is not evaluated.
 **Precedence:**
 Use parentheses for clarity: `(AgeDays() < 2) & Ext("txt")`
 
+
 ## Query Engine
 
 - `Query(filter_expr)` — construct a query
 - `Query.match(path, stat_proxy=None, now=None)` — check a single file
-- `Query.files(path, ...)` — lazily yield matches
-- `Query.select(path, ...)` — collect matches eagerly
+- `Query.files(path_or_paths, ...)` — lazily yield matches from a single folder or a list of folders
+- `Query.select(path_or_paths, ...)` — collect matches eagerly from a single folder or a list of folders
+
+Both `files` and `select` accept either a single path (str or Path) or a list of paths. This allows you to query multiple folders in one call:
+
+```python
+# Query a single folder
+for f in Query(Suffix('.txt')).files('/data/folder1'):
+    print(f)
+
+# Query multiple folders
+folders = ['/data/folder1', '/data/folder2', '/data/folder3']
+for f in Query(Suffix('.txt')).files(folders):
+    print(f)
+
+# Collect all matches from multiple folders
+result = Query(Suffix('.txt')).select(folders)
+print(list(result))
+```
 
 Supports threaded and single-threaded modes, stat caching, recursion, and result collection.
 

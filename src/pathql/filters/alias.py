@@ -41,3 +41,4 @@ IntOrFloatOrNone: TypeAlias = int | float | None
 StrOrPath: TypeAlias = str | pathlib.Path
 IntOrFloat: TypeAlias = int | float
 StrOrListOfStr: TypeAlias = str | list[str]
+StrPathOrListOfStrPath: TypeAlias = StrOrPath | list[StrOrPath]

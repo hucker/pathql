@@ -11,7 +11,7 @@ import queue
 import threading
 from typing import Iterator
 
-from .filters.alias import DatetimeOrNone, StrOrPath
+from .filters.alias import DatetimeOrNone, StrOrPath, StrPathOrListOfStrPath
 from .filters.base import Filter
 from .filters.stat_proxy import StatProxy
 from .result_set import ResultSet
@@ -127,55 +127,40 @@ class Query(Filter):
 
     def files(
         self,
-        path: StrOrPath,
+        paths: StrPathOrListOfStrPath,
         recursive: bool = True,
         files: bool = True,
         now: DatetimeOrNone = None,
         threaded: bool = False,
     ) -> Iterator[pathlib.Path]:
         """
-        Yield files matching the filter expression using either threaded or non-threaded mode.
-
-        Args:
-            path (pathlib.Path): Root directory to search.
-            recursive (bool): If True, search recursively. If False, only top-level files.
-            files (bool): If True, yield only files (not directories).
-            now (float, optional): Reference time for filters. Defaults to current time.
-            threaded (bool): If True, use threaded producer-consumer model. If False,
-            use single-threaded.
-
-        Yields:
-            pathlib.Path: Files matching the filter expression.
+        Yield files matching the filter expression for a single path or a list of paths.
+        Handles both threaded and non-threaded modes.
         """
-        if threaded:
-            yield from self._threaded_files(
-                path, recursive=recursive, files=files, now=now
-            )
+        if isinstance(paths, (str, pathlib.Path)):
+            path_list = [paths]
         else:
-            yield from self._unthreaded_files(
-                path, recursive=recursive, files=files, now=now
-            )
+            path_list = list(paths)
+        path_list = [pathlib.Path(p) for p in path_list]
+        for path in path_list:
+            if threaded:
+                yield from self._threaded_files(
+                    path, recursive=recursive, files=files, now=now
+                )
+            else:
+                yield from self._unthreaded_files(
+                    path, recursive=recursive, files=files, now=now
+                )
 
     def select(
         self,
-        path: StrOrPath,
+        paths: StrPathOrListOfStrPath,
         recursive: bool = True,
         files: bool = True,
         now: DatetimeOrNone = None,
         threaded: bool = False,
     ) -> ResultSet:
         """
-        Select files into a ResultSet list of files matching the filter expression. This list
-        is eagerly generated to support most aggregations.
-
-        Args:
-            path (pathlib.Path): Root directory to search.
-            recursive (bool): If True, search recursively. If False, only top-level files.
-            files (bool): If True, yield only files (not directories).
-            now (float, optional): Reference time for filters. Defaults to current time.
-            threaded (bool): If True, use threaded producer-consumer model. If False,
-            use single-threaded.
+        Return a ResultSet of files matching the filter expression for a single path or a list of paths.
         """
-        self.results = self.files(path, recursive, files, now, threaded)
-        return ResultSet(self.results)
-        return ResultSet(self.results)
+        return ResultSet(self.files(paths, recursive, files, now, threaded))
