@@ -4,13 +4,11 @@ Test Query.select with multiple folders.
 This module verifies that Query.select can accept a list of folders and return all matching files from each folder. Uses AAA (Arrange-Act-Assert) comments and explicit actual/expected naming in assertions.
 """
 import pathlib
+
 import pytest
-from pathql.query import Query
-from pathql.query import MatchAll
-import pathlib
-import pytest
-from pathql.query import Query
-from pathql.query import MatchAll
+
+from pathql.query import MatchAll, Query
+
 
 @pytest.fixture
 def multi_folder_fixture(tmp_path: pathlib.Path) -> list[pathlib.Path]:
@@ -65,5 +63,7 @@ def test_query_select_multi_folder(
     )
     for f in actual_files:
         assert any(str(f).startswith(str(folder)) for folder in selected_folders), (
+            f"File {f} not in selected folders {selected_folders}"
+        )
             f"File {f} not in selected folders {selected_folders}"
         )
