@@ -226,4 +226,5 @@ def test_filedate_between_operator(between_times):
     # Assert
 
     assert actual_between
-    assert not actual_not_between    assert not actual_not_between
+    assert not actual_not_between
+    

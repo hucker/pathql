@@ -1,5 +1,3 @@
-import pytest
-
 """
 Tests for StatProxy call counts in PathQL filters.
 
@@ -7,8 +5,13 @@ This module verifies that stat-based filters and their combinators
 call StatProxy.stat() the expected number of times, including cases
 where short-circuiting in OR combinators reduces the number of stat calls.
 """
+import pathlib
+import pytest
+
+from pathql.filters.base import Filter
 from pathql.filters.age import AgeDays
 from pathql.filters.size import Size
+from pathql.filters.suffix import Suffix
 from pathql.filters.stat_proxy import StatProxy
 from pathql.query import Query
 
@@ -17,6 +20,8 @@ from pathql.query import Query
     "filter_expr,expected_calls",
     [
         # Single stat-based filter: always one stat call
+        (Suffix("txt"), 0),  # Suffix filter should call stat 0 times since it doesn't need stat
+        
         (Size() > 10, 1),  # Size filter should call stat once
         (AgeDays() < 5, 1),  # Age filter should call stat once
         # AND combinator: both filters are always evaluated, so two stat calls
@@ -34,7 +39,7 @@ from pathql.query import Query
         (Size() > 10, 1),  # Repeat for coverage
     ],
 )
-def test_stat_proxy_call_count(tmp_path, filter_expr, expected_calls):
+def test_stat_proxy_call_count(tmp_path:pathlib.Path, filter_expr:Filter, expected_calls:int) -> None:
     """
     Test that StatProxy.stat_calls matches the expected count for each filter expression.
 
@@ -44,7 +49,7 @@ def test_stat_proxy_call_count(tmp_path, filter_expr, expected_calls):
     - Nested combinators follow the same rules recursively.
     """
     # Arrange: create a file and StatProxy
-    file = tmp_path / "testfile.txt"
+    file:pathlib.Path = tmp_path / "testfile.txt"
     file.write_bytes(b"x" * 50)
     proxy = StatProxy(file)
     query = Query(filter_expr)
@@ -63,7 +68,3 @@ def test_stat_proxy_call_count(tmp_path, filter_expr, expected_calls):
         f"Nested combinators follow these rules recursively."
     )
 
-
-# You can add more parameterized cases for different filter combinations and expected stat_calls.
-
-# You can add more parameterized cases for different filter combinations and expected stat_calls.

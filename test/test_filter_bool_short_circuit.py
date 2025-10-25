@@ -192,4 +192,5 @@ def test_and_filter_chain_short_circuit() -> None:
     assert a.called
     assert not getattr(b, "called", False)
     assert not c.called  # c should NOT be called because a fails
-    assert actual_elapsed < SHORT_CIRCUIT_THRESHOLD    assert actual_elapsed < SHORT_CIRCUIT_THRESHOLD
+    assert actual_elapsed < SHORT_CIRCUIT_THRESHOLD
+    
