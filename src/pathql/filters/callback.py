@@ -12,8 +12,9 @@ import inspect
 import pathlib
 from typing import Any, Callable
 
-from .alias import DatetimeOrNone
+from .alias import DatetimeOrNone,StatProxyOrNone
 from .base import Filter
+from .stat_proxy import StatProxy
 
 PathCallable = Callable[..., bool]
 
@@ -117,7 +118,7 @@ class PathCallback(Filter):
     def match(
         self,
         path: pathlib.Path,
-        stat_proxy: "StatProxy",  # type: ignore[name-defined]
+        stat_proxy: StatProxyOrNone = None,  # type: ignore[name-defined]
         now: DatetimeOrNone = None,
     ) -> bool:
         """Call the callback with path and the configured args/kwargs."""
@@ -190,7 +191,7 @@ class MatchCallback(PathCallback):
     def match(
         self,
         path: pathlib.Path,
-        stat_proxy: "StatProxy",  # type: ignore[name-defined]
+        stat_proxy: StatProxyOrNone = None,  # type: ignore[name-defined]
         now: DatetimeOrNone = None,
     ) -> bool:
         """Call the callback with (path, now, stat_result, *bound_args, **bound_kwargs)."""

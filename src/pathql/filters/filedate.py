@@ -128,4 +128,3 @@ class FileDate(Filter):
 
     def __ne__(self, other: datetime.datetime):
         return self._make_filter(operator.ne, other)
-        return self._make_filter(operator.ne, other)

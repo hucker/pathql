@@ -12,21 +12,12 @@ import threading
 from typing import Iterator
 
 from .filters.alias import DatetimeOrNone, StrOrPath, StrPathOrListOfStrPath
-from .filters.base import Filter
+from .filters.base import Filter,AllowAll
 from .filters.stat_proxy import StatProxy
 from .result_set import ResultSet
 
 
-class MatchAll(Filter):
-    """A filter that matches all files."""
 
-    def match(
-        self,
-        path: pathlib.Path,
-        stat_proxy: StatProxy,
-        now: DatetimeOrNone = None,
-    ):
-        return True
 
 
 class Query(Filter):
@@ -49,7 +40,7 @@ class Query(Filter):
         Args:
             filter_expr (Filter): The filter expression to apply to files.
         """
-        self.filter_expr = filter_expr or MatchAll()
+        self.filter_expr = filter_expr or AllowAll()
 
         self.results = []
 

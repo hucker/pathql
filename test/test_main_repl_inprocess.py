@@ -87,4 +87,3 @@ def test_main_repl_inprocess_cli(
     }
     assert found == expected
     assert "PathQL v" in captured.out
-    assert "PathQL v" in captured.out

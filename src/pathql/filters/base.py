@@ -9,7 +9,7 @@ import pathlib
 from abc import ABC
 from types import NotImplementedType
 
-from .alias import DatetimeOrNone
+from .alias import DatetimeOrNone, StatProxyOrNone
 
 
 class Filter(ABC):
@@ -35,11 +35,13 @@ class Filter(ABC):
     def match(
         self,
         path: pathlib.Path,
-        stat_proxy=None,
+        stat_proxy: StatProxyOrNone = None,
         now: DatetimeOrNone = None,
     ) -> bool:
         """
-        Determine if the given path matches the filter criteria.
+        Determine if the given path matches the filter criteria.  Some filters do not
+        care about stat information and can just ignore the stat_proxy parameter. This
+        makes testing and usage easier because you aren't required to pass in a stat value.
 
         Args:
             path: The pathlib.Path to check.
@@ -84,7 +86,7 @@ class AndFilter(Filter):
     def match(
         self,
         path: pathlib.Path,
-        stat_proxy=None,
+        stat_proxy: StatProxyOrNone = None,
         now: DatetimeOrNone = None,
     ) -> bool:
         """Return True if both filters match the path."""
@@ -117,7 +119,7 @@ class OrFilter(Filter):
     def match(
         self,
         path: pathlib.Path,
-        stat_proxy=None,
+        stat_proxy: StatProxyOrNone = None,
         now: DatetimeOrNone = None,
     ) -> bool:
         """Return True if either filter matches the path."""
@@ -139,8 +141,86 @@ class NotFilter(Filter):
     def match(
         self,
         path: pathlib.Path,
-        stat_proxy=None,
+        stat_proxy: StatProxyOrNone = None,
         now: DatetimeOrNone = None,
     ) -> bool:
         """Return True if the operand filter does not match the path."""
         return not self.operand.match(path, stat_proxy, now=now)
+
+
+
+
+class All(Filter):
+    """
+    Filter that matches if all contained filters match (like Python's all()).
+
+    Supports: All([f1, f2, f3]) or All(f1, f2, f3)
+    Short-circuits on first failure.
+    """
+
+    def __init__(self, *filters: Filter):
+        # Allow passing a single iterable or multiple filters
+        if len(filters) == 1 and isinstance(filters[0], (list, tuple, set)):
+            self.filters: list[Filter] = list(filters[0])
+        else:
+            self.filters: list[Filter] = list(filters)
+
+    def match(
+        self,
+        path: pathlib.Path,
+        stat_proxy: StatProxyOrNone = None,
+        now: DatetimeOrNone = None,
+    ) -> bool:
+        """Return True if all filters match the path (short-circuits on first failure)."""
+        for f in self.filters:
+            if not f.match(path, stat_proxy, now=now):
+                return False
+        return True
+
+class Any(Filter):
+    """
+    Filter that matches if any contained filter matches (like Python's any()).
+
+    Supports: Any([f1, f2, f3]) or Any(f1, f2, f3)
+    Short-circuits on first match.
+    """
+
+    def __init__(self, *filters: Filter):
+        # Allow passing a single iterable or multiple filters
+        if len(filters) == 1 and isinstance(filters[0], (list, tuple, set)):
+            self.filters: list[Filter] = list(filters[0])
+        else:
+            self.filters: list[Filter] = list(filters)
+
+    def match(
+        self,
+        path: pathlib.Path,
+        stat_proxy: StatProxyOrNone = None,
+        now: DatetimeOrNone = None,
+    ) -> bool:
+        """Return True if any filter matches the path (short-circuits on first match)."""
+        for f in self.filters:
+            if f.match(path, stat_proxy, now=now):
+                return True
+        return False
+
+class AllowAll(Filter):
+    """
+    Lets all files pass through.  Good for testing
+
+    Supports: AllowAll([f1, f2, f3]) or AllowAll(f1, f2, f3)
+
+    """
+
+    def __init__(self, *filters: Filter):
+        # Just ignore filters, we aren't going to use them.  Don't depend on side effects.
+        pass
+
+    def match(
+        self,
+        path: pathlib.Path,
+        stat_proxy: StatProxyOrNone = None,
+        now: DatetimeOrNone = None,
+    ) -> bool:
+        """All files pass through"""
+        return True

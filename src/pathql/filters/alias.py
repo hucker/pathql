@@ -13,6 +13,7 @@ import datetime as dt
 import os
 import pathlib
 from typing import TYPE_CHECKING, Type, TypeAlias
+from .stat_proxy import StatProxy
 
 if TYPE_CHECKING:
     # Imports only for static type checkers — avoid runtime circular imports
@@ -42,3 +43,4 @@ StrOrPath: TypeAlias = str | pathlib.Path
 IntOrFloat: TypeAlias = int | float
 StrOrListOfStr: TypeAlias = str | list[str]
 StrPathOrListOfStrPath: TypeAlias = StrOrPath | list[StrOrPath]
+StatProxyOrNone: TypeAlias = StatProxy | None

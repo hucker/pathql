@@ -7,8 +7,8 @@ import pathlib
 
 import pytest
 
-from pathql.query import MatchAll, Query
-
+from pathql.query import Query
+from pathql.filters.base import AllowAll
 
 @pytest.fixture
 def multi_folder_fixture(tmp_path: pathlib.Path) -> list[pathlib.Path]:
@@ -17,7 +17,7 @@ def multi_folder_fixture(tmp_path: pathlib.Path) -> list[pathlib.Path]:
     Create three explicit folders (alpha, beta, gamma) each with two files.
     Returns a list of folder paths.
     """
-    # AAA: Arrange
+    # Arrange
     folder_names = ["alpha", "beta", "gamma"]
     folders = []
     for name in folder_names:
@@ -51,7 +51,7 @@ def test_query_select_multi_folder(
     selected_folders = [name_to_folder[name] for name in folder_combo[0]]
 
     # Act
-    q = Query(MatchAll())
+    q = Query(AllowAll())
     result = q.select(selected_folders, recursive=False, files=True)
     actual_files = list(result)
 
@@ -63,7 +63,5 @@ def test_query_select_multi_folder(
     )
     for f in actual_files:
         assert any(str(f).startswith(str(folder)) for folder in selected_folders), (
-            f"File {f} not in selected folders {selected_folders}"
-        )
             f"File {f} not in selected folders {selected_folders}"
         )

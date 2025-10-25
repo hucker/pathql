@@ -107,7 +107,7 @@ def test_query_complex(mini_fs: pathlib.Path) -> None:
     # Assert
     assert names == ["bar.md", "foo.txt", "qux.txt"]
 
-
+#pytest.mark.timeout(10)
 def test_threaded_vs_unthreaded_equivalence_hundred(
     hundred_files: pathlib.Path,
 ) -> None:
