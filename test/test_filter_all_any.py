@@ -125,8 +125,8 @@ def test_short_circuiting(combinator:Filter, results: list[bool], expected_resul
     result:bool = value_filter.match(pathlib.Path("dummy.txt"))
     # Assert
     assert result == expected_result
-    for idx, (filt, expected_count) in enumerate(zip(filters, expected_calls)):
-        assert filt.call_count == expected_count, (
+    for idx, (filter, expected_count) in enumerate(zip(filters, expected_calls)):
+        assert filter.call_count == expected_count, (
             f"Filter {idx} call_count={filt.call_count}, expected {expected_count}"
         )
 

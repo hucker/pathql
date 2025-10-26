@@ -14,6 +14,7 @@ import os
 import pathlib
 
 from .alias import DatetimeOrNone
+from .alias import StatProxyOrNone
 from .base import Filter
 
 
@@ -25,7 +26,7 @@ class Read(Filter):
     def match(
         self,
         path: pathlib.Path,
-        stat_proxy,
+        stat_proxy: StatProxyOrNone = None,
         now: DatetimeOrNone = None,
     ) -> bool:
         return os.access(path, os.R_OK)
@@ -39,7 +40,7 @@ class Write(Filter):
     def match(
         self,
         path: pathlib.Path,
-        stat_proxy,
+        stat_proxy: StatProxyOrNone = None,
         now: DatetimeOrNone = None,
     ) -> bool:
         return os.access(path, os.W_OK)
@@ -53,7 +54,7 @@ class Execute(Filter):
     def match(
         self,
         path: pathlib.Path,
-        stat_proxy,
+        stat_proxy: StatProxyOrNone = None,
         now: DatetimeOrNone = None,
     ) -> bool:
         return os.access(path, os.X_OK)

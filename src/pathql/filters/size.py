@@ -6,9 +6,9 @@ import re
 from types import NotImplementedType
 from typing import Callable, Final, Mapping, Pattern
 
-from pathql.filters.stat_proxy import StatProxy
+from .stat_proxy import StatProxy
 
-from .alias import DatetimeOrNone, IntOrNone
+from .alias import DatetimeOrNone, IntOrNone,StatProxyOrNone
 from .base import Filter
 
 # Accept ints, floats, or strings like "1.5 kb". Default to binary units (KB=1024).
@@ -109,7 +109,7 @@ class Size(Filter):
     def match(
         self,
         path: pathlib.Path,
-        stat_proxy: StatProxy | None = None,
+        stat_proxy: StatProxyOrNone = None,
         now: DatetimeOrNone = None,
     ) -> bool:
         """Return True if the file's size matches the filter criteria."""
@@ -165,5 +165,4 @@ class Size(Filter):
         parsed = _parse_size(other)
         if parsed is NotImplemented:
             return NotImplemented
-        return Size(lambda x, y: x != y, parsed)
         return Size(lambda x, y: x != y, parsed)

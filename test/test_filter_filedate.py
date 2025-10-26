@@ -227,4 +227,26 @@ def test_filedate_between_operator(between_times):
 
     assert actual_between
     assert not actual_not_between
+
+
+@pytest.mark.parametrize(
+    "filename, low, high, expected",
+    [
+        ("2024-01-01_log.txt", datetime.datetime(2024, 2, 1), datetime.datetime(2024, 3, 1), False),  # below
+        ("2024-02-01_log.txt", datetime.datetime(2024, 2, 1), datetime.datetime(2024, 3, 1), True),   # low_edge (inclusive)
+        ("2024-02-15_log.txt", datetime.datetime(2024, 2, 1), datetime.datetime(2024, 3, 1), True),   # middle
+        ("2024-03-01_log.txt", datetime.datetime(2024, 2, 1), datetime.datetime(2024, 3, 1), False),  # high_edge (exclusive)
+        ("2024-04-01_log.txt", datetime.datetime(2024, 2, 1), datetime.datetime(2024, 3, 1), False),  # above
+    ]
+)
+def test_filedate_between_filename_edges(filename, low, high, expected):
+    """
+    Test FileDate 'between' logic for below, low_edge, middle, high_edge, high cases.
+    Between is inclusive of low, exclusive of high.
+    """
+    path = pathlib.Path(filename)
+    ffile = FileDate().filename
+    between_filter = Between(ffile, low, high)
+    result = between_filter.match(path, None)
+    assert result is expected
     

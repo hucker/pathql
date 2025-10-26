@@ -32,10 +32,9 @@ import operator
 import pathlib
 from typing import Callable
 
-from .alias import DatetimeOrNone, IntOrFloat, IntOrFloatOrNone, IntOrNone
+from .alias import DatetimeOrNone, IntOrFloat, IntOrFloatOrNone, IntOrNone,StatProxyOrNone
 from .base import Filter
 from .datetime_parts import normalize_attr
-from .stat_proxy import StatProxy
 
 
 class AgeBase(Filter):
@@ -148,7 +147,7 @@ class AgeBase(Filter):
     def match(
         self,
         path: pathlib.Path,
-        stat_proxy: StatProxy | None = None,
+        stat_proxy: StatProxyOrNone = None,
         now: DatetimeOrNone = None,
     ) -> bool:
         """Evaluate the filter against a path.
@@ -243,5 +242,4 @@ class AgeYears(AgeBase):
     queries (not for precise calendrical arithmetic).
     """
 
-    unit_seconds = 60.0 * 60.0 * 24.0 * 365.25
     unit_seconds = 60.0 * 60.0 * 24.0 * 365.25

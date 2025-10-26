@@ -10,7 +10,7 @@ import pathlib
 
 from dateutil.relativedelta import relativedelta
 
-from .alias import DatetimeOrNone
+from .alias import DatetimeOrNone,StatProxyOrNone
 from .base import Filter
 
 MONTH_NAME_TO_NUM: dict[str | int, int] = {

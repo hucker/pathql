@@ -105,6 +105,12 @@ Thumbs.db
 *.out
 *.err
 
+# Ruff
+.ruff_cache/
+
+# Distributin
+dist/
+
 # Git
 .git/
 >>>>>>> feature/dates

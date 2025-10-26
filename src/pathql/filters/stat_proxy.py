@@ -33,4 +33,3 @@ class StatProxy:
     def stat_calls(self) -> int:
         """Return the number of times stat() was called on this proxy."""
         return self._stat_calls
-        return self._stat_calls

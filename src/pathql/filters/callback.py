@@ -4,6 +4,11 @@ Allows users to create a Filter from a callable that accepts a Path and any
 additional positional/keyword arguments. The returned object can be used as a
 factory (bind args via __call__) and the instance docstring includes the
 wrapped function's docstring plus the bound arguments.
+
+NOTE: You can also just derive from Filter and implement match() directly.  The
+      two classes defined here allow you to just write a function and wrap it into
+      a class for you.  This mechanism allows to just create a function instead of
+      a class.
 """
 
 from __future__ import annotations
@@ -14,7 +19,6 @@ from typing import Any, Callable
 
 from .alias import DatetimeOrNone,StatProxyOrNone
 from .base import Filter
-from .stat_proxy import StatProxy
 
 PathCallable = Callable[..., bool]
 

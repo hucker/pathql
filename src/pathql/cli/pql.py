@@ -1,55 +1,97 @@
 #!/usr/bin/env -S uv run --script
 # /// script
-# dependencies = ["pathql"]
+# python = "3.10"
+# dependencies = ["pathql", "Pillow"]
 # ///
 
 import argparse
+import pathlib
+
+from PIL import Image
+
+from pathql.filters.alias import StatProxyOrNone
+
+
 import pathql
-from typing import Optional
+from pathql.filters.age import AgeDays
+from pathql.filters.base import Filter
+from pathql.filters.size import Size
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="List files filtered by age, size, extension, name, and file dates.")
-    parser.add_argument("--age-days", type=float, help="Match files older than this many days (float allowed)")
-    parser.add_argument("--age-minutes", type=float, help="Match files older than this many minutes (float allowed)")
-    parser.add_argument("--size-gt", type=str, help="Match files larger than this size (e.g. 2GB, 500K)")
-    parser.add_argument("--size-lt", type=str, help="Match files smaller than this size (e.g. 2GB, 500K)")
-    parser.add_argument("--ext", type=str, help="Match files with this extension (e.g. .txt, .jpg)")
-    parser.add_argument("--name", type=str, help="Match files with this name (supports glob patterns, e.g. report_*)")
-    parser.add_argument("--created-before", type=str, help="Match files created before this date (YYYY-MM-DD)")
-    parser.add_argument("--modified-before", type=str, help="Match files modified before this date (YYYY-MM-DD)")
-    parser.add_argument("--accessed-before", type=str, help="Match files accessed before this date (YYYY-MM-DD)")
-    parser.add_argument("folder", nargs="?", default=".", help="Folder to search")
-    args: argparse.Namespace = parser.parse_args()
 
-    # Convert age to seconds
-    age_seconds: Optional[float] = None
-    if args.age_days is not None:
-        age_seconds = args.age_days * 86400
-    elif args.age_minutes is not None:
-        age_seconds = args.age_minutes * 60
+class ColorMode(Filter):
+    """
+    Filter for image color mode (e.g. 'RGB', 'RGBA', 'L', etc.).
+    Accepts a comma-separated list of valid modes.
+    """
+
+    def __init__(self, valid_modes: str):
+        self.valid_modes = [
+            m.strip().lower() for m in valid_modes.split(",") if m.strip()
+        ]
+
+    def match(self, path: pathlib.Path, stat_proxy: StatProxyOrNone = None, now=None):
+        try:
+            with Image.open(path) as img:
+                return img.mode.lower() in self.valid_modes
+        except Exception:
+            return False
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Find image files by color mode, file size, and creation age.",
+        formatter_class=lambda prog: argparse.ArgumentDefaultsHelpFormatter(
+            prog, width=120
+        ),
+    )
+    parser.add_argument(
+        "pattern",
+        nargs="?",
+        help="Glob pattern for image files (default: *.jpg)",
+    )
+    parser.add_argument(
+        "col_mode",
+        help="Comma-separated list of valid color modes (e.g. RGB,RGBA,L) [required]",
+    )
+    parser.add_argument(
+        "--root", default=".", help="Folder to search (default: current directory)"
+    )
+    parser.add_argument(
+        "--size-min", default="0", help="Minimum file size in bytes (default: 0)"
+    )
+    parser.add_argument(
+        "--size-max", default="10Gb", help="Maximum file size in bytes (default: 10Gb)"
+    )
+    parser.add_argument(
+        "--min-age",
+        type=int,
+        default=0,
+        help="Minimum file creation age in days (default: 0)",
+    )
+    parser.add_argument(
+        "--max-age",
+        type=int,
+        default=100000,
+        help="Maximum file creation age in days (default: 100000)",
+    )
+    args = parser.parse_args()
 
     # Build filter expression
-    filter_expr: pathql.filters.base.Filter = pathql.filters.AllowAll()
-    if age_seconds is not None:
-        filter_expr &= pathql.filters.AgeSeconds() > age_seconds
-    if args.size_gt is not None:
-        filter_expr &= pathql.filters.Size() > args.size_gt
-    if args.size_lt is not None:
-        filter_expr &= pathql.filters.Size() < args.size_lt
-    if args.ext is not None:
-        filter_expr &= pathql.filters.Ext(args.ext)
-    if args.name is not None:
-        filter_expr &= pathql.filters.Name(args.name)
-    if args.created_before is not None:
-        filter_expr &= pathql.filters.FileDate("created") < args.created_before
-    if args.modified_before is not None:
-        filter_expr &= pathql.filters.FileDate("modified") < args.modified_before
-    if args.accessed_before is not None:
-        filter_expr &= pathql.filters.FileDate("accessed") < args.accessed_before
+    filter_expr = pathql.filters.File(args.pattern)
+    color_modes = [m.strip().upper() for m in args.col_mode.split(",") if m.strip()]
+    color_filter = None
+    for m in color_modes:
+        f = ColorMode(m)
+        color_filter = f if color_filter is None else (color_filter | f)
+    filter_expr &= color_filter
+    filter_expr &= Size() >= args.size_min
+    filter_expr &= Size() <= args.size_max
+    filter_expr &= AgeDays() >= args.min_age
+    filter_expr &= AgeDays() <= args.max_age
 
-    # List files
-    for path in pathql.Query(args.folder, filter_expr):
+    for path in pathql.Query(filter_expr).files(args.root):
         print(path)
+
 
 if __name__ == "__main__":
     main()

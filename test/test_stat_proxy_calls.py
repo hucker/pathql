@@ -21,7 +21,7 @@ from pathql.query import Query
     [
         # Single stat-based filter: always one stat call
         (Suffix("txt"), 0),  # Suffix filter should call stat 0 times since it doesn't need stat
-        
+
         (Size() > 10, 1),  # Size filter should call stat once
         (AgeDays() < 5, 1),  # Age filter should call stat once
         # AND combinator: both filters are always evaluated, so two stat calls
@@ -67,4 +67,3 @@ def test_stat_proxy_call_count(tmp_path:pathlib.Path, filter_expr:Filter, expect
         f"OR combinators may short-circuit, reducing stat calls if the first filter matches. "
         f"Nested combinators follow these rules recursively."
     )
-

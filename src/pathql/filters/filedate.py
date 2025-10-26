@@ -1,5 +1,3 @@
-from pathql.filters.stat_proxy import StatProxy
-
 """
 FileDate filter for PathQL.
 
@@ -15,13 +13,14 @@ expressive queries such as:
 Use the .created, .modified, .accessed, or .filename properties for source selection.
 """
 
-import datetime
+import datetime as dt
 import operator
 import pathlib
 from typing import Any, Callable
 
-from pathql.filters.base import Filter
-
+from .base import Filter
+from .alias import StatProxyOrNone,DatetimeOrNone
+from .date_filename import filename_to_datetime
 
 class FileDate(Filter):
     """
@@ -39,7 +38,7 @@ class FileDate(Filter):
         self.source = source
 
     def match(
-        self, path: pathlib.Path, stat_proxy: StatProxy | None = None, now: Any = None
+        self, path: pathlib.Path, stat_proxy: StatProxyOrNone = None, now: DatetimeOrNone = None,
     ) -> datetime.datetime | None:
         """
         Return the file's date according to the selected source.
@@ -51,26 +50,24 @@ class FileDate(Filter):
                 )
             st = stat_proxy.stat()
             if self.source == "modified":
-                return datetime.datetime.fromtimestamp(st.st_mtime)
+                return dt.datetime.fromtimestamp(st.st_mtime)
             elif self.source == "created":
-                return datetime.datetime.fromtimestamp(st.st_ctime)
+                return dt.datetime.fromtimestamp(st.st_ctime)
             elif self.source == "accessed":
-                return datetime.datetime.fromtimestamp(st.st_atime)
+                return dt.datetime.fromtimestamp(st.st_atime)
         elif self.source == "filename":
             # Example: expects YYYY-MM-DD in filename before an underscore
-            try:
-                stem = path.stem
-                date_str = stem.split("_")[0]
-                return datetime.datetime.strptime(date_str, "%Y-%m-%d")
-            except Exception:
-                return None
+            return filename_to_datetime(path)
         else:
             return None
 
-    def _make_filter(self, op: Callable[[Any, Any], bool], other: datetime.datetime):
+    def _make_filter(self, op: Callable[[Any, Any], bool], other: dt.datetime):
         """
         Return a filter object with a .match() method that compares the file's date
         to 'other' using the operator 'op'.
+
+        This enables operator overloading for comparison with datetime objects by creating
+        the correct object for the comparison.
         """
 
         class DateComparisonFilter(Filter):
@@ -80,9 +77,10 @@ class FileDate(Filter):
             def match(
                 self,
                 path: pathlib.Path,
-                stat_proxy: StatProxy | None = None,
+                stat_proxy: StatProxyOrNone = None,
                 now: Any = None,
             ) -> bool:
+                """Custom class where op is captured from outer scope."""
                 file_date = self.parent.match(path, stat_proxy=stat_proxy, now=now)
                 if file_date is None:
                     return False
@@ -93,38 +91,38 @@ class FileDate(Filter):
     @property
     def accessed(self) -> "FileDate":
         """Return a FileDate filter for file access time."""
-        return FileDate(source="accessed")
+        return FileDate().accessed # FileDate(source="accessed")
 
     @property
     def created(self) -> "FileDate":
         """Return a FileDate filter for file creation time."""
-        return FileDate(source="created")
+        return FileDate().created #  FileDate(source="created")
 
     @property
     def modified(self) -> "FileDate":
         """Return a FileDate filter for file modification time."""
-        return FileDate(source="modified")
+        return FileDate().modified #(source="modified")
 
     @property
     def filename(self) -> "FileDate":
         """Return a FileDate filter for date parsed from filename."""
-        return FileDate(source="filename")
+        return FileDate().filename #source="filename")
 
     # Operator overloads for comparison with datetime
-    def __gt__(self, other: datetime.datetime):
+    def __gt__(self, other: dt.datetime):
         return self._make_filter(operator.gt, other)
 
-    def __ge__(self, other: datetime.datetime):
+    def __ge__(self, other: dt.datetime):
         return self._make_filter(operator.ge, other)
 
-    def __lt__(self, other: datetime.datetime):
+    def __lt__(self, other: dt.datetime):
         return self._make_filter(operator.lt, other)
 
-    def __le__(self, other: datetime.datetime):
+    def __le__(self, other: dt.datetime):
         return self._make_filter(operator.le, other)
 
-    def __eq__(self, other: datetime.datetime):
+    def __eq__(self, other: dt.datetime):
         return self._make_filter(operator.eq, other)
 
-    def __ne__(self, other: datetime.datetime):
+    def __ne__(self, other: dt.datetime):
         return self._make_filter(operator.ne, other)

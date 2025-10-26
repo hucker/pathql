@@ -6,7 +6,7 @@ Provides declarative, pathlib-like queries for filesystem filtering.
 import fnmatch
 import pathlib
 
-from .alias import DatetimeOrNone
+from .alias import DatetimeOrNone,StatProxyOrNone
 from .base import Filter
 
 
@@ -49,7 +49,7 @@ class Stem(Filter):
     def match(
         self,
         path: pathlib.Path,
-        stat_proxy=None,  # Accept and ignore stat_proxy for interface consistency
+        stat_proxy: StatProxyOrNone = None,  # Accept and ignore stat_proxy for interface consistency
         now: DatetimeOrNone = None,
     ) -> bool:
         """

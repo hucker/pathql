@@ -1,18 +1,3 @@
-class TestStatProxy:
-    def __init__(self, path, stat_result):
-        self.path = path
-        self._stat = stat_result
-        self._stat_calls = 0
-
-    def stat(self):
-        self._stat_calls += 1
-        return self._stat
-
-    @property
-    def stat_calls(self):
-        return self._stat_calls
-
-
 """Deterministic tests for 1-second age behavior using injected stat_result objects.
 
 These tests avoid filesystem platform differences (ctime semantics) by creating a
@@ -30,8 +15,25 @@ import pytest
 from pathql.filters.age import AgeSeconds
 
 
+class TestStatProxy:
+    def __init__(self, path, stat_result):
+        self.path = path
+        self._stat = stat_result
+        self._stat_calls = 0
+
+    def stat(self):
+        self._stat_calls += 1
+        return self._stat
+
+    @property
+    def stat_calls(self):
+        return self._stat_calls
+
+
 def make_stat(
-    st_mtime: float, st_atime: float | None = None, st_ctime: float | None = None
+    st_mtime: float,
+    st_atime: float | None = None,
+    st_ctime: float | None = None,
 ):
     # create a simple object with the required attributes
     obj = types.SimpleNamespace()

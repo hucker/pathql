@@ -21,6 +21,8 @@ from pathql.filters.date_filename import (
         ("2022-archive.zip", DateFilenameParts(year=2022), "Y only, archive/ext"),
         ("2022-archive", DateFilenameParts(year=2022), "Y only, archive/no ext"),
         ("2022-", DateFilenameParts(year=2022), "Y only, no archive/ext"),
+        ("2022", DateFilenameParts(year=2022), "Y only no ext, archive/ext"),
+        ("2022.zip", DateFilenameParts(year=2022), "Y only plain, archive/ext"),
         (
             "2022-07_archive.zip",
             DateFilenameParts(year=2022, month=7),

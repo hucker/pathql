@@ -19,9 +19,9 @@ import pathlib
 import re
 from typing import List
 
-from .alias import DatetimeOrNone, StrOrListOfStr
+from .alias import DatetimeOrNone, StrOrListOfStr,StatProxyOrNone
 from .base import Filter
-from .proxy_not_needed import ProxyNotNeededTriggersExceptionOnUsage
+from .stat_proxy_guard import StatProxyGuard
 from .stat_proxy import StatProxy
 
 
@@ -74,7 +74,7 @@ class Suffix(Filter):
     def match(
         self,
         path: pathlib.Path,
-        stat_proxy: StatProxy | None = None,
+        stat_proxy: StatProxyOrNone = None,
         now: DatetimeOrNone = None,
     ) -> bool:
         """
@@ -82,7 +82,7 @@ class Suffix(Filter):
         Supports multi-part extensions.
         """  # If stat_proxy is not provided, use a dummy proxy that raises if accessed
         if stat_proxy is None:
-            stat_proxy = ProxyNotNeededTriggersExceptionOnUsage(path)
+            stat_proxy = StatProxyGuard(path)
 
         filename = path.name.lower() if self.ignore_case else path.name
         for pattern in self.patterns:
@@ -127,5 +127,4 @@ class Suffix(Filter):
 
 # Alias for pathlib-like naming
 Ext = Suffix
-Ext.__doc__ = "Alias for Suffix. See Suffix for usage.\n\n" + (Suffix.__doc__ or "")
 Ext.__doc__ = "Alias for Suffix. See Suffix for usage.\n\n" + (Suffix.__doc__ or "")

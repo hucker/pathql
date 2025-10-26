@@ -1,5 +1,5 @@
+ `<!-- Badges -->`
 
-<!-- Badges -->
 ![pytest](https://img.shields.io/badge/pytest-233-blue)
 ![coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)
 ![mypy](https://img.shields.io/badge/mypy-13-orange)
@@ -10,17 +10,18 @@
 PathQL allows you to query `pathlib.Path` objects using a declarative syntax reminiscent of SQL.
 
 ## Table of Contents
+
 - [Quick Examples](#quick-examples)
 - [Features](#features)
-- [Concepts & Filters](#concepts--filters)
-- [Boolean Operators & Short-Circuiting](#boolean-operators--short-circuiting)
+- [Concepts &amp; Filters](#concepts--filters)
+- [Boolean Operators &amp; Short-Circuiting](#boolean-operators--short-circuiting)
 - [Query Engine](#query-engine)
 - [Filter Reference](#filter-reference)
-- [Datetime & Age Filters](#datetime--age-filters)
+- [Datetime &amp; Age Filters](#datetime--age-filters)
 - [Filename Builders](#filename-builders)
 - [File Actions](#file-actions)
 - [Usage Examples](#usage-examples)
-- [Developer & Release Conventions](#developer--release-conventions)
+- [Developer &amp; Release Conventions](#developer--release-conventions)
 - [Release Summary](#release-summary)
 
 ## Quick Examples
@@ -66,19 +67,19 @@ Filters are composable objects that match files based on attributes like size, a
 - `Between(Size(), 1000, 2000)` — size in range
 - `YearFilter(2024)`, `MonthFilter("May")`, etc.
 
-## Boolean Operators & Short-Circuiting
+## Boolean Operators, Any, All & Short-Circuiting
 
 - `&` (AND): Both filters must match.
 - `|` (OR): Either filter matches (short-circuits if first matches).
 - `~` (NOT): Inverts the filter.
+- **Any/All** keywords allow short circuited composition of query
 
 **Short-circuiting:**
 For `A & B`, if `A` fails, `B` is not evaluated.
 For `A | B`, if `A` matches, `B` is not evaluated.
 
 **Precedence:**
-Use parentheses for clarity: `(AgeDays() < 2) & Ext("txt")`
-
+Use parentheses for clarity: `(AgeDays() < 2) & Ext("txt") `
 
 ## Query Engine
 
@@ -155,11 +156,13 @@ See `AI_CONTEXT.md` for coding style, contributing, and release steps.
 ## Release Summary
 
 ### Highlights
+
 - File filter uses shell-style globbing
 - Suffix filter supports dot-prefixed patterns and wildcards
 - Improved documentation and test coverage
 
 ### Breaking Changes
+
 - File filter does not support curly-brace expansion
 - Suffix filter matches using normalized dot-prefixed patterns
 
@@ -178,21 +181,32 @@ PathQL is a declarative, composable, and efficient query language for filesystem
 
 ## Basic Concepts
 
-### Filters
+`PathQL` can be thought of as a tool that takes a an arbitrary composition of filter expression that  and running each `pathlib.Path` object through your filter expression.  The guts of the code look something like this:
 
-Filters are composable objects that match files based on many of the attributes exposed by the `pathlib` Package. Attributes such as size, age, suffix, stem, or type. Each filter can be combined using Python's over-loadable boolean operators.
+```python
+for path in rootpath.glob(*):
+    if filter_expression.match(query):
+        yield path
+```
 
-# Boolean Filter Operators: `&`, `|`, `~`
+The goal of this tool is to give you a lot of `Filter` objects that you can compose in arbitrarily complex ways, without having to deal with the guts of time, datetime, file ages, being efficient with `stat` objects.
+
+### Composition and Filters
+
+Filters are composable objects that match files based on many of the attributes exposed by the `pathlib` Package. Attributes such as size, age, suffix, stem, or type. Each filter can be combined using Python's over-loadable boolean operators. Those filters can be composed in arbitrarily complex ways using boolean operators and methods that operate on queries.
+
+# Boolean Filter Functions(all/any) and Operators: `&`, `|`, `~`
 
 PathQL allows you to compose complex queries using the `&` (AND), `|` (OR), and `~` (NOT) operators. These operators work analogously to Python's built-in `and`, `or`, and `not`, but are implemented using operator overloading to allow chaining and composition of filter objects.
 
 - `&` (AND): Combines two filters so that both must match for a file to be included.
 - `|` (OR): Combines two filters so that either filter matching will include the file.
 - `~` (NOT): Inverts the result of a filter, matching files that do **not** satisfy the filter.
+- **Any(q1,q2,..)** and **All(q1,q2,...** composable queries allow for short circuited sub query composition.
 
 **Precedence**
 
-The query langage implimented by `PathQL` should be thought of as a mathematical system that uses pythons mathematical operators, as such the rules of precedance follow those for '&', `|` and `^`, which have different precedance than the `and`/`or` operators (which cannot be overloaded).
+The query language implemented by `PathQL` should be thought of as a mathematical system that uses pythons mathematical operators, as such the rules of precedence follow those for '&', `|` and `^`, which have different precedence than the `and`/`or` operators (which cannot be overloaded).
 
 You must say
 
@@ -207,10 +221,11 @@ PathQL's filter composition is designed to short-circuit, just like Python's boo
 - For `A & B`, if filter `A` does not match, filter `B` is **not** evaluated.
 - For `A | B`, if filter `A` matches, filter `B` is **not** evaluated.
 - For chained filters (e.g., `A & B & C`), evaluation stops at the first filter that fails for AND, or the first that succeeds for OR.
+- For `All(A,B,C)` or `Any(A,B,C)`, the operation will short circuit once a `All` sees a `False` or `Any` sees a `True`.
 
 This means that if you have expensive filters (such as those that read file contents or perform slow network operations), place them at the end of an and expression.
 
-**Example:**
+**Example 1**
 
 ```python
 from pathql.filters.base import Filter, AndFilter, OrFilter
@@ -231,11 +246,22 @@ class FalseFilter(Filter):
         return False
 
 # ExpensiveFilter will NOT be called because CheapFilter fails
-combined = FalseFilter & ExpensiveFilter()
+combined = FalseFilter() & ExpensiveFilter()
 result = combined.match(pathlib.Path("somefile.txt"))  # Fast, no delay
 
 # ExpensiveFilter will NOT be called because CheapFilter succeeds
 combined = TrueFilter() | ExpensiveFilter()
+result = combined.match(pathlib.Path("somefile.txt"))  # Fast, no delay
+```
+
+**Example 2**
+```python
+# ExpensiveFilter will NOT be called because CheapFilter fails.  All Function mimics 'and'
+combined = All(FalseFilter(), ExpensiveFilter())
+result = combined.match(pathlib.Path("somefile.txt"))  # Fast, no delay
+
+# ExpensiveFilter will NOT be called because CheapFilter succeeds.  Any funcion mimics 'or'
+combined = Any(TrueFilter(), ExpensiveFilter())
 result = combined.match(pathlib.Path("somefile.txt"))  # Fast, no delay
 ```
 
@@ -270,6 +296,7 @@ state information.  Eliminating these checks can be VERY valuable.
 ### Using the `Between` Filter
 
 The `Between` filter matches files whose attribute (such as size or age) falls within a specified range: inclusive on the lower bound, exclusive on the upper bound.
+This filter works with values that can be reduced to comparable values.  At this time `Size` and `FileDate` work with between.
 
 **Example:** Find files with size >= 1KB and < 2KB:
 
@@ -305,14 +332,19 @@ It exposes a small API and supports both single-threaded and producer/consumer (
 
 - Single-threaded (`threaded=False`) walks the tree and filters each entry in a single loop. Simpler and predictable; good for small trees or when threading
   is not desired.
-- Threaded (`threaded=True`) starts a daemon producer thread that walks the filesystem and pushes `(path, stat_result)` tuples into a bounded `queue.Queue` (default maxsize: 10). The consumer (caller) reads from the queue and runs the filter expression. This can improve throughput when the filesystem is slow or when filter evaluation is relatively expensive.
+- Threaded (`threaded=True`) starts a producer thread that walks the filesystem and pushes `(path, stat_result)` tuples into a bounded `queue.Queue` (default maxsize: 10). The consumer (caller) reads from the queue and runs the filter expression. This can improve throughput when the filesystem is slow or when filter evaluation is relatively expensive.
 - The producer places a `None` sentinel on the queue when traversal completes; the consumer stops after seeing the sentinel and joins the producer thread.
 
 ### Stat caching and `stat_result`
 
-- The producer (threaded mode) or the single-threaded walker performs `path.stat()` once per file and passes the `stat_result` along with the path to the filters. Filters should accept and refer the provided `stat_result` to avoid extra system calls.
+- The producer (threaded mode) or the single-threaded walker performs `path.stat()` once per file (at most) and passes the `stat_result` along with the path to the filters. Filters should accept and refer the provided `stat_result` to avoid extra system calls.
+- `stat-result` is only generated when it is actually used and if other filter expressions require stat, they use a cached version.
 - All filters in PathQL accept optional `now` and `stat_result` parameters so that a single `now` timestamp can be used for consistent comparisons and
   so callers can reuse stat results.
+
+### Timing ###
+
+IN large directory trees with 100's or 1000's of files the time changes between the beginning and end of a query, sometimes by many seconds or more.  This can lead to race conditions when ages are calculated. The design decision that was made is that at the start of a query the current time is read (or a user provided one is used) for all datetime calculations.  This is imperfect because there are many possible issues.  For example, a  file existed when you started the run but was deleted when you finished.  There are many ways that this problem could be solved with varying degrees of "quality".
 
 ### Recursion, files vs directories
 
@@ -348,7 +380,7 @@ if q.match(pathlib.Path('notes.txt')):
 ### Edge cases and notes
 
 - The default queue max size (10) is a tradeoff between memory and producer progress; tuning may help for very large or very slow filesystems.
-- Filters should avoid calling `stat()` themselves when a cached`stat_result` is provided. (os.stat is expensive on network file systems)
+- Filters should avoid calling `stat()` themselves when a cached `stat_result` is provided. (os.stat is expensive on network file systems)
 - When using `now`, pass a fixed datetime in tests to make results deterministic.
 
 If you need more control (parallel consumers, custom traversal ordering, or different queueing semantics) you can implement your own driver that reuses the filter primitives exposed by PathQL.
@@ -475,7 +507,7 @@ You almost never need to interact with the raw `datetime` objects if you are dea
 
 | Friendly name | stat attribute | Description                                                       |
 | ------------- | -------------- | ----------------------------------------------------------------- |
-| modified       | `st_mtime`   | File modification time (most commonly used for age calculations)  |
+| modified      | `st_mtime`   | File modification time (most commonly used for age calculations)  |
 | created       | `st_ctime`   | File creation time (platform-dependent: more reliable on Windows) |
 | accessed      | `st_atime`   | Last access time                                                  |
 
@@ -823,5 +855,3 @@ latest instructions on coding style, testing, and release procedures.
 - Curly-brace expansion is no longer supported in File filter.
 - All filters and tests are PEP8 and docstring compliant.
 - Improved documentation and test coverage.
-
-

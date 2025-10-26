@@ -39,18 +39,18 @@ def filename_to_datetime_parts(filename: StrOrPath) -> DateFilenameParts|None:
     if isinstance(filename, pathlib.Path):
         filename = filename.name
     # Regex explanation:
-    # ^                   : Start of string
-    # (?P<year>\d{4})     : 4-digit year, captured as 'year'
-    # (?:-(?P<month>\d{2})): Optional 2-digit month, preceded by '-', captured as 'month'
-    # (?:-(?P<day>\d{2})) : Optional 2-digit day, preceded by '-', captured as 'day'
-    # (?:_(?P<hour>\d{2})): Optional 2-digit hour, preceded by '_', captured as 'hour'
-    # [_-]                : Require either '_' or '-' after the date part to separate from archive name
+    # ^                        : Start of string
+    # (?P<year>\d{4})          : 4-digit year, captured as 'year'
+    # (?:[_\-]?(?P<month>\d{2}))? : Optional 2-digit month, optionally preceded by '_' or '-'
+    # (?:[_\-]?(?P<day>\d{2}))?   : Optional 2-digit day, optionally preceded by '_' or '-'
+    # (?:[_\-]?(?P<hour>\d{2}))?  : Optional 2-digit hour, optionally preceded by '_' or '-'
+    # (?:[_\-\.]|$)             : Optional separator ('_', '-', or '.') or end of string after the last date part
     pattern = (
         r"^(?P<year>\d{4})"
-        r"(?:-(?P<month>\d{2}))?"
-        r"(?:-(?P<day>\d{2}))?"
-        r"(?:_(?P<hour>\d{2}))?"
-        r"[_-]"
+        r"(?:[_\-]?(?P<month>\d{2}))?"
+        r"(?:[_\-]?(?P<day>\d{2}))?"
+        r"(?:[_\-]?(?P<hour>\d{2}))?"
+        r"(?:[_\-\.]|$)"
     )
     match = re.match(pattern, filename)
     if not match:

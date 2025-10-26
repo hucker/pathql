@@ -18,7 +18,7 @@ import operator
 import pathlib
 from typing import Callable
 
-from .alias import IntOrNone
+from .alias import IntOrNone, StatProxyOrNone
 from .date_filename import filename_to_datetime_parts
 
 
@@ -55,8 +55,7 @@ class FilenameAgeBase:
         return self.__class__(op=operator.le, value=other)
 
     def __lt__(self, other: int):
-        stat_proxy = (None,)  # Accept and ignore stat_proxy for interface consistency
-        now: dt.datetime | None = (None,)
+        return self.__class__(op=operator.lt, value=other)
 
     def __ge__(self, other: int):
         return self.__class__(op=operator.ge, value=other)
@@ -73,6 +72,7 @@ class FilenameAgeBase:
     def match(
         self,
         path: pathlib.Path,
+        stat_proxy: StatProxyOrNone = None,
         now: dt.datetime | None = None,
     ) -> bool:
         """Evaluate the filter against a path using filename date.
