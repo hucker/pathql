@@ -63,7 +63,7 @@ class Between(Filter):
                 "Failed to combine comparison filters with '&' "
                 f"for type {type(filter_instance).__name__!r}."
             ) from exc
-        
+
     def match(
         self,
         path: pathlib.Path,

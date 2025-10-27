@@ -31,7 +31,6 @@ class FilenameAgeBase(AttributeFilter):
     date parts, not filesystem timestamps. Supports operator overloads for
     expressive queries.
     """
-
     unit_seconds: float = 1.0
 
     def __init__(
@@ -47,8 +46,7 @@ class FilenameAgeBase(AttributeFilter):
         """
         if value is not None and not isinstance(value, numbers.Integral):
             raise TypeError(
-                "Fractional age thresholds are not allowed; use an integer "
-                "threshold or express the value in a smaller unit."
+                "Fractional age thresholds are not allowed; use an integer threshold or express the value in a smaller unit."
             )
 
         def extractor(
@@ -67,8 +65,8 @@ class FilenameAgeBase(AttributeFilter):
             """
             now = now or dt.datetime.now()
             parts = filename_to_datetime_parts(path)
-            if parts is None or parts.year is None:
-                return None
+            if parts is None:
+                raise ValueError(f"Filename does not contain a valid date for age : {path}")
             file_date = dt.datetime(
                 parts.year,
                 parts.month if parts.month is not None else 1,
@@ -112,19 +110,16 @@ class FilenameAgeBase(AttributeFilter):
 
 class FilenameAgeMinutes(FilenameAgeBase):
     """Filename age filter in minutes."""
-
     unit_seconds = 60.0
 
 
 class FilenameAgeHours(FilenameAgeBase):
     """Filename age filter in hours."""
-
     unit_seconds = 3600.0
 
 
 class FilenameAgeDays(FilenameAgeBase):
     """Filename age filter in days."""
-
     unit_seconds = 86400.0
 
 

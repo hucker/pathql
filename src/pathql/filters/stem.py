@@ -27,7 +27,7 @@ class Stem(Filter):
     NOTE: You might think the following should be possible:
         Stem() == "foo"
 
-        This is not the case because only one operaton is possible (matching)
+        This is not the case because only one operation is possible (matching)
 
 
 
@@ -56,7 +56,7 @@ class Stem(Filter):
     def match(
         self,
         path: pathlib.Path,
-        stat_proxy: StatProxyOrNone = None,  # Accept and ignore stat_proxy for interface consistency
+        stat_proxy: StatProxyOrNone = None,  # Accept and ignore stat_proxy for consistency
         now: DatetimeOrNone = None,
     ) -> bool:
         """
@@ -75,7 +75,3 @@ class Stem(Filter):
         else:
             pats = self.patterns
         return any(fnmatch.fnmatchcase(stem, pat) for pat in pats)
-
-
-# Alias for pathlib-like naming
-Name = Stem

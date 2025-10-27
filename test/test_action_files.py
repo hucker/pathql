@@ -2,7 +2,8 @@
 Unit tests for file_actions: copy, move, and delete operations.
 
 Creates a temporary multi-level 'source' directory and a 'destination' directory for each test.
-Verifies correct file manipulation for flat and nested structures using AAA (Arrange, Act, Assert) comments.
+Verifies correct file manipulation for flat and nested structures using AAA (Arrange, Act, Assert)
+comments.
 """
 import pathlib
 
@@ -22,11 +23,13 @@ TREE = {
 }
 
 def create_tree(base: pathlib.Path, tree: dict) -> None:
-    """Recursively create folders and files from a nested dictionary structure.
+    """
+    Recursively create folders and files from a nested dictionary structure.
 
     Args:
         base: The base directory to create the tree in.
-        tree: Dictionary where keys are folder names and values are lists of filenames or subfolder dicts.
+        tree: Dictionary where keys are folder names and values are lists of filenames or subfolder
+            dicts.
     """
     for folder, items in tree.items():
         folder_path = base / folder
@@ -39,7 +42,9 @@ def create_tree(base: pathlib.Path, tree: dict) -> None:
 
 @pytest.fixture
 def test_dirs(tmp_path) -> tuple[pathlib.Path, pathlib.Path]:
-    """Pytest fixture that creates a temporary 'source' and 'destination' directory with a nested file structure.
+    """
+    Pytest fixture that creates a temporary 'source' and 'destination' directory with a nested
+    file structure.
 
     Returns:
         Tuple of (source, destination) pathlib.Path objects.

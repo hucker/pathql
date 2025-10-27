@@ -1,7 +1,7 @@
 import pathlib
 import datetime as dt
 import pytest
-from pathql.filters.fileage import FilenameAgeMinutes, FilenameAgeHours, FilenameAgeDays, FilenameAgeYears
+from pathql.filters.file_age import FilenameAgeMinutes, FilenameAgeHours, FilenameAgeDays, FilenameAgeYears
 from pathql.filters.base import Filter
 
 @pytest.mark.parametrize(

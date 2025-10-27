@@ -112,4 +112,3 @@ class ResultSet(list[pathlib.Path]):
         """Return the bottom N items from the result set."""
         key = self._get_key(field)
         return ResultSet(heapq.nsmallest(n, self, key=key))
- 

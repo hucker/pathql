@@ -154,6 +154,6 @@ class Query(Filter):
         threaded: bool = False,
     ) -> ResultSet:
         """
-        Return a ResultSet of files matching the filter expression for a single path or a list of paths.
+        Return a ResultSet of files matching the filter expr for a path or a list of paths.
         """
         return ResultSet(self.files(paths, recursive, files, now, threaded))

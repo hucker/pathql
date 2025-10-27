@@ -60,7 +60,7 @@ Filters are composable objects that match files based on attributes like size, a
 ### Filter Reference
 
 - `Size() <= 1_000_000` — files up to 1MB
-- `Suffix({".png", ".jpg"})` — files with .png or .jpg extension
+- `Suffix() == "jpg"` — files with .png or .jpg extension
 - `Stem("report_*")` — files whose stem matches a glob pattern
 - `FileType().file` — file, dir, link
 - `AgeMinutes() < 10` — modified in the last 10 minutes

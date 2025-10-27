@@ -45,7 +45,7 @@ class Filter(ABC):
 
         Args:
             path: The pathlib.Path to check.
-            stat_proxy: StatProxy for lazy stat access, or None. If stat is required and not provided, raise.
+            stat_proxy: StatProxy for lazy stat access, or None. Raise ValueError for missing stat.
             now: Optional reference datetime for time-based filters.
 
         Returns:

@@ -22,8 +22,6 @@ from typing import List
 from .alias import DatetimeOrNone, StrOrListOfStr,StatProxyOrNone
 from .base import Filter
 from .stat_proxy_guard import StatProxyGuard
-from .stat_proxy import StatProxy
-
 
 class Suffix(Filter):
     """
@@ -95,7 +93,7 @@ class Suffix(Filter):
     def __eq__(self, other: object):
         """
         Instance-level equality and factory behavior.
-        - If `other` is a str/list/tuple, return a new Suffix filter constructed from that pattern(s).
+        - If `other` is a str/list/tuple, return a Suffix filter from those pattern(s).
         - If `other` is a Suffix, return boolean equality of normalized patterns.
         - Otherwise return NotImplemented.
         """

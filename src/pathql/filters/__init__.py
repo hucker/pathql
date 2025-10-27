@@ -17,7 +17,7 @@ from .datetime_parts import (
 from .file import File
 from .file_type import FileType
 from .size import Size
-from .stem import Name, Stem
+from .stem import Stem
 from .suffix import Ext, Suffix
 
 __all__ = [
@@ -30,7 +30,6 @@ __all__ = [
     "AgeDays",
     "AgeYears",
     "Stem",
-    "Name",
     "FileType",
     "YearFilter",
     "MonthFilter",

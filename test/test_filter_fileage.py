@@ -8,7 +8,7 @@ import operator
 import pathlib
 import pytest
 
-from pathql.filters.fileage import FilenameAgeDays, FilenameAgeHours, FilenameAgeYears
+from pathql.filters.file_age import FilenameAgeDays, FilenameAgeHours, FilenameAgeYears
 from pathql.filters.date_filename import path_from_datetime
 
 

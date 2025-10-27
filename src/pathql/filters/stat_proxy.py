@@ -18,6 +18,13 @@ class StatProxy:
         self._stat_calls = 0
 
     def stat(self) -> os.stat_result:
+        """
+        Call and cache pathlib.Path.stat(), counting calls.
+        Returns:
+            os.stat_result: Cached stat result for the file path.
+        Raises:
+            Exception: If stat() fails, the error is cached and re-raised.
+        """
         self._stat_calls += 1
         if self._stat is None and self._stat_error is None:
             try:

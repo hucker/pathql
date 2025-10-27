@@ -101,24 +101,47 @@ class Size(AttributeFilter):
     """Filter for file size (in bytes), supports operator overloads."""
 
     def __init__(self, op: Callable[[int, int], bool] = None, value: object = None):
-        # Always parse value to bytes if provided
+        """
+        Initialize a Size filter for file size in bytes.
+        Args:
+            op: Comparison operator (e.g., operator.lt).
+            value: Size threshold (int, float, or str).
+        """
         parsed_value = parse_size(value) if value is not None else None
         super().__init__(_extract_size, op, parsed_value, requires_stat=True)
 
     def __le__(self, other: object) -> "Size":
+        """
+        Return a Size filter for files <= other bytes.
+        """
         return Size(lambda x, y: x <= y, parse_size(other))
 
     def __lt__(self, other: object) -> "Size":
+        """
+        Return a Size filter for files < other bytes.
+        """
         return Size(lambda x, y: x < y, parse_size(other))
 
     def __ge__(self, other: object) -> "Size":
+        """
+        Return a Size filter for files >= other bytes.
+        """
         return Size(lambda x, y: x >= y, parse_size(other))
 
     def __gt__(self, other: object) -> "Size":
+        """
+        Return a Size filter for files > other bytes.
+        """
         return Size(lambda x, y: x > y, parse_size(other))
 
     def __eq__(self, other: object) -> "Size":
+        """
+        Return a Size filter for files == other bytes.
+        """
         return Size(lambda x, y: x == y, parse_size(other))
 
     def __ne__(self, other: object) -> "Size":
+        """
+        Return a Size filter for files != other bytes.
+        """
         return Size(lambda x, y: x != y, parse_size(other))

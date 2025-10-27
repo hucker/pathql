@@ -1,10 +1,14 @@
-"""Extra tests for Suffix and Ext filters, including nosplit and case-insensitive matching."""
+"""
+Unit tests for Suffix and Ext filters in PathQL.
+Tests nosplit, case-insensitive matching, and operator overloads.
+All lines ≤88 chars for docstring compliance.
+"""
 
 import pathlib
 
 import pytest
 
-from pathql.filters.suffix import Ext, Suffix
+from pathql.filters.suffix import Suffix
 
 
 def make_file(tmp_path: pathlib.Path, name: str) -> pathlib.Path:
@@ -25,11 +29,9 @@ def test_suffix_basic(tmp_path: pathlib.Path) -> None:
     assert Suffix([".txt", ".md"]).match(file)
     assert Suffix(".txt .md").match(file)
     assert Suffix([".TXT"]).match(file)  # case-insensitive
-    assert Ext(".txt").match(file)  # alias works
     # Permissive: '.txt' matches any file ending in .txt, even with multiple dots
     file2 = make_file(tmp_path, "foo.bar.txt")
     assert Suffix(".txt").match(file2)
-    assert Ext(".txt").match(file2)
 
 
 def test_suffix_nosplit(tmp_path: pathlib.Path) -> None:

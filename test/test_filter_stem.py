@@ -1,15 +1,15 @@
-"""Tests for Stem and Name filters (equality, multiple, and wildcard)."""
+"""Tests for Stem  filters (equality, multiple, and wildcard)."""
 
 import pathlib
 
 import pytest
 
-from pathql.filters.stem import Name, Stem
+from pathql.filters.stem import Stem
 
 
-@pytest.mark.parametrize("cls", [Stem, Name])
+@pytest.mark.parametrize("cls", [Stem])
 def test_stem_eq(cls: type) -> None:
-    """Equality matching for Stem and Name filters."""
+    """Equality matching for Stem  filters."""
     # Arrange
     f = pathlib.Path("foo.txt")
 
@@ -18,7 +18,7 @@ def test_stem_eq(cls: type) -> None:
     assert not cls(["bar"]).match(f)
 
 
-@pytest.mark.parametrize("cls", [Stem, Name])
+@pytest.mark.parametrize("cls", [Stem ])
 def test_stem_multiple(cls: type) -> None:
     """Multiple stem matching works as expected."""
     # Arrange
@@ -31,9 +31,9 @@ def test_stem_multiple(cls: type) -> None:
     assert stem_filter.match(f2)
 
 
-@pytest.mark.parametrize("cls", [Stem, Name])
+@pytest.mark.parametrize("cls", [Stem ])
 def test_stem_string(cls: type) -> None:
-    """String-based matching for Stem and Name filters."""
+    """String-based matching for Stem  filters."""
     # Arrange
     f = pathlib.Path("foo.txt")
 
@@ -42,9 +42,9 @@ def test_stem_string(cls: type) -> None:
     assert not cls("bar").match(f)
 
 
-@pytest.mark.parametrize("cls", [Stem, Name])
+@pytest.mark.parametrize("cls", [Stem ])
 def test_stem_wildcard(cls: type) -> None:
-    """Wildcard matching for Stem and Name filters."""
+    """Wildcard matching for Stem  filters."""
     # Arrange
     f = pathlib.Path("foo123.txt")
 
@@ -53,7 +53,7 @@ def test_stem_wildcard(cls: type) -> None:
     assert not cls("bar*").match(f)
 
 
-@pytest.mark.parametrize("cls", [Stem, Name])
+@pytest.mark.parametrize("cls", [Stem ])
 def test_name_alias(cls: type) -> None:
     """Name alias behaves like Stem filter."""
     # Arrange
@@ -64,7 +64,7 @@ def test_name_alias(cls: type) -> None:
     assert not cls("bar").match(f)
 
 
-@pytest.mark.parametrize("cls", [Stem, Name])
+@pytest.mark.parametrize("cls", [Stem ])
 def test_stem_fnmatch_patterns(cls: type) -> None:
     """fnmatch patterns are supported for Stem/Name filters."""
     # Arrange

@@ -1,3 +1,11 @@
+"""
+AttributeFilter base class for PathQL filters.
+
+Provides a generic filter for extracting file attributes and comparing them
+to a threshold using a specified operator. Designed for subclassing by
+filters like Age, Size, and FileDate. Supports stat-based and stat-less
+extraction and robust error handling.
+"""
 import pathlib
 from typing import Any, Callable
 

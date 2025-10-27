@@ -15,6 +15,3 @@ class ProxyNotNeededTriggersExceptionOnUsage(StatProxy):
         raise RuntimeError(
             "ProxyNotNeededTriggersExceptionOnUsage: stat() was called on a filter that should not require stat access."
         )
-        raise RuntimeError(
-            "ProxyNotNeededTriggersExceptionOnUsage: stat() was called on a filter that should not require stat access."
-        )

@@ -35,6 +35,10 @@ from .datetime_parts import normalize_attr
 
 
 class AgeBase(AttributeFilter):
+    """
+    Base class for file age filters. Computes file age from stat mtime and supports
+    operator overloads for expressive queries (e.g., AgeDays < 10).
+    """
     def __init__(
         self,
         op: Callable[[int, int], bool] = operator.lt,
@@ -42,6 +46,13 @@ class AgeBase(AttributeFilter):
         *,
         attr: str = "modified",
     ) -> None:
+        """
+        Initialize AgeBase filter for file age comparison.
+        Args:
+            op: Comparison operator (e.g., operator.lt).
+            value: Age threshold (int).
+            attr: Stat attribute to use (default: 'modified').
+        """
         self.unit_seconds = getattr(self, "unit_seconds", 1.0)
         self.attr = attr
         self._stat_field = normalize_attr(attr)
@@ -49,6 +60,15 @@ class AgeBase(AttributeFilter):
         def extractor(
             path: pathlib.Path, stat_proxy: StatProxyOrNone, now: Any = None
         ) -> int:
+            """
+            Extract file age in unit_seconds from stat mtime.
+            Args:
+                path: Path to file.
+                stat_proxy: StatProxy for file.
+                now: Reference datetime (default: now).
+            Returns:
+                Age in unit_seconds (int).
+            """
             if stat_proxy is None:
                 raise ValueError("stat_proxy required for age extraction")
             import datetime
@@ -71,6 +91,15 @@ class AgeBase(AttributeFilter):
 
     @staticmethod
     def _parse_value(value: int) -> int:
+        """
+        Parse and validate age threshold value.
+        Args:
+            value: Age threshold (int).
+        Returns:
+            int: Validated age threshold.
+        Raises:
+            TypeError: If value is not an int.
+        """
         if type(value) is not int:
             raise TypeError(
                 "Age filter threshold must be an integer (fractional thresholds are not allowed)"
@@ -78,43 +107,69 @@ class AgeBase(AttributeFilter):
         return value
 
     def __le__(self, other: int):
+        """Return filter for age <= other."""
         return self.__class__(op=operator.le, value=self._parse_value(other))
 
     def __lt__(self, other: int):
+        """Return filter for age < other."""
         return self.__class__(op=operator.lt, value=self._parse_value(other))
 
     def __ge__(self, other: int):
+        """Return filter for age >= other."""
         return self.__class__(op=operator.ge, value=self._parse_value(other))
 
     def __gt__(self, other: int):
+        """Return filter for age > other."""
         return self.__class__(op=operator.gt, value=self._parse_value(other))
 
     def __eq__(self, other: int):
+        """Return filter for age == other."""
         return self.__class__(op=operator.eq, value=self._parse_value(other))
 
     def __ne__(self, other: int):
+        """Return filter for age != other."""
         return self.__class__(op=operator.ne, value=self._parse_value(other))
 
 
 class AgeMinutes(AgeBase):
+    """
+    Filter for file age in minutes. Matches files whose modification time is
+    at least the specified number of minutes ago.
+    """
     unit_seconds = 60
 
 
 class AgeHours(AgeBase):
+    """
+    Filter for file age in hours. Matches files whose modification time is
+    at least the specified number of hours ago.
+    """
     unit_seconds = 3600
 
 
 class AgeDays(AgeBase):
+    """
+    Filter for file age in days. Matches files whose modification time is
+    at least the specified number of days ago.
+    """
     unit_seconds = 86400
 
 
 class AgeYears(AgeBase):
+    """
+    Filter for file age in years. Matches files whose modification time is
+    at least the specified number of years ago.
+    """
     unit_seconds = (
         86400 * 365.25
     )  # Use 365.25 days per year for compatibility with boundary tests
 
 
 class AgeSeconds(AgeBase):
+    """
+    Filter for file age in seconds. Matches files whose modification time is
+    at least the specified number of seconds ago.
+    """
     unit_seconds = 1
 
     @staticmethod

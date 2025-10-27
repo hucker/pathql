@@ -1,10 +1,9 @@
 """
 FileDate filter for PathQL.
 
-This module provides the FileDate class, which enables filtering files by their
-modification, creation, access, or filename-encoded date. FileDate supports
-operator overloading for direct comparison with datetime objects, allowing
-expressive queries such as:
+This module provides the FileDate class, which enables filtering files by their modification,
+creation, access, or filename-encoded date. FileDate supports operator overloading for direct
+comparison with datetime objects, allowing expressive queries such as:
 
     FileDate().created > dt.datetime(2024, 1, 1)
     FileDate().modified <= dt.datetime(2024, 1, 1)
@@ -36,6 +35,13 @@ class FileDate(AttributeFilter):
         op: Callable[[Any, Any], bool] = None,
         value: dt.datetime = None,
     ):
+        """
+        Initialize a FileDate filter for file date comparison.
+        Args:
+            source: Which date to use ('modified', 'created', 'accessed', 'filename').
+            op: Comparison operator (e.g., operator.gt).
+            value: Datetime threshold for comparison.
+        """
         self.source = source
 
         def extractor(
@@ -63,34 +69,44 @@ class FileDate(AttributeFilter):
 
     @property
     def accessed(self) -> "FileDate":
+        """Return a FileDate filter for accessed time."""
         return FileDate(source="accessed")
 
     @property
     def created(self) -> "FileDate":
+        """Return a FileDate filter for created time."""
         return FileDate(source="created")
 
     @property
     def modified(self) -> "FileDate":
+        """Return a FileDate filter for modified time."""
         return FileDate(source="modified")
 
     @property
     def filename(self) -> "FileDate":
+        """Return a FileDate filter for filename-encoded date."""
         return FileDate(source="filename")
 
     def __gt__(self, other: dt.datetime):
+        """Return a FileDate filter for date > other."""
         return FileDate(self.source, operator.gt, other)
 
     def __ge__(self, other: dt.datetime):
+        """Return a FileDate filter for date >= other."""
         return FileDate(self.source, operator.ge, other)
 
     def __lt__(self, other: dt.datetime):
+        """Return a FileDate filter for date < other."""
         return FileDate(self.source, operator.lt, other)
 
     def __le__(self, other: dt.datetime):
+        """Return a FileDate filter for date <= other."""
         return FileDate(self.source, operator.le, other)
 
     def __eq__(self, other: dt.datetime):
+        """Return a FileDate filter for date == other."""
         return FileDate(self.source, operator.eq, other)
 
     def __ne__(self, other: dt.datetime):
+        """Return a FileDate filter for date != other."""
         return FileDate(self.source, operator.ne, other)

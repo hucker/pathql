@@ -14,11 +14,11 @@ from .filters.datetime_parts import (
 )
 from .filters.file import File
 from .filters.size import Size, parse_size
-from .filters.stem import Name, Stem
+from .filters.stem import Stem
 from .filters.suffix import Ext, Suffix
 from .filters.file_type import FileType
 
-from .filters.fileage import (
+from .filters.file_age import (
     FilenameAgeHours,
     FilenameAgeDays,
     FilenameAgeYears,
@@ -39,7 +39,6 @@ __all__ = [
     "AgeDays",
     "AgeYears",
     "Stem",
-    "Name",
     "FileType",
     "YearFilter",
     "MonthFilter",
