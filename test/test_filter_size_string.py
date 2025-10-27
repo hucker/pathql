@@ -134,8 +134,7 @@ def test_size_operator_notimplemented_for_other_types() -> None:
     # Arrange
     s = Size()
 
-    # Act
-    res = s.__lt__([1, 2, 3])
-
-    # Assert
-    assert res is NotImplemented
+    # Act & Assert
+    import pytest
+    with pytest.raises(TypeError):
+        s.__lt__([1, 2, 3])

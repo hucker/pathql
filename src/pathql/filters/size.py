@@ -89,80 +89,36 @@ def parse_size(value: object) -> int:
     return res
 
 
-class Size(Filter):
-    """Filter for file size (in bytes)."""
 
-    # This class requires stat data to function
+from .attribute_filter import AttributeFilter
 
-    def __init__(
-        self,
-        op: Callable[[int, int], bool] | None = None,
-        value: IntOrNone = None,
-    ) -> None:
-        """Initialize a Size filter.
+def _extract_size(path: pathlib.Path, stat_proxy: StatProxyOrNone) -> int:
+    if stat_proxy is None:
+        raise ValueError("stat_proxy required for size extraction")
+    st = stat_proxy.stat()
+    return st.st_size
 
-        The op callable receives two integer byte counts.
-        """
-        self.op: Callable[[int, int], bool] | None = op
-        self.value: IntOrNone = value
+class Size(AttributeFilter):
+    """Filter for file size (in bytes), supports operator overloads."""
 
-    def match(
-        self,
-        path: pathlib.Path,
-        stat_proxy: StatProxyOrNone = None,
-        now: DatetimeOrNone = None,
-    ) -> bool:
-        """Return True if the file's size matches the filter criteria."""
-        if self.op is None or self.value is None:
-            raise TypeError("Size filter not fully specified.")
-        if stat_proxy is None:
-            raise ValueError("Size filter requires stat_proxy, but none was provided.")
-        try:
-            st = stat_proxy.stat()
-            size: int = st.st_size
-            return self.op(size, self.value)
-        except (OSError, TypeError, ValueError):
-            # stat can raise OSError; op may raise TypeError/ValueError for bad inputs.
-            return False
+    def __init__(self, op: Callable[[int, int], bool] = None, value: int = None):
+        # Used for operator overloads or direct construction
+        super().__init__(_extract_size, op, value, requires_stat=True)
 
-    def __le__(self, other: object) -> Size | NotImplementedType:
-        """Return a Size filter for <= comparison with size strings/ints."""
-        parsed = _parse_size(other)
-        if parsed is NotImplemented:
-            return NotImplemented
-        return Size(lambda x, y: x <= y, parsed)
+    def __le__(self, other: object) -> "Size":
+        return Size(lambda x, y: x <= y, parse_size(other))
 
-    def __lt__(self, other: object) -> Size | NotImplementedType:
-        """Return a Size filter for < comparison with size strings/ints."""
-        parsed = _parse_size(other)
-        if parsed is NotImplemented:
-            return NotImplemented
-        return Size(lambda x, y: x < y, parsed)
+    def __lt__(self, other: object) -> "Size":
+        return Size(lambda x, y: x < y, parse_size(other))
 
-    def __ge__(self, other: object) -> Size | NotImplementedType:
-        """Return a Size filter for >= comparison with size strings/ints."""
-        parsed = _parse_size(other)
-        if parsed is NotImplemented:
-            return NotImplemented
-        return Size(lambda x, y: x >= y, parsed)
+    def __ge__(self, other: object) -> "Size":
+        return Size(lambda x, y: x >= y, parse_size(other))
 
-    def __gt__(self, other: object) -> Size | NotImplementedType:
-        """Return a Size filter for > comparison with size strings/ints."""
-        parsed = _parse_size(other)
-        if parsed is NotImplemented:
-            return NotImplemented
-        return Size(lambda x, y: x > y, parsed)
+    def __gt__(self, other: object) -> "Size":
+        return Size(lambda x, y: x > y, parse_size(other))
 
-    def __eq__(self, other: object) -> Size | NotImplementedType:
-        """Return a Size filter for == comparison with size strings/ints."""
-        parsed = _parse_size(other)
-        if parsed is NotImplemented:
-            return NotImplemented
-        return Size(lambda x, y: x == y, parsed)
+    def __eq__(self, other: object) -> "Size":
+        return Size(lambda x, y: x == y, parse_size(other))
 
-    def __ne__(self, other: object) -> Size | NotImplementedType:
-        """Return a Size filter for != comparison with size strings/ints."""
-        parsed = _parse_size(other)
-        if parsed is NotImplemented:
-            return NotImplemented
-        return Size(lambda x, y: x != y, parsed)
+    def __ne__(self, other: object) -> "Size":
+        return Size(lambda x, y: x != y, parse_size(other))
