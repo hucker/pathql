@@ -1,12 +1,14 @@
+"""Utilities and a filter for parsing and matching file sizes."""
+
 from __future__ import annotations
 
-"""Utilities and a filter for parsing and matching file sizes."""
 import pathlib
 import re
 from types import NotImplementedType
 from typing import Callable, Final, Mapping, Pattern
 
 from .alias import StatProxyOrNone
+from .attribute_filter import AttributeFilter
 
 # Accept ints, floats, or strings like "1.5 kb". Default to binary units (KB=1024).
 _SIZE_RE_STRING = r"^\s*([0-9]+(?:\.[0-9]+)?)\s*([kmgtpe]?i?b?|b)?\s*$"
@@ -86,10 +88,9 @@ def parse_size(value: object) -> int:
     return res
 
 
-from .attribute_filter import AttributeFilter
-
-
-def _extract_size(path: pathlib.Path, stat_proxy: StatProxyOrNone) -> int:
+def _extract_size(
+    path: pathlib.Path, stat_proxy: StatProxyOrNone, now: object = None
+) -> int:
     if stat_proxy is None:
         raise ValueError("stat_proxy required for size extraction")
     st = stat_proxy.stat()
@@ -99,9 +100,10 @@ def _extract_size(path: pathlib.Path, stat_proxy: StatProxyOrNone) -> int:
 class Size(AttributeFilter):
     """Filter for file size (in bytes), supports operator overloads."""
 
-    def __init__(self, op: Callable[[int, int], bool] = None, value: int = None):
-        # Used for operator overloads or direct construction
-        super().__init__(_extract_size, op, value, requires_stat=True)
+    def __init__(self, op: Callable[[int, int], bool] = None, value: object = None):
+        # Always parse value to bytes if provided
+        parsed_value = parse_size(value) if value is not None else None
+        super().__init__(_extract_size, op, parsed_value, requires_stat=True)
 
     def __le__(self, other: object) -> "Size":
         return Size(lambda x, y: x <= y, parse_size(other))

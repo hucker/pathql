@@ -12,7 +12,7 @@ class AttributeFilter(Filter):
 
     def __init__(
         self,
-        extractor: Callable[[pathlib.Path, StatProxyOrNone], Any],
+        extractor: Callable[[pathlib.Path, StatProxyOrNone, Any], Any],
         op: Callable[[Any, Any], bool],
         value: Any,
         requires_stat: bool = True,
@@ -35,9 +35,7 @@ class AttributeFilter(Filter):
                 f"{self.__class__.__name__} filter requires stat_proxy, but none was provided."
             )
         try:
-            attr = self.extractor(path, stat_proxy)
+            attr = self.extractor(path, stat_proxy, now)
             return self.op(attr, self.value)
-        except Exception:
-            return False
         except Exception:
             return False

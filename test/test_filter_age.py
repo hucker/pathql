@@ -102,20 +102,33 @@ def test_age_thresholds(
     f.write_text("X")
     now = dt.datetime.now()  # Use datetime, not time.time()
 
-    # Act & Assert: Just below threshold
-    setter(f, unit - 0.0001, now)
     from pathql.filters.stat_proxy import StatProxy
+    if filter_cls is AgeYears:
+        # Use integer days to avoid leap year ambiguity
+        setter(f, 364 / 365, now)  # Just below 1 year
+        result_below = op(filter_cls(), unit).match(f, stat_proxy=StatProxy(f), now=now)
+        assert result_below is expected_below
 
-    result_below = op(filter_cls(), unit).match(f, stat_proxy=StatProxy(f), now=now)
-    assert result_below is expected_below
+        setter(f, 1, now)  # Exactly 1 year
+        result_exact = op(filter_cls(), unit).match(f, stat_proxy=StatProxy(f), now=now)
+        assert result_exact is expected_exact
 
-    setter(f, unit, now)
-    result_exact = op(filter_cls(), unit).match(f, stat_proxy=StatProxy(f), now=now)
-    assert result_exact is expected_exact
+        setter(f, 366 / 365, now)  # Just above 1 year
+        result_above = op(filter_cls(), unit).match(f, stat_proxy=StatProxy(f), now=now)
+        assert result_above is expected_above
+    else:
+        # Act & Assert: Just below threshold
+        setter(f, unit - 0.0001, now)
+        result_below = op(filter_cls(), unit).match(f, stat_proxy=StatProxy(f), now=now)
+        assert result_below is expected_below
 
-    setter(f, unit + 0.0001, now)
-    result_above = op(filter_cls(), unit).match(f, stat_proxy=StatProxy(f), now=now)
-    assert result_above is expected_above
+        setter(f, unit, now)
+        result_exact = op(filter_cls(), unit).match(f, stat_proxy=StatProxy(f), now=now)
+        assert result_exact is expected_exact
+
+        setter(f, unit + 0.0001, now)
+        result_above = op(filter_cls(), unit).match(f, stat_proxy=StatProxy(f), now=now)
+        assert result_above is expected_above
 
 
 @pytest.mark.parametrize(

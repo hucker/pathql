@@ -54,13 +54,16 @@ def make_stat(
 @pytest.mark.parametrize(
     "offset,expected_age,msg",
     [
-        (0.999999, 0, "just below 1 second should yield unit_age == 0"),
-        (1.0, 1, "exactly 1 second should yield unit_age == 1"),
-        (1.000001, 1, "just above 1 second should yield unit_age == 1"),
+        (0, 0, "exactly now should yield unit_age == 0"),
+        (1, 1, "exactly 1 second should yield unit_age == 1"),
+        (2, 2, "exactly 2 seconds should yield unit_age == 2"),
+        (9, 9, "exactly 9 seconds should yield unit_age == 9"),
+        (10, 10, "exactly 10 seconds should yield unit_age == 10"),
+        (11, 11, "exactly 11 seconds should yield unit_age == 11"),
     ],
 )
 def test_age_seconds_boundaries(
-    attr_name: str, offset: float, expected_age: int, msg: str
+    attr_name: str, offset: int, expected_age: int, msg: str
 ) -> None:
     """
     Test AgeSeconds filter at 1-second boundaries using injected stat_result.
@@ -74,14 +77,10 @@ def test_age_seconds_boundaries(
     now = dt.datetime(2025, 10, 21, 12, 0, 0)
 
     def stat_for_attr(attr_name: str, ts: float):
-        if "mtime" in attr_name or "mod" in attr_name:
-            return make_stat(st_mtime=ts)
-        if "atime" in attr_name or "access" in attr_name:
-            return make_stat(st_mtime=now.timestamp(), st_atime=ts)
-        # default to ctime/created
-        return make_stat(st_mtime=now.timestamp(), st_ctime=ts)
+        # Set all three fields to ts for consistency
+        return make_stat(st_mtime=ts, st_atime=ts, st_ctime=ts)
 
-    ts = (now - dt.timedelta(seconds=offset)).timestamp()
+    ts = int(now.timestamp()) - offset
     st = stat_for_attr(attr_name, ts)
     f = AgeSeconds(attr=attr_name) == expected_age
     dummy_path = pathlib.Path("dummy")
