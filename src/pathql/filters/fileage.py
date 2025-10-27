@@ -20,36 +20,30 @@ from typing import Callable
 
 from .alias import IntOrNone, StatProxyOrNone
 from .date_filename import filename_to_datetime_parts
+from .attribute_filter import AttributeFilter
 
-
-class FilenameAgeBase:
-    """Base for unit-rounded filename age filters."""
-
-    # This class requires stat data to function
-    requires_stat: bool = True
-
+class FilenameAgeBase(AttributeFilter):
     unit_seconds: float = 1.0
 
-    def __init__(
-        self,
-        op: Callable[[float, float], bool] = operator.lt,
-        value: IntOrNone = None,
-    ) -> None:
-        self.op = op
-        if value is None:
-            self.value: IntOrNone = None
-        else:
-            if not isinstance(value, numbers.Integral):
-                raise TypeError(
-                    "Fractional age thresholds are not allowed; "
-                    "use an integer threshold or express the value in a smaller unit."
-                )
-            self.value = int(value)
-
-    def _unit_age(self, now: dt.datetime, file_date: dt.datetime) -> int:
-        # floor division semantics: 0..unit_seconds-1 -> 0, unit_seconds..2*unit_seconds-1 -> 1, etc.
-        age_seconds = (now - file_date).total_seconds()
-        return int(math.floor(age_seconds / self.unit_seconds))
+    def __init__(self, op: Callable[[int, int], bool] = operator.lt, value: IntOrNone = None):
+        if value is not None and not isinstance(value, numbers.Integral):
+            raise TypeError(
+                "Fractional age thresholds are not allowed; use an integer threshold or express the value in a smaller unit."
+            )
+        def extractor(path: pathlib.Path, stat_proxy: StatProxyOrNone, now: dt.datetime | None = None) -> int:
+            now = now or dt.datetime.now()
+            parts = filename_to_datetime_parts(path)
+            if parts is None or parts.year is None:
+                return None
+            file_date = dt.datetime(
+                parts.year,
+                parts.month if parts.month is not None else 1,
+                parts.day if parts.day is not None else 1,
+                parts.hour if parts.hour is not None else 0,
+            )
+            age_seconds = (now - file_date).total_seconds()
+            return int(math.floor(age_seconds / self.unit_seconds))
+        super().__init__(extractor, op, int(value) if value is not None else None, requires_stat=False)
 
     def __le__(self, other: int):
         return self.__class__(op=operator.le, value=other)
@@ -63,63 +57,20 @@ class FilenameAgeBase:
     def __gt__(self, other: int):
         return self.__class__(op=operator.gt, value=other)
 
-    def __eq__(self, other: int):  # type: ignore[override]
+    def __eq__(self, other: int):
         return self.__class__(op=operator.eq, value=other)
 
-    def __ne__(self, other: int):  # type: ignore[override]
+    def __ne__(self, other: int):
         return self.__class__(op=operator.ne, value=other)
 
-    def match(
-        self,
-        path: pathlib.Path,
-        stat_proxy: StatProxyOrNone = None,
-        now: dt.datetime | None = None,
-    ) -> bool:
-        """Evaluate the filter against a path using filename date.
-
-        Semantics: compute the file age in seconds relative to `now` (defaults to
-        current time), convert to the configured unit (via `unit_seconds`) and
-        floor to an integer unit count. The operator is applied to the integer
-        unit age and the integer form of the configured threshold.
-
-        Returns True if the comparison holds, False if no date can be extracted.
-        """
-        if self.op is None or self.value is None:
-            raise TypeError(f"{self.__class__.__name__} filter not fully specified.")
-        now = now or dt.datetime.now()
-        parts = filename_to_datetime_parts(path)
-        if parts is None or parts.year is None:
-            return False
-        # Fill missing parts with 1 for month/day, 0 for hour (matches AgeBase convention)
-        file_date = dt.datetime(
-            parts.year,
-            parts.month if parts.month is not None else 1,
-            parts.day if parts.day is not None else 1,
-            parts.hour if parts.hour is not None else 0,
-        )
-        unit_age = self._unit_age(now, file_date)
-        return bool(self.op(unit_age, int(self.value)))
-
-
 class FilenameAgeMinutes(FilenameAgeBase):
-    """Filter matching file age in whole minutes (from filename)."""
-
     unit_seconds = 60.0
 
-
 class FilenameAgeHours(FilenameAgeBase):
-    """Filter matching file age in whole hours (from filename)."""
-
     unit_seconds = 3600.0
 
-
 class FilenameAgeDays(FilenameAgeBase):
-    """Filter matching file age in whole days (from filename)."""
-
     unit_seconds = 86400.0
 
-
 class FilenameAgeYears(FilenameAgeBase):
-    """Filter matching file age in whole years (from filename)."""
-
     unit_seconds = 86400.0 * 365.25

@@ -103,6 +103,7 @@ def test_age_thresholds(
     now = dt.datetime.now()  # Use datetime, not time.time()
 
     from pathql.filters.stat_proxy import StatProxy
+
     if filter_cls is AgeYears:
         # Use integer days to avoid leap year ambiguity
         setter(f, 364 / 365, now)  # Just below 1 year
