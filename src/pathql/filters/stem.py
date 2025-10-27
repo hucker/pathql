@@ -24,6 +24,13 @@ class Stem(Filter):
         Stem("img_*")            # matches stems like 'img_123' (glob, not regex)
         Stem("foo", ignore_case=False)  # case-sensitive match
 
+    NOTE: You might think the following should be possible:
+        Stem() == "foo"
+
+        This is not the case because only one operaton is possible (matching)
+
+
+
     Args:
         patterns (str | list[str]): One or more glob patterns to match against the stem.
             Use shell-style wildcards (e.g., "foo*", "bar?").

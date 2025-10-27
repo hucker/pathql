@@ -19,18 +19,26 @@ import pathlib
 from typing import Callable
 
 from .alias import IntOrNone, StatProxyOrNone
-from .date_filename import filename_to_datetime_parts
 from .attribute_filter import AttributeFilter
+from .date_filename import filename_to_datetime_parts
+
 
 class FilenameAgeBase(AttributeFilter):
     unit_seconds: float = 1.0
 
-    def __init__(self, op: Callable[[int, int], bool] = operator.lt, value: IntOrNone = None):
+    def __init__(
+        self, op: Callable[[int, int], bool] = operator.lt, value: IntOrNone = None
+    ):
         if value is not None and not isinstance(value, numbers.Integral):
             raise TypeError(
                 "Fractional age thresholds are not allowed; use an integer threshold or express the value in a smaller unit."
             )
-        def extractor(path: pathlib.Path, stat_proxy: StatProxyOrNone, now: dt.datetime | None = None) -> int:
+
+        def extractor(
+            path: pathlib.Path,
+            stat_proxy: StatProxyOrNone,
+            now: dt.datetime | None = None,
+        ) -> int:
             now = now or dt.datetime.now()
             parts = filename_to_datetime_parts(path)
             if parts is None or parts.year is None:
@@ -43,7 +51,13 @@ class FilenameAgeBase(AttributeFilter):
             )
             age_seconds = (now - file_date).total_seconds()
             return int(math.floor(age_seconds / self.unit_seconds))
-        super().__init__(extractor, op, int(value) if value is not None else None, requires_stat=False)
+
+        super().__init__(
+            extractor,
+            op,
+            int(value) if value is not None else None,
+            requires_stat=False,
+        )
 
     def __le__(self, other: int):
         return self.__class__(op=operator.le, value=other)
@@ -63,14 +77,19 @@ class FilenameAgeBase(AttributeFilter):
     def __ne__(self, other: int):
         return self.__class__(op=operator.ne, value=other)
 
+
 class FilenameAgeMinutes(FilenameAgeBase):
     unit_seconds = 60.0
+
 
 class FilenameAgeHours(FilenameAgeBase):
     unit_seconds = 3600.0
 
+
 class FilenameAgeDays(FilenameAgeBase):
     unit_seconds = 86400.0
 
+
 class FilenameAgeYears(FilenameAgeBase):
+    unit_seconds = 86400.0 * 365.25
     unit_seconds = 86400.0 * 365.25
