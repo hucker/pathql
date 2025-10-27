@@ -136,5 +136,6 @@ def test_size_operator_notimplemented_for_other_types() -> None:
 
     # Act & Assert
     import pytest
+
     with pytest.raises(TypeError):
         s.__lt__([1, 2, 3])
