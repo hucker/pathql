@@ -1,9 +1,10 @@
 """Top-level PathQL package exports and convenience imports."""
 
-from .filters.age import AgeDays, AgeMinutes, AgeYears, AgeHours
+from .filters.age import AgeDays, AgeHours, AgeMinutes, AgeYears
+from .filters.alias import StatProxy, StatProxyOrNone
 from .filters.base import Filter
 from .filters.between import Between
-from .filters.alias import StatProxyOrNone,StatProxy
+from .filters.date_filename import filename_to_datetime
 from .filters.datetime_parts import (
     DayFilter,
     HourFilter,
@@ -13,18 +14,12 @@ from .filters.datetime_parts import (
     YearFilter,
 )
 from .filters.file import File
+from .filters.file_age import FilenameAgeDays, FilenameAgeHours, FilenameAgeYears
+from .filters.file_type import FileType
 from .filters.size import Size, parse_size
 from .filters.stem import Stem
 from .filters.suffix import Ext, Suffix
-from .filters.file_type import FileType
-
-from .filters.file_age import (
-    FilenameAgeHours,
-    FilenameAgeDays,
-    FilenameAgeYears,
-)
 from .query import Query
-from .filters.date_filename import filename_to_datetime
 
 __version__ = "0.0.4"
 
@@ -54,5 +49,5 @@ __all__ = [
     "parse_size",
     "StatProxyOrNone",
     "StatProxy",
-    "filename_to_datetime"
+    "filename_to_datetime",
 ]

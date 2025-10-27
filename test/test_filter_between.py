@@ -2,6 +2,8 @@ import os
 import pathlib
 import time
 
+import pytest
+
 from pathql.filters import AgeHours, AgeMinutes, Between, Size
 from pathql.filters.stat_proxy import StatProxy
 
@@ -62,5 +64,24 @@ def test_between_size(tmp_path: pathlib.Path) -> None:
     assert size_below.match(test_path, StatProxy(test_path)) is False
     size_above = Between(Size(), 2001, 3000)
     assert size_above.match(test_path, StatProxy(test_path)) is False
-    size_above = Between(Size(), 2001, 3000)
-    assert size_above.match(test_path, StatProxy(test_path)) is False
+
+
+def test_between_invalid_lower_type():
+    """Between raises TypeError if lower bound is a string."""
+    # Type of lower bound is intentionally wrong; ignore type linting.
+    with pytest.raises(TypeError):
+        Between(Size(), "bad", 2000)  # type: ignore
+
+
+def test_between_invalid_upper_type():
+    """Between raises TypeError if upper bound is a string."""
+    # Type of upper bound is intentionally wrong; ignore type linting.
+    with pytest.raises(TypeError):
+        Between(Size(), 1000, "bad")  # type: ignore
+
+
+def test_between_invalid_both_types():
+    """Between raises TypeError if both bounds are strings."""
+    # Both bounds are intentionally wrong types; ignore type linting.
+    with pytest.raises(TypeError):
+        Between(Size(), "bad", "bad")  # type: ignore

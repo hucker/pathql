@@ -46,7 +46,7 @@ class FilenameAgeBase(AttributeFilter):
         """
         if value is not None and not isinstance(value, numbers.Integral):
             raise TypeError(
-                "Fractional age thresholds are not allowed; use an integer threshold or express the value in a smaller unit."
+                "Illegal Fractional age threshold, use an int or smaller unit."
             )
 
         def extractor(
@@ -124,5 +124,5 @@ class FilenameAgeDays(FilenameAgeBase):
 
 
 class FilenameAgeYears(FilenameAgeBase):
-    unit_seconds = 86400.0 * 365.25
+    """Filename age filter in years."""
     unit_seconds = 86400.0 * 365.25

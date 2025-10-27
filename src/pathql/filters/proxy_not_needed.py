@@ -1,5 +1,5 @@
 from pathql.filters.stat_proxy import StatProxy
-
+import pathlib
 
 class ProxyNotNeededTriggersExceptionOnUsage(StatProxy):
     """
@@ -8,10 +8,10 @@ class ProxyNotNeededTriggersExceptionOnUsage(StatProxy):
     that stat was not needed or should not be used in this context.
     """
 
-    def __init__(self, path=None):
+    def __init__(self, path:pathlib.Path|None=None):
         self.path = path
 
     def stat(self):
         raise RuntimeError(
-            "ProxyNotNeededTriggersExceptionOnUsage: stat() was called on a filter that should not require stat access."
+            "ProxyNotNeededTriggersExceptionOnUsage: stat() called on a filter that doesn't need stat()."
         )

@@ -5,6 +5,7 @@ Creates a temporary multi-level 'source' directory and a 'destination' directory
 Verifies correct file manipulation for flat and nested structures using AAA (Arrange, Act, Assert)
 comments.
 """
+
 import pathlib
 
 import pytest
@@ -22,6 +23,7 @@ TREE = {
     ]
 }
 
+
 def create_tree(base: pathlib.Path, tree: dict) -> None:
     """
     Recursively create folders and files from a nested dictionary structure.
@@ -36,9 +38,12 @@ def create_tree(base: pathlib.Path, tree: dict) -> None:
         folder_path.mkdir()
         for item in items:
             if isinstance(item, str):
-                (folder_path / item).write_text(item[0])  # Write first letter as content
+                (folder_path / item).write_text(
+                    item[0]
+                )  # Write first letter as content
             elif isinstance(item, dict):
                 create_tree(folder_path, item)
+
 
 @pytest.fixture
 def test_dirs(tmp_path) -> tuple[pathlib.Path, pathlib.Path]:
@@ -54,6 +59,7 @@ def test_dirs(tmp_path) -> tuple[pathlib.Path, pathlib.Path]:
     destination: pathlib.Path = tmp_path / "destination"
     destination.mkdir()
     return source, destination
+
 
 def test_copy_files_flat(test_dirs: tuple[pathlib.Path, pathlib.Path]):
     """Test copying flat files from source to destination."""
@@ -71,7 +77,10 @@ def test_copy_files_flat(test_dirs: tuple[pathlib.Path, pathlib.Path]):
     # Assert
     assert result.status
     for name in ["a.txt", "b.txt"]:
-        assert (destination / name).exists(), f"File {name} should exist in flat destination"
+        assert (destination / name).exists(), (
+            f"File {name} should exist in flat destination"
+        )
+
 
 def test_copy_files_nested(test_dirs: tuple[pathlib.Path, pathlib.Path]):
     """Test copying nested files from source to destination."""
@@ -80,7 +89,7 @@ def test_copy_files_nested(test_dirs: tuple[pathlib.Path, pathlib.Path]):
     source: pathlib.Path
     destination: pathlib.Path
     source, destination = test_dirs
-    q = Query(Suffix('txt'))
+    q = Query(Suffix("txt"))
     files = list(q.files(source, recursive=True))
 
     # Act
@@ -89,7 +98,10 @@ def test_copy_files_nested(test_dirs: tuple[pathlib.Path, pathlib.Path]):
     # Assert
     assert result.status
     for name in ["a.txt", "b.txt", "c.txt", "d.txt"]:
-        assert (destination / name).exists(), f"File {name} should exist in nested destination"
+        assert (destination / name).exists(), (
+            f"File {name} should exist in nested destination"
+        )
+
 
 def test_move_files_flat(test_dirs: tuple[pathlib.Path, pathlib.Path]):
     """Test moving flat files from source to destination."""
@@ -98,7 +110,7 @@ def test_move_files_flat(test_dirs: tuple[pathlib.Path, pathlib.Path]):
     source: pathlib.Path
     destination: pathlib.Path
     source, destination = test_dirs
-    q = Query(Suffix('txt'))
+    q = Query(Suffix("txt"))
     files = list(q.files(source, recursive=False))
 
     # Act
@@ -107,8 +119,13 @@ def test_move_files_flat(test_dirs: tuple[pathlib.Path, pathlib.Path]):
     # Assert
     assert result.status
     for name in ["a.txt", "b.txt"]:
-        assert (destination / name).exists(), f"File {name} should exist in destination after move"
-        assert not (source / name).exists(), f"File {name} should not exist in source after move"
+        assert (destination / name).exists(), (
+            f"File {name} should exist in destination after move"
+        )
+        assert not (source / name).exists(), (
+            f"File {name} should not exist in source after move"
+        )
+
 
 def test_move_files_nested(test_dirs: tuple[pathlib.Path, pathlib.Path]):
     """Test moving nested files from source to destination."""
@@ -117,7 +134,7 @@ def test_move_files_nested(test_dirs: tuple[pathlib.Path, pathlib.Path]):
     source: pathlib.Path
     destination: pathlib.Path
     source, destination = test_dirs
-    q = Query(Suffix("txt") )
+    q = Query(Suffix("txt"))
     files = list(q.files(source, recursive=True))
 
     # Act
@@ -126,16 +143,21 @@ def test_move_files_nested(test_dirs: tuple[pathlib.Path, pathlib.Path]):
     # Assert
     assert result.status
     for name in ["a.txt", "b.txt", "c.txt", "d.txt"]:
-        assert (destination / name).exists(), f"File {name} should exist in destination after move"
+        assert (destination / name).exists(), (
+            f"File {name} should exist in destination after move"
+        )
     for sub, fname in [("sub1", "c.txt"), ("sub2", "d.txt")]:
-        assert not (source / sub / fname).exists(), f"File {fname} should not exist in source after move"
+        assert not (source / sub / fname).exists(), (
+            f"File {fname} should not exist in source after move"
+        )
+
 
 def test_delete_files_flat(test_dirs: tuple[pathlib.Path, pathlib.Path]):
     """Test deleting flat files from source."""
 
     # Arrange
     source, _ = test_dirs
-    q = Query(Suffix("txt") )
+    q = Query(Suffix("txt"))
     files = list(q.files(source, recursive=False))
 
     # Act
@@ -144,14 +166,17 @@ def test_delete_files_flat(test_dirs: tuple[pathlib.Path, pathlib.Path]):
     # Assert
     assert result.status
     for name in ["a.txt", "b.txt"]:
-        assert not (source / name).exists(), f"File {name} should be deleted from source"
+        assert not (source / name).exists(), (
+            f"File {name} should be deleted from source"
+        )
+
 
 def test_delete_files_nested(test_dirs: tuple[pathlib.Path, pathlib.Path]):
     """Test deleting nested files from source."""
 
     # Arrange
     source, _ = test_dirs
-    q = Query(Suffix("txt") )
+    q = Query(Suffix("txt"))
     files = list(q.files(source, recursive=True))
 
     # Act
@@ -160,6 +185,10 @@ def test_delete_files_nested(test_dirs: tuple[pathlib.Path, pathlib.Path]):
     # Assert
     assert result.status
     for name in ["a.txt", "b.txt", "c.txt", "d.txt"]:
-        assert not (source / name).exists(), f"File {name} should be deleted from source"
+        assert not (source / name).exists(), (
+            f"File {name} should be deleted from source"
+        )
     for sub, fname in [("sub1", "c.txt"), ("sub2", "d.txt")]:
-        assert not (source / sub / fname).exists(), f"File {fname} should be deleted from sub folders source"
+        assert not (source / sub / fname).exists(), (
+            f"File {fname} should be deleted from sub folders source"
+        )

@@ -44,7 +44,7 @@ def test_type_link(tmp_path: pathlib.Path) -> None:
     assert not (FileType().file).match(link, StatProxy(link))
 
 
-def test_type_no_type_name_raises(tmp_path):
+def test_type_no_type_name_raises(tmp_path:pathlib.Path):
     """Type filter with no type_name should not match anything and should not raise."""
     f = tmp_path / "foo.txt"
     f.write_text("x")
@@ -54,7 +54,7 @@ def test_type_no_type_name_raises(tmp_path):
     assert not t.match(tmp_path, StatProxy(tmp_path))
 
 
-def test_type_invalid_type_name(tmp_path):
+def test_type_invalid_type_name(tmp_path:pathlib.Path):
     """Type filter with an invalid type_name should never match and should not raise."""
     f = tmp_path / "foo.txt"
     f.write_text("x")
@@ -64,9 +64,9 @@ def test_type_invalid_type_name(tmp_path):
     assert not t.match(tmp_path, StatProxy(tmp_path))
 
 
-def test_type_unknown_on_missing_file(tmp_path):
+def test_type_unknown_on_missing_file(tmp_path:pathlib.Path):
     """Type().unknown should match missing files, others should not."""
-    missing = tmp_path / "does_not_exist.txt"
+    missing:pathlib.Path = tmp_path / "does_not_exist.txt"
     assert FileType().unknown.match(missing, StatProxy(missing))
     assert not FileType().file.match(missing, StatProxy(missing))
     assert not FileType().directory.match(missing, StatProxy(missing))

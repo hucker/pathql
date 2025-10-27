@@ -39,6 +39,7 @@ class AgeBase(AttributeFilter):
     Base class for file age filters. Computes file age from stat mtime and supports
     operator overloads for expressive queries (e.g., AgeDays < 10).
     """
+
     def __init__(
         self,
         op: Callable[[int, int], bool] = operator.lt,
@@ -136,6 +137,7 @@ class AgeMinutes(AgeBase):
     Filter for file age in minutes. Matches files whose modification time is
     at least the specified number of minutes ago.
     """
+
     unit_seconds = 60
 
 
@@ -144,6 +146,7 @@ class AgeHours(AgeBase):
     Filter for file age in hours. Matches files whose modification time is
     at least the specified number of hours ago.
     """
+
     unit_seconds = 3600
 
 
@@ -152,6 +155,7 @@ class AgeDays(AgeBase):
     Filter for file age in days. Matches files whose modification time is
     at least the specified number of days ago.
     """
+
     unit_seconds = 86400
 
 
@@ -160,6 +164,7 @@ class AgeYears(AgeBase):
     Filter for file age in years. Matches files whose modification time is
     at least the specified number of years ago.
     """
+
     unit_seconds = (
         86400 * 365.25
     )  # Use 365.25 days per year for compatibility with boundary tests
@@ -170,6 +175,7 @@ class AgeSeconds(AgeBase):
     Filter for file age in seconds. Matches files whose modification time is
     at least the specified number of seconds ago.
     """
+
     unit_seconds = 1
 
     @staticmethod

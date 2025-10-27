@@ -24,7 +24,7 @@ from .date_filename import filename_to_datetime
 
 class FileDate(AttributeFilter):
     """
-    Filter that extracts a file's date (from stat or filename) and allows comparison with a datetime.
+    Filter extracts a file's date (from stat or filename) and allows comparison with a datetime.
     Supports operator overloading for >, >=, <, <=, ==, !=.
     Use .created, .modified, .accessed, or .filename properties for source selection.
     """
@@ -50,7 +50,7 @@ class FileDate(AttributeFilter):
             if self.source in ("modified", "created", "accessed"):
                 if stat_proxy is None:
                     raise ValueError(
-                        f"FileDate filter requires stat_proxy for {self.source}, but none was provided."
+                        f"Missing stat_proxy for FileDate filter {self.source}"
                     )
                 st = stat_proxy.stat()
                 if self.source == "modified":
