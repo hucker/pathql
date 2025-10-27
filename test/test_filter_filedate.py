@@ -3,7 +3,7 @@ Tests for the FileDate filter object.
 Verifies operator overloads and correct extraction of file dates from stat and filename.
 """
 
-import datetime
+import datetime as dt
 import pathlib
 import sys
 
@@ -18,14 +18,19 @@ if sys.platform == "win32":
 else:
     BasePath = pathlib.PosixPath
 
+
 class DummyPath(BasePath):
     """A dummy Path subclass for testing with custom stat and stem."""
-    def __new__(cls, *args, **kwargs):
-        return BasePath.__new__(cls, *args, **kwargs)
 
-    def __init__(self, *args, **kwargs):
-        self._stat = kwargs.get("stat", None)
-        self._stem = kwargs.get("stem", None)
+    def __new__(cls, *args, **kwargs):
+        # Extract test-only kwargs before letting pathlib build the Path
+        stat = kwargs.pop("stat", None)
+        stem = kwargs.pop("stem", None)
+        self = BasePath.__new__(cls, *args, **kwargs)
+        # Attach test-only attributes without touching pathlib internals
+        object.__setattr__(self, "_stat", stat)
+        object.__setattr__(self, "_stem", stem)
+        return self
 
     def stat(self):
         return self._stat
@@ -34,24 +39,28 @@ class DummyPath(BasePath):
     def stem(self):
         return self._stem if self._stem is not None else super().stem
 
+
 class DummyStat:
     """Dummy stat result for testing."""
+
     def __init__(self, mtime, ctime, atime):
         self.st_mtime = mtime
         self.st_ctime = ctime
         self.st_atime = atime
+
 
 @pytest.fixture
 def dummy_times():
     # Arrange
 
     # Jan 1, 2024
-    dt1 = datetime.datetime(2024, 1, 1, 0, 0, 0)
+    dt1 = dt.datetime(2024, 1, 1, 0, 0, 0)
     # Feb 1, 2024
-    dt2 = datetime.datetime(2024, 2, 1, 0, 0, 0)
+    dt2 = dt.datetime(2024, 2, 1, 0, 0, 0)
     # Mar 1, 2024
-    dt3 = datetime.datetime(2024, 3, 1, 0, 0, 0)
+    dt3 = dt.datetime(2024, 3, 1, 0, 0, 0)
     return dt1, dt2, dt3
+
 
 def test_filedate_modified(dummy_times):
     """
@@ -60,7 +69,9 @@ def test_filedate_modified(dummy_times):
     # Arrange
 
     dt1, dt2, dt3 = dummy_times
-    stat = DummyStat(mtime=dt2.timestamp(), ctime=dt1.timestamp(), atime=dt3.timestamp())
+    stat = DummyStat(
+        mtime=dt2.timestamp(), ctime=dt1.timestamp(), atime=dt3.timestamp()
+    )
     path = DummyPath("dummy.txt", stat=stat)
     fmod = FileDate().modified
 
@@ -82,6 +93,7 @@ def test_filedate_modified(dummy_times):
     assert actual_eq
     assert actual_ne
 
+
 def test_filedate_created(dummy_times):
     """
     Test FileDate.created operator overloads.
@@ -89,7 +101,9 @@ def test_filedate_created(dummy_times):
     # Arrange
 
     dt1, dt2, dt3 = dummy_times
-    stat = DummyStat(mtime=dt2.timestamp(), ctime=dt1.timestamp(), atime=dt3.timestamp())
+    stat = DummyStat(
+        mtime=dt2.timestamp(), ctime=dt1.timestamp(), atime=dt3.timestamp()
+    )
     path = DummyPath("dummy.txt", stat=stat)
     fcre = FileDate().created
 
@@ -109,6 +123,7 @@ def test_filedate_created(dummy_times):
     assert actual_ne
     assert not actual_gt
 
+
 def test_filedate_accessed(dummy_times):
     """
     Test FileDate.accessed operator overloads.
@@ -116,7 +131,9 @@ def test_filedate_accessed(dummy_times):
     # Arrange
 
     dt1, dt2, dt3 = dummy_times
-    stat = DummyStat(mtime=dt2.timestamp(), ctime=dt1.timestamp(), atime=dt3.timestamp())
+    stat = DummyStat(
+        mtime=dt2.timestamp(), ctime=dt1.timestamp(), atime=dt3.timestamp()
+    )
     path = DummyPath("dummy.txt", stat=stat)
     facc = FileDate().accessed
 
@@ -135,6 +152,7 @@ def test_filedate_accessed(dummy_times):
     assert actual_eq
     assert actual_ne
     assert not actual_lt
+
 
 def test_filedate_filename(dummy_times):
     """
@@ -163,6 +181,7 @@ def test_filedate_filename(dummy_times):
     assert actual_ne
     assert not actual_lt
 
+
 def test_filedate_between(dummy_times):
     """
     Test FileDate 'between' logic using two comparisons (lower inclusive, upper exclusive).
@@ -170,7 +189,9 @@ def test_filedate_between(dummy_times):
     # Arrange
 
     dt1, dt2, dt3 = dummy_times
-    stat = DummyStat(mtime=dt2.timestamp(), ctime=dt1.timestamp(), atime=dt3.timestamp())
+    stat = DummyStat(
+        mtime=dt2.timestamp(), ctime=dt1.timestamp(), atime=dt3.timestamp()
+    )
     path = DummyPath("dummy.txt", stat=stat)
     fmod = FileDate().modified
 
@@ -180,7 +201,7 @@ def test_filedate_between(dummy_times):
 
     actual_between = between.match(path, StatProxy(path))
 
-    not_between = (fmod > datetime.datetime(2024, 2, 2)) & (fmod < dt3)
+    not_between = (fmod > dt.datetime(2024, 2, 2)) & (fmod < dt3)
     actual_not_between = not_between.match(path, StatProxy(path))
 
     # Assert
@@ -188,19 +209,21 @@ def test_filedate_between(dummy_times):
     assert actual_between
     assert not actual_not_between
 
+
 @pytest.fixture
 def between_times():
     # Arrange
 
     # Dec 1, 2024
-    dt1 = datetime.datetime(2024, 12, 1, 0, 0, 0)
+    dt1 = dt.datetime(2024, 12, 1, 0, 0, 0)
     # Dec 15, 2024
-    dt2 = datetime.datetime(2024, 12, 15, 0, 0, 0)
+    dt2 = dt.datetime(2024, 12, 15, 0, 0, 0)
     # Dec 31, 2024
-    dt3 = datetime.datetime(2024, 12, 31, 0, 0, 0)
+    dt3 = dt.datetime(2024, 12, 31, 0, 0, 0)
     # Jan 1, 2025
-    dt4 = datetime.datetime(2025, 1, 1, 0, 0, 0)
+    dt4 = dt.datetime(2025, 1, 1, 0, 0, 0)
     return dt1, dt2, dt3, dt4
+
 
 def test_filedate_between_operator(between_times):
     """
@@ -209,7 +232,9 @@ def test_filedate_between_operator(between_times):
     # Arrange
 
     dt1, dt2, dt3, dt4 = between_times
-    stat = DummyStat(mtime=dt2.timestamp(), ctime=dt1.timestamp(), atime=dt3.timestamp())
+    stat = DummyStat(
+        mtime=dt2.timestamp(), ctime=dt1.timestamp(), atime=dt3.timestamp()
+    )
     path = DummyPath("dummy.txt", stat=stat)
     fmod = FileDate().modified
 
@@ -232,12 +257,37 @@ def test_filedate_between_operator(between_times):
 @pytest.mark.parametrize(
     "filename, low, high, expected",
     [
-        ("2024-01-01_log.txt", datetime.datetime(2024, 2, 1), datetime.datetime(2024, 3, 1), False),  # below
-        ("2024-02-01_log.txt", datetime.datetime(2024, 2, 1), datetime.datetime(2024, 3, 1), True),   # low_edge (inclusive)
-        ("2024-02-15_log.txt", datetime.datetime(2024, 2, 1), datetime.datetime(2024, 3, 1), True),   # middle
-        ("2024-03-01_log.txt", datetime.datetime(2024, 2, 1), datetime.datetime(2024, 3, 1), False),  # high_edge (exclusive)
-        ("2024-04-01_log.txt", datetime.datetime(2024, 2, 1), datetime.datetime(2024, 3, 1), False),  # above
-    ]
+        (
+            "2024-01-01_log.txt",
+            dt.datetime(2024, 2, 1),
+            dt.datetime(2024, 3, 1),
+            False,
+        ),  # below
+        (
+            "2024-02-01_log.txt",
+            dt.datetime(2024, 2, 1),
+            dt.datetime(2024, 3, 1),
+            True,
+        ),  # low_edge (inclusive)
+        (
+            "2024-02-15_log.txt",
+            dt.datetime(2024, 2, 1),
+            dt.datetime(2024, 3, 1),
+            True,
+        ),  # middle
+        (
+            "2024-03-01_log.txt",
+            dt.datetime(2024, 2, 1),
+            dt.datetime(2024, 3, 1),
+            False,
+        ),  # high_edge (exclusive)
+        (
+            "2024-04-01_log.txt",
+            dt.datetime(2024, 2, 1),
+            dt.datetime(2024, 3, 1),
+            False,
+        ),  # above
+    ],
 )
 def test_filedate_between_filename_edges(filename, low, high, expected):
     """
@@ -249,4 +299,3 @@ def test_filedate_between_filename_edges(filename, low, high, expected):
     between_filter = Between(ffile, low, high)
     result = between_filter.match(path, None)
     assert result is expected
-    

@@ -3,6 +3,7 @@
 import pathlib
 import zipfile
 
+from ..filters.alias import StrPathOrListOfStrPath
 from .file_actions import (
     EXCEPTIONS,
     FileActionResult,
@@ -11,9 +12,11 @@ from .file_actions import (
     delete_files,
     move_files,
 )
+from .utils import normalize_file_str_list
+
 
 def zip_apply_action(
-    files: list[pathlib.Path],
+    files: StrPathOrListOfStrPath,
     root: pathlib.Path,
     target_zip: pathlib.Path,
     preserve_dir_structure: bool = True,
@@ -35,8 +38,10 @@ def zip_apply_action(
     result = FileActionResult(success=[], failed=[], errors={})
     target_zip.parent.mkdir(parents=True, exist_ok=True)
     compress_mode = zipfile.ZIP_DEFLATED if compress else zipfile.ZIP_STORED
+    paths = normalize_file_str_list(files)
+
     with zipfile.ZipFile(target_zip, "a", compression=compress_mode) as zf:
-        for p in files:
+        for p in paths:
             try:
                 arcname = p.relative_to(root) if preserve_dir_structure else p.name
             except ValueError:
@@ -49,8 +54,9 @@ def zip_apply_action(
                 result.errors[p] = e
     return result
 
+
 def zip_files(
-    files: list[pathlib.Path],
+    files: StrPathOrListOfStrPath,
     root: pathlib.Path,
     target_zip: pathlib.Path,
     preserve_dir_structure: bool = True,
@@ -62,8 +68,9 @@ def zip_files(
         files, root, target_zip, preserve_dir_structure, compress, exceptions
     )
 
+
 def zip_delete_files(
-    files: list[pathlib.Path],
+    files: StrPathOrListOfStrPath,
     root: pathlib.Path,
     target_zip: pathlib.Path,
     preserve_dir_structure: bool = True,
@@ -75,13 +82,13 @@ def zip_delete_files(
     zip_result = zip_files(
         files, root, target_zip, preserve_dir_structure, compress, exceptions
     )
-    delete_result = delete_files(
-        root, files, ignore_access_exception=ignore_access_exception
-    )
+
+    delete_result = delete_files(files, ignore_access_exception=ignore_access_exception)
     return combine_results(zip_result, delete_result)
 
+
 def zip_move_files(
-    files: list[pathlib.Path],
+    files: StrPathOrListOfStrPath,
     root: pathlib.Path,
     target_zip: pathlib.Path,
     move_target: pathlib.Path,
@@ -95,12 +102,13 @@ def zip_move_files(
         files, root, target_zip, preserve_dir_structure, compress, exceptions
     )
     move_result = move_files(
-        root, files, move_target, ignore_access_exception=ignore_access_exception
+        files, move_target, ignore_access_exception=ignore_access_exception
     )
     return combine_results(zip_result, move_result)
 
+
 def zip_copy_files(
-    files: list[pathlib.Path],
+    files: StrPathOrListOfStrPath,
     root: pathlib.Path,
     target_zip: pathlib.Path,
     copy_target: pathlib.Path,
@@ -114,6 +122,6 @@ def zip_copy_files(
         files, root, target_zip, preserve_dir_structure, compress, exceptions
     )
     copy_result = copy_files(
-        root, files, copy_target, ignore_access_exception=ignore_access_exception
+        files, copy_target, ignore_access_exception=ignore_access_exception
     )
     return combine_results(zip_result, copy_result)

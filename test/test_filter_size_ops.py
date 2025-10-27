@@ -6,7 +6,7 @@ from pathql.filters.size import Size
 from pathql.filters.stat_proxy import StatProxy
 
 
-def get_stat_proxy(path):
+def get_stat_proxy(path:pathlib.Path) -> StatProxy:
     return StatProxy(path)
 
 

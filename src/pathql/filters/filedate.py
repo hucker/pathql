@@ -6,9 +6,9 @@ modification, creation, access, or filename-encoded date. FileDate supports
 operator overloading for direct comparison with datetime objects, allowing
 expressive queries such as:
 
-    FileDate().created > datetime.datetime(2024, 1, 1)
-    FileDate().modified <= datetime.datetime(2024, 1, 1)
-    FileDate().filename == datetime.datetime(2024, 1, 1)
+    FileDate().created > dt.datetime(2024, 1, 1)
+    FileDate().modified <= dt.datetime(2024, 1, 1)
+    FileDate().filename == dt.datetime(2024, 1, 1)
 
 Use the .created, .modified, .accessed, or .filename properties for source selection.
 """
@@ -16,11 +16,13 @@ Use the .created, .modified, .accessed, or .filename properties for source selec
 import datetime as dt
 import operator
 import pathlib
+import datetime as dt
 from typing import Any, Callable
 
+from .alias import DatetimeOrNone, StatProxyOrNone
 from .base import Filter
-from .alias import StatProxyOrNone,DatetimeOrNone
 from .date_filename import filename_to_datetime
+
 
 class FileDate(Filter):
     """
@@ -35,18 +37,20 @@ class FileDate(Filter):
             source: 'modified', 'created', 'accessed', or 'filename'.
                    Prefer using the .created, .modified, .accessed, or .filename properties.
         """
-        self.source = source
+        self.source:str = source
 
-    def match(
-        self, path: pathlib.Path, stat_proxy: StatProxyOrNone = None, now: DatetimeOrNone = None,
-    ) -> datetime.datetime | None:
+
+    def _get_datetime(self, stat_proxy: StatProxyOrNone, path: pathlib.Path) -> dt.datetime:
         """
         Return the file's date according to the selected source.
+
+        3 of the methods use the stat_proxy object to get the timestamps, while the file name
+        method parses the date from the file name.
         """
         if self.source in ("modified", "created", "accessed"):
             if stat_proxy is None:
                 raise ValueError(
-                    "FileDate filter requires stat_proxy, but none was provided."
+                    f"FileDate filter requires stat_proxy for {self.source}, but none was provided."
                 )
             st = stat_proxy.stat()
             if self.source == "modified":
@@ -56,10 +60,29 @@ class FileDate(Filter):
             elif self.source == "accessed":
                 return dt.datetime.fromtimestamp(st.st_atime)
         elif self.source == "filename":
+            # stat_proxy is not needed since the filename is in the filename
             # Example: expects YYYY-MM-DD in filename before an underscore
             return filename_to_datetime(path)
-        else:
-            return None
+
+        raise ValueError(f"Unknown source for FileDate: `{self.source}`")
+
+
+    def match(
+        self,
+        path: pathlib.Path,
+        stat_proxy: StatProxyOrNone = None,
+        now: DatetimeOrNone = None,
+    ) -> bool:
+        """
+        FileDate itself is not a boolean filter. Use comparison operators to
+        produce a Filter that implements .match(), e.g.:
+            FileDate().modified < datetime.datetime(2024, 12, 1)
+        """
+        raise TypeError(
+            "FileDate is not a boolean filter; use a comparison (e.g. "
+            "FileDate().modified < datetime.datetime(...)) to obtain a Filter "
+            "with a .match() method."
+        )
 
     def _make_filter(self, op: Callable[[Any, Any], bool], other: dt.datetime):
         """
@@ -71,7 +94,7 @@ class FileDate(Filter):
         """
 
         class DateComparisonFilter(Filter):
-            def __init__(self, parent):
+            def __init__(self, parent:Filter):
                 self.parent = parent
 
             def match(
@@ -81,9 +104,13 @@ class FileDate(Filter):
                 now: Any = None,
             ) -> bool:
                 """Custom class where op is captured from outer scope."""
-                file_date = self.parent.match(path, stat_proxy=stat_proxy, now=now)
+                #file_date = self.parent.match(path, stat_proxy=stat_proxy, now=now)
+                file_date:dt.datetime = self.parent._get_datetime(stat_proxy, path)
+
+                # Exception?
                 if file_date is None:
                     return False
+
                 return op(file_date, other)
 
         return DateComparisonFilter(self)
@@ -91,22 +118,22 @@ class FileDate(Filter):
     @property
     def accessed(self) -> "FileDate":
         """Return a FileDate filter for file access time."""
-        return FileDate().accessed # FileDate(source="accessed")
+        return FileDate(source="accessed")
 
     @property
     def created(self) -> "FileDate":
         """Return a FileDate filter for file creation time."""
-        return FileDate().created #  FileDate(source="created")
+        return FileDate(source="created")
 
     @property
     def modified(self) -> "FileDate":
         """Return a FileDate filter for file modification time."""
-        return FileDate().modified #(source="modified")
+        return FileDate(source="modified")
 
     @property
     def filename(self) -> "FileDate":
         """Return a FileDate filter for date parsed from filename."""
-        return FileDate().filename #source="filename")
+        return FileDate(source="filename")
 
     # Operator overloads for comparison with datetime
     def __gt__(self, other: dt.datetime):

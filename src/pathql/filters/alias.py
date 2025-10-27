@@ -43,4 +43,5 @@ StrOrPath: TypeAlias = str | pathlib.Path
 IntOrFloat: TypeAlias = int | float
 StrOrListOfStr: TypeAlias = str | list[str]
 StrPathOrListOfStrPath: TypeAlias = StrOrPath | list[StrOrPath]
+PathList: TypeAlias = list[pathlib.Path]
 StatProxyOrNone: TypeAlias = StatProxy | None

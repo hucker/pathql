@@ -130,7 +130,7 @@ print(path_from_dt_ints("archive", "zip", year=2022, month=7, day=15, hour=13)) 
 
 # Datetime object
 import datetime
-dt = datetime.datetime(2022, 7, 15, 13)
+dt = dt.datetime(2022, 7, 15, 13)
 print(path_from_datetime("archive", "zip", "year", dt))   # 2022-archive.zip
 print(path_from_datetime("archive", "zip", "month", dt))  # 2022-07_archive.zip
 print(path_from_datetime("archive", "zip", "day", dt))    # 2022-07-15_archive.zip
@@ -815,28 +815,86 @@ You can generate filenames in two ways:
 ### Usage Examples
 
 ```python
-import datetime
+import datetime as dt
 from pathql.filters.date_filename import path_from_dt_ints, path_from_datetime
 
 # Using explicit integer components
 print(path_from_dt_ints("archive", "zip", year=2022))  # 2022-archive.zip
 print(path_from_dt_ints("archive", "zip", year=2022, month=7))  # 2022-07_archive.zip
 print(path_from_dt_ints("archive", "zip", year=2022, month=7, day=15))  # 2022-07-15_archive.zip
-print(path_from_dt_ints("archive", "zip", year=2022, month=7, day=15, hour=13))  # 2022-07-15_13_archive.zip
+print(path_from_dt_ints("archive", "zip", year=2022, month=7, day=15, hour=13))  # 2022-07-15-13_archive.zip
 
 # Using a datetime object and width
-dt = datetime.datetime(2022, 7, 15, 13)
+dt = dt.datetime(2022, 7, 15, 13)
 print(path_from_datetime("archive", "zip", "year", dt))   # 2022-archive.zip
 print(path_from_datetime("archive", "zip", "month", dt))  # 2022-07_archive.zip
 print(path_from_datetime("archive", "zip", "day", dt))    # 2022-07-15_archive.zip
-print(path_from_datetime("archive", "zip", "hour", dt))   # 2022-07-15_13_archive.zip
+print(path_from_datetime("archive", "zip", "hour", dt))   # 2022-07-15-13_archive.zip
 
 ```
 
-**Note:**
+## Using the CLI App (`src/cli/pql.py`) with `uv`
 
-- If `ext` is an empty string, no dot is added to the filename.
-- If `.ext` is provided the `.` is removed internally, thus ".bmp" and "bmp" have the same effect.
+PathQL includes a CLI demo for querying files using composable filters adding the capability to filter the files by looking into files in a non trivial way.
+
+### Example: Find JPEG Images with RGB Color Mode
+
+Image files have the following color modes
+
+| Mode      | Description                                   | Bit Depth / Channels         |
+|-----------|-----------------------------------------------|-----------------------------|
+| 1         | 1-bit pixels, black and white                 | 1 bit                       |
+| L         | 8-bit pixels, grayscale                       | 8 bits                      |
+| P         | 8-bit pixels, palette-mapped                  | 8 bits                      |
+| RGB       | 3x8-bit pixels, true color                    | 24 bits (8x3)               |
+| RGBA      | 4x8-bit pixels, true color + alpha            | 32 bits (8x4)               |
+| CMYK      | 4x8-bit pixels, color separation              | 32 bits (8x4)               |
+| YCbCr     | 3x8-bit pixels, color video format            | 24 bits (8x3)               |
+| LAB       | 3x8-bit pixels, L*a*b color space             | 24 bits (8x3)               |
+| HSV       | 3x8-bit pixels, Hue, Saturation, Value        | 24 bits (8x3)               |
+| I         | 32-bit signed integer pixels                  | 32 bits                     |
+| F         | 32-bit floating point pixels                  | 32 bits                     |
+| LA        | L with alpha (grayscale + alpha)              | 16 bits (8x2)               |
+| PA        | P with alpha (palette + alpha)                | 16 bits (8x2)               |
+| RGBX      | RGB with padding                              | 32 bits (8x4)               |
+| RGBa      | RGB with premultiplied alpha                  | 32 bits (8x4)               |
+| I;16      | 16-bit unsigned integer pixels (grayscale)    | 16 bits                     |
+| I;16B     | 16-bit unsigned integer pixels, big-endian    | 16 bits                     |
+| I;16L     | 16-bit unsigned integer pixels, little-endian | 16 bits                     |
+
+If you want to find which images in a folder match one of these patterns it can often times be tedious to sort through the images.
+
+pql.py is a script that will let you find files of this type on your system.
+
+
+```bash
+uv run --script pql.py "*.jpg" RGB
+```
+
+This command will:
+- Search for files matching the pattern `*.jpg` in the current directory
+- Filter for images with color mode `RGB`
+
+You can add more options, such as file size and age:
+
+```bash
+uv run --script pql.py "*.jpg" RGB --size-min 10kb --size-max 2mb --min-age 0 --max-age 365
+```
+
+This will:
+- Find JPEG images with RGB color mode
+- Only include files between 10KB and 2MB
+- Only include files created between 0 and 365 days ago
+
+### Arguments
+
+- **pattern** (positional): Glob pattern for files (e.g., `"*.jpg"`)
+- **col_mode** (positional): Comma-separated color modes (e.g., `"RGB,RGBA,L"`)
+- **--root**: Folder to search (default: current directory)
+- **--size-min**: Minimum file size in bytes (default: 0)
+- **--size-max**: Maximum file size in bytes (default: 1TB)
+- **--min-age**: Minimum file creation age in days (default: 0)
+- **--max-age**: Maximum file creation age in days (default: 100000)
 
 ## Developer & Release Conventions
 

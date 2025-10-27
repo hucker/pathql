@@ -10,7 +10,7 @@ import pathlib
 
 from dateutil.relativedelta import relativedelta
 
-from .alias import DatetimeOrNone,StatProxyOrNone
+from .alias import DatetimeOrNone, StatProxyOrNone
 from .base import Filter
 
 MONTH_NAME_TO_NUM: dict[str | int, int] = {
@@ -100,10 +100,12 @@ class YearFilter(_DatetimePartFilter):
     def match(
         self,
         path: pathlib.Path,
-        stat_proxy: "StatProxy",  # type: ignore[name-defined]
+        stat_proxy: StatProxyOrNone = None,  # type: ignore[name-defined]
         now: DatetimeOrNone = None,
     ) -> bool:
         """Return True if the file's year matches the filter's year."""
+        if stat_proxy is None:
+            raise ValueError("YearFilter requires stat_proxy, but none was provided.")
         st = stat_proxy.stat()
         ts = getattr(st, self.attr)
         dt_obj = dt.datetime.fromtimestamp(ts)
@@ -137,10 +139,13 @@ class MonthFilter(Filter):
     def match(
         self,
         path: pathlib.Path,
-        stat_proxy: "StatProxy",  # type: ignore[name-defined]
+        stat_proxy: StatProxyOrNone = None,  # type: ignore[name-defined]
         now: DatetimeOrNone = None,
     ) -> bool:
         """Return True if the file's year and month match the filter."""
+        if stat_proxy is None:
+            raise ValueError("YearFilter requires stat_proxy, but none was provided.")
+
         st = stat_proxy.stat()
         ts = getattr(st, self.attr)
         dt_obj = dt.datetime.fromtimestamp(ts)
@@ -168,10 +173,12 @@ class DayFilter(Filter):
     def match(
         self,
         path: pathlib.Path,
-        stat_proxy: "StatProxy",  # type: ignore[name-defined]
+        stat_proxy: StatProxyOrNone,  # type: ignore[name-defined]
         now: DatetimeOrNone = None,
     ) -> bool:
         """Return True if the file's year, month and day match the filter."""
+        if stat_proxy is None:
+            raise ValueError("DayFilter requires stat_proxy, but none was provided.")
         st = stat_proxy.stat()
         ts = getattr(st, self.attr)
         dt_obj = dt.datetime.fromtimestamp(ts)
@@ -204,10 +211,12 @@ class HourFilter(Filter):
     def match(
         self,
         path: pathlib.Path,
-        stat_proxy: "StatProxy",  # type: ignore[name-defined]
+        stat_proxy: StatProxyOrNone = None,  # type: ignore[name-defined]
         now: DatetimeOrNone = None,
     ) -> bool:
         """Return True if the file's date/time matches this hour filter."""
+        if stat_proxy is None:
+            raise ValueError("HourFilter requires stat_proxy, but none was provided.")
         st = stat_proxy.stat()
         ts = getattr(st, self.attr)
         dt_obj = dt.datetime.fromtimestamp(ts)
@@ -242,10 +251,12 @@ class MinuteFilter(Filter):
     def match(
         self,
         path: pathlib.Path,
-        stat_proxy: "StatProxy",  # type: ignore[name-defined]
+        stat_proxy: StatProxyOrNone = None,  # type: ignore[name-defined]
         now: DatetimeOrNone = None,
     ) -> bool:
         """Return True if the file's date/time matches this minute filter."""
+        if stat_proxy is None:
+            raise ValueError("MinuteFilter requires stat_proxy, but none was provided.")
         st = stat_proxy.stat()
         ts = getattr(st, self.attr)
         dt_obj = dt.datetime.fromtimestamp(ts)
@@ -282,10 +293,12 @@ class SecondFilter(Filter):
     def match(
         self,
         path: pathlib.Path,
-        stat_proxy: "StatProxy",  # type: ignore[name-defined]
+        stat_proxy: StatProxyOrNone,  # type: ignore[name-defined]
         now: DatetimeOrNone = None,
     ) -> bool:
         """Return True if the file's date/time matches this second filter."""
+        if stat_proxy is None:
+            raise ValueError("SecondFilter requires stat_proxy, but none was provided.")
         st = stat_proxy.stat()
         ts = getattr(st, self.attr)
         dt_obj = dt.datetime.fromtimestamp(ts)

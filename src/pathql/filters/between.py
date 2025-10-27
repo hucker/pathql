@@ -3,7 +3,7 @@
 import datetime as dt
 import pathlib
 
-from .alias import DatetimeOrNone
+from .alias import DatetimeOrNone,StatProxyOrNone
 from .base import Filter
 
 
@@ -23,13 +23,51 @@ class Between(Filter):
         lower: int | float | dt.datetime,
         upper: int | float | dt.datetime,
     ) -> None:
-        # Compose the filter using the instance, not the class
-        self.filter: Filter = (filter_instance >= lower) & (filter_instance < upper)
+        # Try the comparisons and raise clear, specific errors for common failure modes.
+        # Common exceptions when calling filter_instance >= lower (or <) include:
+        # - TypeError: unsupported operand types or improper implementation
+        # - AttributeError: missing operator method on the object
+        # - ValueError: operator raised a value error for the provided bound
+        # - NotImplementedError: explicit refusal to compare
+        try:
+            lower_cmp = filter_instance >= lower
+        except (TypeError, AttributeError, ValueError, NotImplementedError) as exc:
+            raise TypeError(
+                "Underlying filter of type "
+                f"{type(filter_instance).__name__!r} does not support '>=' comparison "
+                f"with lower bound {lower!r}."
+            ) from exc
 
+        try:
+            upper_cmp = filter_instance < upper
+        except (TypeError, AttributeError, ValueError, NotImplementedError) as exc:
+            raise TypeError(
+                "Underlying filter of type "
+                f"{type(filter_instance).__name__!r} does not support '<' comparison "
+                f"with upper bound {upper!r}."
+            ) from exc
+
+        # Ensure comparisons returned Filter instances
+        if not isinstance(lower_cmp, Filter) or not isinstance(upper_cmp, Filter):
+            raise TypeError(
+                "Filter comparisons must return Filter instances. "
+                f"Got {type(lower_cmp).__name__} and {type(upper_cmp).__name__} "
+                f"from comparisons on {type(filter_instance).__name__!r}."
+            )
+
+        # Combine with '&' and surface combination errors clearly
+        try:
+            self.filter: Filter = lower_cmp & upper_cmp
+        except (TypeError, AttributeError) as exc:
+            raise TypeError(
+                "Failed to combine comparison filters with '&' "
+                f"for type {type(filter_instance).__name__!r}."
+            ) from exc
+        
     def match(
         self,
         path: pathlib.Path,
-        stat_proxy: "StatProxy",  # type: ignore[name-defined]
+        stat_proxy: StatProxyOrNone = None,  # type: ignore[name-defined]
         now: DatetimeOrNone = None,
     ) -> bool:
         """Return True if the underlying between filter matches."""

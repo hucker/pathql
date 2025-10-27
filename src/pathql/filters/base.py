@@ -163,7 +163,7 @@ class All(Filter):
         if len(filters) == 1 and isinstance(filters[0], (list, tuple, set)):
             self.filters: list[Filter] = list(filters[0])
         else:
-            self.filters: list[Filter] = list(filters)
+            self.filters= list(filters)
 
     def match(
         self,
@@ -190,7 +190,7 @@ class Any(Filter):
         if len(filters) == 1 and isinstance(filters[0], (list, tuple, set)):
             self.filters: list[Filter] = list(filters[0])
         else:
-            self.filters: list[Filter] = list(filters)
+            self.filters= list(filters)
 
     def match(
         self,

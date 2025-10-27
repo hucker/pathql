@@ -10,6 +10,8 @@ import shutil
 from dataclasses import dataclass
 from typing import Callable, Dict, List
 
+from ..filters.alias import PathList, StrPathOrListOfStrPath
+
 EXCEPTIONS: tuple[type[Exception], ...] = (
     IOError,
     PermissionError,
@@ -17,6 +19,19 @@ EXCEPTIONS: tuple[type[Exception], ...] = (
     FileNotFoundError,
     NotADirectoryError,
 )
+
+
+def _normalize_path(paths: StrPathOrListOfStrPath) -> PathList:
+    """Return a normalized absolute pathlib.Path."""
+    if isinstance(paths, list):
+        return [pathlib.Path(path) for path in paths]
+    elif isinstance(paths, str):
+        return [pathlib.Path(paths)]
+    elif isinstance(paths, pathlib.Path):
+        return [paths]
+
+    raise ValueError("Invalid path(s) provided.")
+
 
 @dataclass
 class FileActionResult:
@@ -29,6 +44,7 @@ class FileActionResult:
         errors: Mapping of files to exceptions raised during processing.
         status: True if all actions succeeded (no failures), else False.
     """
+
     success: List[pathlib.Path]
     failed: List[pathlib.Path]
     errors: Dict[pathlib.Path, Exception]
@@ -38,8 +54,9 @@ class FileActionResult:
         """True if all actions succeeded (no failures)."""
         return not self.failed
 
+
 def apply_action(
-    files: list[pathlib.Path],
+    files: StrPathOrListOfStrPath,
     action: Callable[[pathlib.Path, pathlib.Path | None], None],
     target_dir: pathlib.Path | None = None,
     ignore_access_exception: bool = False,
@@ -56,20 +73,24 @@ def apply_action(
     Returns:
         FileActionResult: Object containing lists of successful, failed, and errored files.
     """
+
+    normal_files: PathList = _normalize_path(files)
+
     result = FileActionResult(success=[], failed=[], errors={})
     if target_dir is not None:
         target_dir = pathlib.Path(target_dir)
         target_dir.mkdir(parents=True, exist_ok=True)
-    for p in files:
+    for normal_file in normal_files:
         try:
-            action(p, target_dir)
-            result.success.append(p)
+            action(normal_file, target_dir)
+            result.success.append(normal_file)
         except exceptions as e:
-            result.failed.append(p)
-            result.errors[p] = e
+            result.failed.append(normal_file)
+            result.errors[normal_file] = e
             if not ignore_access_exception:
                 raise
     return result
+
 
 def combine_results(*results: FileActionResult) -> FileActionResult:
     """
@@ -88,24 +109,28 @@ def combine_results(*results: FileActionResult) -> FileActionResult:
         errors.update(r.errors)
     return FileActionResult(success=success, failed=failed, errors=errors)
 
+
 # Example actions:
 def _copy_action(src: pathlib.Path, dest_dir: pathlib.Path | None) -> None:
     """Copy a source file to the destination directory."""
     if dest_dir is not None:
         shutil.copy2(str(src), str(dest_dir / src.name))
 
+
 def _move_action(src: pathlib.Path, dest_dir: pathlib.Path | None) -> None:
     """Move a source file to the destination directory."""
     if dest_dir is not None:
         shutil.move(str(src), str(dest_dir / src.name))
 
+
 def _delete_action(src: pathlib.Path, _: pathlib.Path | None) -> None:
     """Delete a source file."""
     src.unlink()
 
+
 # Public API wrappers:
 def copy_files(
-    files: list[pathlib.Path],
+    files: StrPathOrListOfStrPath,
     dest_dir: pathlib.Path,
     ignore_access_exception: bool = False,
     exceptions: tuple[type[Exception], ...] = EXCEPTIONS,
@@ -124,6 +149,7 @@ def copy_files(
         files, _copy_action, dest_dir, ignore_access_exception, exceptions
     )
 
+
 def _fast_copy_action(src: pathlib.Path, dest_dir: pathlib.Path | None) -> None:
     """
     Copy a source file to the destination directory only if the destination file
@@ -136,15 +162,15 @@ def _fast_copy_action(src: pathlib.Path, dest_dir: pathlib.Path | None) -> None:
         src_stat = src.stat()
         dest_stat = dest_file.stat()
         # Compare size and modification time
-        if (
-            src_stat.st_size == dest_stat.st_size
-            and int(src_stat.st_mtime) == int(dest_stat.st_mtime)
+        if src_stat.st_size == dest_stat.st_size and int(src_stat.st_mtime) == int(
+            dest_stat.st_mtime
         ):
             return  # Skip copy, files are the same
     shutil.copy2(str(src), str(dest_file))
 
+
 def fast_copy_files(
-    files: list[pathlib.Path],
+    files: StrPathOrListOfStrPath,
     dest_dir: pathlib.Path,
     ignore_access_exception: bool = False,
     exceptions: tuple[type[Exception], ...] = EXCEPTIONS,
@@ -155,7 +181,7 @@ def fast_copy_files(
     is any overlap in files, but for copying to a new location or are really worried
     about operating system edge cases where you might not completely trust that
     stat is accurate, use copy_files instead.
-    
+
     Args:
         files: List of files to copy.
         dest_dir: Destination directory for copied files.
@@ -170,7 +196,7 @@ def fast_copy_files(
 
 
 def move_files(
-    files: list[pathlib.Path],
+    files: StrPathOrListOfStrPath,
     dest_dir: pathlib.Path,
     ignore_access_exception: bool = False,
     exceptions: tuple[type[Exception], ...] = EXCEPTIONS,
@@ -189,8 +215,9 @@ def move_files(
         files, _move_action, dest_dir, ignore_access_exception, exceptions
     )
 
+
 def delete_files(
-    files: list[pathlib.Path],
+    files: StrPathOrListOfStrPath,
     ignore_access_exception: bool = False,
     exceptions: tuple[type[Exception], ...] = EXCEPTIONS,
 ) -> FileActionResult:

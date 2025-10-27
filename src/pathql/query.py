@@ -11,13 +11,15 @@ import queue
 import threading
 from typing import Iterator
 
-from .filters.alias import DatetimeOrNone, StrOrPath, StrPathOrListOfStrPath
-from .filters.base import Filter,AllowAll
+from .filters.alias import (
+    DatetimeOrNone,
+    StatProxyOrNone,
+    StrOrPath,
+    StrPathOrListOfStrPath,
+)
+from .filters.base import AllowAll, Filter
 from .filters.stat_proxy import StatProxy
 from .result_set import ResultSet
-
-
-
 
 
 class Query(Filter):
@@ -30,7 +32,7 @@ class Query(Filter):
         filter_expr (Filter): The filter expression to apply to files.
     """
 
-    def __init__(self, filter_expr: Filter | None = None):
+    def __init__(self, filter_expr: Filter | None = None) -> None:
         """
         Initialize Query.
 
@@ -40,14 +42,14 @@ class Query(Filter):
         Args:
             filter_expr (Filter): The filter expression to apply to files.
         """
-        self.filter_expr = filter_expr or AllowAll()
+        self.filter_expr: Filter = filter_expr or AllowAll()
 
-        self.results = []
+        self.results: list[pathlib.Path] = []
 
     def match(
         self,
         path: pathlib.Path,
-        stat_proxy: StatProxy,
+        stat_proxy: StatProxyOrNone = None,  # type: ignore[name-defined]
         now: DatetimeOrNone = None,
     ) -> bool:
         """

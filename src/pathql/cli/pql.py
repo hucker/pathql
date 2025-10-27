@@ -1,19 +1,20 @@
 #!/usr/bin/env -S uv run --script
 # /// script
-# python = "3.10"
+# python = "3.14"
 # dependencies = ["pathql", "Pillow"]
 # ///
 
 import argparse
 import pathlib
 
-from PIL import Image
-
-from pathql.filters.alias import StatProxyOrNone
-
+# These imports are not visible here because the code is a demo that
+# will run under a script environment where pathql is installed.
+# uv run --script pdl.py --
+from PIL import Image  # noqa
 
 import pathql
 from pathql.filters.age import AgeDays
+from pathql.filters.alias import DatetimeOrNone, StatProxyOrNone
 from pathql.filters.base import Filter
 from pathql.filters.size import Size
 
@@ -29,7 +30,12 @@ class ColorMode(Filter):
             m.strip().lower() for m in valid_modes.split(",") if m.strip()
         ]
 
-    def match(self, path: pathlib.Path, stat_proxy: StatProxyOrNone = None, now=None):
+    def match(
+        self,
+        path: pathlib.Path,
+        stat_proxy: StatProxyOrNone = None,
+        now: DatetimeOrNone = None,
+    ):
         try:
             with Image.open(path) as img:
                 return img.mode.lower() in self.valid_modes

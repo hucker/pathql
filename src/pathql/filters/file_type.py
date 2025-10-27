@@ -3,7 +3,7 @@
 import pathlib
 import stat
 
-from .alias import DatetimeOrNone
+from .alias import DatetimeOrNone, StatProxyOrNone
 from .base import Filter
 
 
@@ -51,11 +51,14 @@ class FileType(Filter):
     def match(
         self,
         path: pathlib.Path,
-        stat_proxy: "StatProxy",  # type: ignore[name-defined]
+        stat_proxy: StatProxyOrNone = None,  # type: ignore[name-defined]
         now: DatetimeOrNone = None,
     ) -> bool:
         """Check if the path matches the specified type."""
         try:
+            if stat_proxy is None:
+                raise ValueError("FileType requires stat_proxy, but none was provided.")
+
             if self.type_name == FileType.LINK:
                 return path.is_symlink()
             if not path.exists():
