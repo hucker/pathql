@@ -735,23 +735,28 @@ pql.py is a script that will let you find files of this type on your system.
 
 
 ```bash
-uv run --script pql.py "*.jpg" RGB
+cli %  uv run --script pql.py "*.jpg" RGB
+black_1kb.jpg
+
 ```
 
 This command will:
+- Build a virtual environment with python 3.14 and install pathql and PIL
 - Search for files matching the pattern `*.jpg` in the current directory
 - Filter for images with color mode `RGB`
 
 You can add more options, such as file size and age:
 
 ```bash
-uv run --script pql.py "*.jpg" RGB --size-min 10kb --size-max 2mb --min-age 0 --max-age 365
+cli % uv run --script pql.py "*.jpg" RGB --size-min 10kb --size-max 2mb --min-age 0 --max-age 365
 ```
 
 This will:
+- Build a virtual environment with python 3.14 and install pathql and PIL
 - Find JPEG images with RGB color mode
 - Only include files between 10KB and 2MB
 - Only include files created between 0 and 365 days ago
+- Return nothing because the file size constraint missed.
 
 ### Arguments
 
@@ -763,9 +768,70 @@ This will:
 - **--min-age**: Minimum file creation age in days (default: 0)
 - **--max-age**: Maximum file creation age in days (default: 100000)
 
+
+## Note on Types: Operator Overloads in DSLs
+
+PathQL filter classes (like `Size`, `AgeDays`, etc.) intentionally override Python's
+comparison and boolean operator methods (`__eq__`, `__lt__`, etc.) to return filter
+objects, not `bool`. This enables expressive, composable query logic:
+
+```python
+Size() > "10MB"   # returns a filter, not a bool
+```
+
+This pattern is common in query builders and DSLs, but it conflicts with Python's
+type system and expectations for these dunder methods (which are supposed to return
+`bool`). As a result, type checkers (like mypy, Pyright) and some linters will
+report errors or warnings about return types and operator overloads.
+
+**Why?**
+- Python expects `__eq__`, `__lt__`, etc. to return `bool` for built-in types.
+- DSLs return filter objects so you can build up complex queries using operators.
+- This is deliberate and necessary for PathQL's design, but it is not type-safe
+    according to Python's current type system.
+
+**What to do?**
+- Ignore these type errors for filter classes, or use `# type: ignore` comments.
+- Document this behavior for users and contributors.
+- If you need strict `bool` results, use explicit methods or evaluate filters directly.
+
+**Community Note:**
+This is a known limitation in Python's type system. A future PEP may address DSL-
+friendly operator overloads, but for now, this pattern will always cause typechecker
+friction.
+
+---
 ## Developer & Release Conventions
 
 Project-level conventions, contributor guidance, and release steps are maintained
 in `AI_CONTEXT.md` in the repository root. Please consult that file for the
 latest instructions on coding style, testing, and release procedures.
+
+---
+
+## Release Summary (v0.0.5, 2025-10-28)
+
+### Highlights
+
+- Query API refactored: supports SQL-like `where_expr` and default path (`from_path`).
+- Major normalization and extensibility improvements for filters and actions.
+- All public API exports (`__all__`) now match implementation; missing exports added.
+- Docstrings and comments audited and wrapped to line length limits (≤88 chars).
+- README updated for new API, usage, and developer notes on type system issues.
+- Robust parameterized tests for edge cases and error handling.
+- Improved error reporting and test coverage for query and filter logic.
+- CLI help and usage examples expanded.
+
+### Breaking Changes
+
+- Query constructor now prefers `where_expr` for SQL-like semantics.
+- Some filter and action APIs have stricter type normalization.
+- All filters and actions require explicit stat/caching for performance.
+
+### Developer Notes
+
+- See new README section on operator overloads and typechecker limitations for DSLs.
+- All docstrings and comments are PEP8-compliant and wrapped to ≤88 chars/line.
+
+---
 

@@ -78,9 +78,22 @@ def _parse_size(value: object) -> int | NotImplementedType:
 
 
 def parse_size(value: object) -> int:
-    """Parse a size value and return the byte count as an int.
+    """
+    Parse a file size value and return the byte count as an int.
 
-    Raises TypeError for unsupported operand types.
+    Accepts:
+        - int or float: Interpreted as bytes.
+        - str: Accepts human-friendly formats, e.g.:
+            '1.5 KB', '2MiB', '1000', '3 gb', '4.2k', '5MB', '7.5 GiB', etc.
+            Supports SI (decimal) and IEC (binary) units:
+                SI: k, kb, m, mb, g, gb, t, tb, p, pb, e, eb, z, zb
+                IEC: kib, mib, gib, tib, pib, eib, zib
+            Case-insensitive, spaces optional.
+    Returns:
+        int: Size in bytes.
+    Raises:
+        ValueError: For invalid strings, unknown units, or negative sizes.
+        TypeError: For unsupported operand types (e.g., lists, dicts).
     """
     res = _parse_size(value)
     if res is NotImplemented:

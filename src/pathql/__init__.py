@@ -1,8 +1,14 @@
 """Top-level PathQL package exports and convenience imports."""
 
+from .actions.file_actions import FileActionResult
+from .actions.zip import (zip_copy_files,
+    zip_delete_files,
+    zip_files,
+    zip_move_files,
+)
 from .filters.age import AgeDays, AgeHours, AgeMinutes, AgeYears
 from .filters.alias import StatProxy, StatProxyOrNone
-from .filters.base import Filter
+from .filters.base import All, AllowAll, AndFilter, Any, Filter, NotFilter, OrFilter
 from .filters.between import Between
 from .filters.date_filename import filename_to_datetime,path_from_datetime,path_from_dt_ints
 from .filters.datetime_parts import (
@@ -16,40 +22,63 @@ from .filters.datetime_parts import (
 from .filters.file import File
 from .filters.file_age import FilenameAgeDays, FilenameAgeHours, FilenameAgeYears
 from .filters.file_type import FileType
+from .filters.filedate import FileDate
 from .filters.size import Size, parse_size
 from .filters.stem import Stem
-from .filters.suffix import Ext, Suffix
+from .filters.suffix import Suffix
+from .filters.callback import MatchCallback, PathCallback
 from .query import Query
 from .utils import normalize_path
+from .filters.date_filename import DateFilenameParts
+from .result_fields import ResultField
+from .result_set import ResultSet
 
-__version__ = "0.0.4"
+__version__ = "0.0.5"
 
 __all__ = [
-    "Between",
-    "Filter",
-    "Suffix",
-    "Ext",
-    "Size",
-    "AgeMinutes",
-    "AgeHours",
     "AgeDays",
+    "AgeHours",
+    "AgeMinutes",
     "AgeYears",
-    "Stem",
-    "FileType",
-    "YearFilter",
-    "MonthFilter",
+    "All",
+    "AllowAll",
+    "AndFilter",
+    "Any",
+    "Between",
+    "DateFilenameParts",
     "DayFilter",
-    "HourFilter",
-    "MinuteFilter",
-    "SecondFilter",
-    "FilenameAgeHours",
-    "FilenameAgeDays",
-    "FilenameAgeYears",
     "File",
-    "Query",
+    "FileActionResult",
+    "FileDate",
+    "FileType",
+    "FilenameAgeDays",
+    "FilenameAgeHours",
+    "FilenameAgeYears",
+    "Filter",
+    "HourFilter",
+    "MatchCallback",
+    "MinuteFilter",
+    "MonthFilter",
+    "NotFilter",
+    "OrFilter",
     "parse_size",
-    "StatProxyOrNone",
+    "PathCallback",
+    "path_from_datetime",
+    "path_from_dt_ints",
+    "Query",
+    "ResultField",
+    "ResultSet",
+    "SecondFilter",
+    "Size",
     "StatProxy",
+    "StatProxyOrNone",
+    "Stem",
+    "Suffix",
+    "YearFilter",
+    "zip_copy_files",
+    "zip_delete_files",
+    "zip_files",
+    "zip_move_files",
     "filename_to_datetime",
     "path_from_datetime",
     "normalize_path",
