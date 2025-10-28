@@ -6,7 +6,10 @@ Public API: copy_files, move_files, delete_files.
 """
 
 import pathlib
+import queue
 import shutil
+import threading
+import time
 from dataclasses import dataclass
 from typing import Callable, Dict, List
 
@@ -37,17 +40,21 @@ def _normalize_path(paths: StrPathOrListOfStrPath) -> PathList:
 class FileActionResult:
     """
     Represents the result of a batch file action (copy, move, delete).
-    Contains lists of successful and failed files, and a mapping of errors.
+    Contains lists of successful and failed files, a mapping of errors, and timing info.
     Properties:
         success: List of files that were processed successfully.
         failed: List of files that failed to process.
         errors: Mapping of files to exceptions raised during processing.
+        timings: Mapping of files to elapsed time for each action.
+        total_time: Total elapsed time for the entire batch action.
         status: True if all actions succeeded (no failures), else False.
     """
 
     success: List[pathlib.Path]
     failed: List[pathlib.Path]
     errors: Dict[pathlib.Path, Exception]
+    timings: Dict[pathlib.Path, float] = None
+    total_time: float = 0.0
 
     @property
     def status(self) -> bool:
@@ -61,34 +68,83 @@ def apply_action(
     target_dir: pathlib.Path | None = None,
     ignore_access_exception: bool = False,
     exceptions: tuple[type[Exception], ...] = EXCEPTIONS,
+    workers: int = 1,
 ) -> FileActionResult:
     """
-    Apply an action to a list of files with error handling.
+    Apply an action to a list of files with error handling, optionally in parallel.
     Args:
         files: List of files to process.
         action: Function to apply to each file.
         target_dir: Optional target directory for the action.
         ignore_access_exception: If True, ignore access exceptions; otherwise, raise them.
         exceptions: Tuple of exception types to catch.
+        workers: Number of worker threads to use for parallel processing.
     Returns:
         FileActionResult: Object containing lists of successful, failed, and errored files.
+        Also attaches timing info per file as .timings (dict: file -> seconds).
     """
 
     normal_files: PathList = _normalize_path(files)
 
-    result = FileActionResult(success=[], failed=[], errors={})
+    result = FileActionResult(success=[], failed=[], errors={}, timings={}, total_time=0.0)
     if target_dir is not None:
         target_dir = pathlib.Path(target_dir)
         target_dir.mkdir(parents=True, exist_ok=True)
-    for normal_file in normal_files:
-        try:
-            action(normal_file, target_dir)
-            result.success.append(normal_file)
-        except exceptions as e:
-            result.failed.append(normal_file)
-            result.errors[normal_file] = e
-            if not ignore_access_exception:
-                raise
+
+    start_total = time.perf_counter()
+
+    if workers == 1:
+        # Single-threaded fallback
+        for normal_file in normal_files:
+            start = time.perf_counter()
+            try:
+                action(normal_file, target_dir)
+                result.success.append(normal_file)
+            except exceptions as e:
+                result.failed.append(normal_file)
+                result.errors[normal_file] = e
+                if not ignore_access_exception:
+                    raise
+            finally:
+                result.timings[normal_file] = time.perf_counter() - start
+        result.total_time = time.perf_counter() - start_total
+        return result
+
+    # Multi-threaded
+    file_queue: queue.Queue[pathlib.Path | None] = queue.Queue()
+    for f in normal_files:
+        file_queue.put(f)
+    for _ in range(workers):
+        file_queue.put(None)  # Sentinel for each worker
+
+    lock = threading.Lock()
+
+    def worker():
+        while True:
+            f = file_queue.get()
+            if f is None:
+                break
+            start = time.perf_counter()
+            try:
+                action(f, target_dir)
+                with lock:
+                    result.success.append(f)
+            except exceptions as e:
+                with lock:
+                    result.failed.append(f)
+                    result.errors[f] = e
+                if not ignore_access_exception:
+                    raise
+            finally:
+                with lock:
+                    result.timings[f] = time.perf_counter() - start
+
+    threads = [threading.Thread(target=worker) for _ in range(workers)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    result.total_time = time.perf_counter() - start_total
     return result
 
 

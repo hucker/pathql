@@ -181,15 +181,31 @@ PathQL is a declarative, composable, and efficient query language for filesystem
 
 ## Basic Concepts
 
-`PathQL` can be thought of as a tool that takes a an arbitrary composition of filter expression that  and running each `pathlib.Path` object through your filter expression.  The guts of the code look something like this:
+PathQL lets you write queries against the file system in a composable form:
+
 
 ```python
-for path in rootpath.glob(*):
-    if filter_expression.match(query):
-        yield path
+from pathql import AgeYears, Ext, Query
+for f in Query("c:/logs", (AgeYears() > 1) & Ext(".bak")):
+    print(f"Files to delete - {f.resolve()}")
 ```
 
-The goal of this tool is to give you a lot of `Filter` objects that you can compose in arbitrarily complex ways, without having to deal with the guts of time, datetime, file ages, being efficient with `stat` objects.
+```python
+from pathql import AgeDays, Size, FileType
+for f in Query(r"C:/logs", (AgeDays() == 0) & (Size() > "10 mb") & Ext("log"), threaded=True):
+    print(f"Files to zip - {f.resolve()}")
+```
+
+```python
+from pathql import DayFilter
+import datetime as dt
+for f in Query(r"C:/logs", DayFilter(base=dt.datetime(year=2020, month=1, day=1))):
+    print(f"Files to zip - {f.resolve()}")
+```
+
+This basic examples  show how `PathQL` hides the guts of the pathlib module and the os module from you with readable filter espressions.  The real power comes with actions that allow you to apply a function to all of the files that match your query, in parallel.
+
+
 
 ### Composition and Filters
 
