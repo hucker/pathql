@@ -8,24 +8,32 @@ Edge case and robustness tests for apply_action parallelism:
 - More workers than files
 - Target directory usage
 """
-import time
+
 import pathlib
 import shutil
+import time
+
 import pytest
-from pathql.actions.file_actions import FileActionResult, apply_action
+
+from pathql.actions.file_actions import apply_action
 
 DELAY_MS = 100
 DELAY_SEC = DELAY_MS / 1000.0
 OVERHEAD_ESTIMATE = 0.02  # 20ms
 
+
 def delay_action(path: pathlib.Path, target_dir: pathlib.Path | None):
     time.sleep(DELAY_SEC)
 
-@pytest.mark.parametrize("num_files, num_workers", [
-    (0, 3),
-    (1, 4),
-    (5, 10),
-])
+
+@pytest.mark.parametrize(
+    "num_files, num_workers",
+    [
+        (0, 3),
+        (1, 4),
+        (5, 10),
+    ],
+)
 def test_parallel_edge_cases(tmp_path: pathlib.Path, num_files: int, num_workers: int):
     # Arrange: Create dummy files
     files = [tmp_path / f"file_{i}.txt" for i in range(num_files)]
@@ -77,5 +85,7 @@ def test_parallel_target_dir(tmp_path: pathlib.Path):
         copied = target_dir / f.name
         assert copied.exists()
         assert copied.read_text() == f.name
+    assert set(result.success) == set(files)
+    assert result.total_time >= 0.0
     assert set(result.success) == set(files)
     assert result.total_time >= 0.0

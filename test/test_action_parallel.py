@@ -24,11 +24,12 @@ provides a benchmark for expected speedup. It also ensures that the parallel cod
 in apply_action is correct and thread-safe.
 """
 
-import time
 import pathlib
-import pytest
-from pathql.actions.file_actions import FileActionResult, apply_action
+import time
 
+import pytest
+
+from pathql.actions.file_actions import FileActionResult, apply_action
 
  # Constants for delay action and overhead estimate
 DELAY_MS = 100
@@ -90,4 +91,5 @@ def test_parallel_speedup(tmp_path:pathlib.Path, num_files:int):
     for f in files:
         assert result.timings[f] >= DELAY_SEC, (
             f"File {f} timing too short: {result.timings[f]:.3f}s"
+        )
         )

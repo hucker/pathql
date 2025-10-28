@@ -86,7 +86,9 @@ def apply_action(
 
     normal_files: PathList = _normalize_path(files)
 
-    result = FileActionResult(success=[], failed=[], errors={}, timings={}, total_time=0.0)
+    result = FileActionResult(
+        success=[], failed=[], errors={}, timings={}, total_time=0.0
+    )
     if target_dir is not None:
         target_dir = pathlib.Path(target_dir)
         target_dir.mkdir(parents=True, exist_ok=True)
