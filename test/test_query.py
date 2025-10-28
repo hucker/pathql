@@ -9,11 +9,12 @@ import shutil
 
 import pytest
 
+from pathql.filters.base import AllowAll
 from pathql.filters.file_type import FileType
 from pathql.filters.size import Size
 from pathql.filters.suffix import Suffix
 from pathql.query import Query
-from pathql.filters.base import AllowAll
+
 
 def test_query_select_list_of_paths(mini_fs: pathlib.Path) -> None:
     """Test Query.select() with a list of paths."""
@@ -186,6 +187,7 @@ def test_threaded_vs_unthreaded_equivalence_hundred(
     assert threaded == unthreaded
     assert len(threaded) == 100
 
+
 def test_query_where_expr_and_from_path(tmp_path: pathlib.Path) -> None:
     """Test Query's where_expr and from_path keyword arguments."""
     # Arrange
@@ -195,7 +197,6 @@ def test_query_where_expr_and_from_path(tmp_path: pathlib.Path) -> None:
     file2: pathlib.Path = test_dir / "file2.log"
     file1.write_text("hello")
     file2.write_text("world")
-
 
     # Act
     q: Query = Query(where_expr=Suffix(".txt"), from_path=str(test_dir))
@@ -210,4 +211,5 @@ def test_query_where_expr_and_from_path(tmp_path: pathlib.Path) -> None:
     results2 = list(q2.files(paths=str(test_dir)))
 
     # Assert
+    assert file1 in results2 and file2 in results2
     assert file1 in results2 and file2 in results2

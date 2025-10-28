@@ -11,12 +11,19 @@ dependencies = [
 	"python-dateutil"
 ]
 
-license = {file = "LICENSE"}
+# Specify license using SPDX identifier and include LICENSE file
+license = {text = "MIT"}
 keywords = ["pathlib", "query", "filesystem"]
 classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent"
+	"Development Status :: 4 - Beta",
+	"Intended Audience :: Developers",
+	"Programming Language :: Python :: 3",
+	"Programming Language :: Python :: 3.10",
+	"Programming Language :: Python :: 3.11",
+	"Operating System :: OS Independent",
+	"Topic :: Software Development :: Libraries",
+	"Natural Language :: English",
+	"License :: OSI Approved :: MIT License"
 ]
 
 [tool.setuptools.packages.find]
