@@ -130,4 +130,5 @@ class FilenameAgeDays(FilenameAgeBase):
 
 class FilenameAgeYears(FilenameAgeBase):
     """Filename age filter in years. Watch out for leap years in testing."""
+
     unit_seconds = 86400.0 * 365.25

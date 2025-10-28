@@ -1,174 +1,10 @@
- `<!-- Badges -->`
 
-![pytest](https://img.shields.io/badge/pytest-233-blue)
-![coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)
-![mypy](https://img.shields.io/badge/mypy-13-orange)
-![ruff](https://img.shields.io/badge/ruff-passed-brightgreen)
-
-# PathQL: Declarative SQL Layer For Pathlib
-
-PathQL allows you to query `pathlib.Path` objects using a declarative syntax reminiscent of SQL.
-
-## Table of Contents
-
-- [Quick Examples](#quick-examples)
-- [Features](#features)
-- [Concepts &amp; Filters](#concepts--filters)
-- [Boolean Operators &amp; Short-Circuiting](#boolean-operators--short-circuiting)
-- [Query Engine](#query-engine)
-- [Filter Reference](#filter-reference)
-- [Datetime &amp; Age Filters](#datetime--age-filters)
-- [Filename Builders](#filename-builders)
-- [File Actions](#file-actions)
-- [Usage Examples](#usage-examples)
-- [Developer &amp; Release Conventions](#developer--release-conventions)
-- [Release Summary](#release-summary)
-
-## Quick Examples
-
-```python
-from pathql import AgeYears, Ext, Query
-for f in Query("c:/logs", (AgeYears() > 1) & Ext(".bak")):
-    print(f"Files to delete - {f.resolve()}")
-```
-
-```python
-from pathql import AgeDays, Size, FileType
-for f in Query(r"C:/logs", (AgeDays() == 0) & (Size() > "10 mb") & Ext("log"), threaded=True):
-    print(f"Files to zip - {f.resolve()}")
-```
-
-```python
-from pathql import DayFilter
-import datetime as dt
-for f in Query(r"C:/logs", DayFilter(base=dt.datetime(year=2020, month=1, day=1))):
-    print(f"Files to zip - {f.resolve()}")
-```
-
-## Features
-
-- Declarative query syntax with Python operators (`&`, `|`, `~`)
-- Pathlib-like naming and conventions
-- Stat caching for efficient file metadata access
-- Threaded and single-threaded search
-- Extensible filters and comprehensive testing
-
-## Concepts & Filters
-
-Filters are composable objects that match files based on attributes like size, age, suffix, stem, or type. Combine filters using Python’s boolean operators.
-
-### Filter Reference
-
-- `Size() <= 1_000_000` — files up to 1MB
-- `Suffix() == "jpg"` — files with .png or .jpg extension
-- `Stem("report_*")` — files whose stem matches a glob pattern
-- `FileType().file` — file, dir, link
-- `AgeMinutes() < 10` — modified in the last 10 minutes
-- `Between(Size(), 1000, 2000)` — size in range
-- `YearFilter(2024)`, `MonthFilter("May")`, etc.
-
-## Boolean Operators, Any, All & Short-Circuiting
-
-- `&` (AND): Both filters must match.
-- `|` (OR): Either filter matches (short-circuits if first matches).
-- `~` (NOT): Inverts the filter.
-- **Any/All** keywords allow short circuited composition of query
-
-**Short-circuiting:**
-For `A & B`, if `A` fails, `B` is not evaluated.
-For `A | B`, if `A` matches, `B` is not evaluated.
-
-**Precedence:**
-Use parentheses for clarity: `(AgeDays() < 2) & Ext("txt") `
-
-## Query Engine
-
-- `Query(filter_expr)` — construct a query
-- `Query.match(path, stat_proxy=None, now=None)` — check a single file
-- `Query.files(path_or_paths, ...)` — lazily yield matches from a single folder or a list of folders
-- `Query.select(path_or_paths, ...)` — collect matches eagerly from a single folder or a list of folders
-
-Both `files` and `select` accept either a single path (str or Path) or a list of paths. This allows you to query multiple folders in one call:
-
-```python
-# Query a single folder
-for f in Query(Suffix('.txt')).files('/data/folder1'):
-    print(f)
-
-# Query multiple folders
-folders = ['/data/folder1', '/data/folder2', '/data/folder3']
-for f in Query(Suffix('.txt')).files(folders):
-    print(f)
-
-# Collect all matches from multiple folders
-result = Query(Suffix('.txt')).select(folders)
-print(list(result))
-```
-
-Supports threaded and single-threaded modes, stat caching, recursion, and result collection.
-
-## Datetime & Age Filters
-
-- `YearFilter`, `MonthFilter`, `DayFilter`, etc. — match by parts of file timestamps
-- `AgeMinutes`, `AgeHours`, `AgeDays`, `AgeYears` — match by file age
-
-**Filename-based Age Filters:**
-Match files by date encoded in filename (e.g., `YYYY-MM-DD_HH_{ArchiveName}.{EXT}`).
-
-## Filename Builders
-
-Utility functions for generating sortable filenames:
-
-```python
-from pathql.filters.date_filename import path_from_dt_ints, path_from_datetime
-
-# Integer components
-print(path_from_dt_ints("archive", "zip", year=2022))  # 2022-archive.zip
-print(path_from_dt_ints("archive", "zip", year=2022, month=7))  # 2022-07_archive.zip
-print(path_from_dt_ints("archive", "zip", year=2022, month=7, day=15))  # 2022-07-15_archive.zip
-print(path_from_dt_ints("archive", "zip", year=2022, month=7, day=15, hour=13))  # 2022-07-15_13_archive.zip
-
-# Datetime object
-import datetime
-dt = dt.datetime(2022, 7, 15, 13)
-print(path_from_datetime("archive", "zip", "year", dt))   # 2022-archive.zip
-print(path_from_datetime("archive", "zip", "month", dt))  # 2022-07_archive.zip
-print(path_from_datetime("archive", "zip", "day", dt))    # 2022-07-15_archive.zip
-print(path_from_datetime("archive", "zip", "hour", dt))   # 2022-07-15_13_archive.zip
-```
-
-## File Actions
-
-Batch file operations: `copy_files`, `move_files`, `delete_files`, `zip_files`, etc.
-Robust exception handling and result reporting.
-
-## Usage Examples
-
-- Find PNG/BMP images under 1MB, modified in last 10 minutes
-- Find files with stem starting with "report_"
-- Find directories older than 1 year
-- Custom filters with functions
-
-## Developer & Release Conventions
-
-See `AI_CONTEXT.md` for coding style, contributing, and release steps.
-
-## Release Summary
-
-### Highlights
-
-- File filter uses shell-style globbing
-- Suffix filter supports dot-prefixed patterns and wildcards
-- Improved documentation and test coverage
-
-### Breaking Changes
-
-- File filter does not support curly-brace expansion
-- Suffix filter matches using normalized dot-prefixed patterns
 
 ## PathQL: Declarative Filesystem Query Language for Python
 
-PathQL is a declarative, composable, and efficient query language for filesystem operations in Python. It enables expressive, readable, and powerful queries over files and directories, inspired by `pathlib` and modern query languages. PathQL is designed for performance (stat caching), extensibility, and testability, with robust operator overloading and a familiar, Pythonic API.
+PathQL is a declarative, composable, and efficient query language for filesystem operations in Python. It enables expressive, readable, and powerful queries over files and directories, inspired by `pathlib` and modern query languages. PathQL is designed for performance (threading, stat caching), extensibility, and testability, with robust operator overloading and a familiar, Pythonic API.
+
+IF you find your self crawling file systems and performing actions on files based on file age, size, type, `pathQL` can simplify you code and likely speed it up with built in threading
 
 ## Features
 
@@ -185,14 +21,14 @@ PathQL lets you write queries against the file system in a composable form:
 
 
 ```python
-from pathql import AgeYears, Ext, Query
-for f in Query("c:/logs", (AgeYears() > 1) & Ext(".bak")):
+from pathql import AgeYears, Query
+for f in Query("c:/logs", (AgeYears() > 1) & Suffix(".bak")):
     print(f"Files to delete - {f.resolve()}")
 ```
 
 ```python
-from pathql import AgeDays, Size, FileType
-for f in Query(r"C:/logs", (AgeDays() == 0) & (Size() > "10 mb") & Ext("log"), threaded=True):
+from pathql import AgeDays, Size, Suffix
+for f in Query(r"C:/logs", (AgeDays() == 0) & (Size() > "10 mb") & Suffix("log"), threaded=True):
     print(f"Files to zip - {f.resolve()}")
 ```
 
@@ -203,7 +39,7 @@ for f in Query(r"C:/logs", DayFilter(base=dt.datetime(year=2020, month=1, day=1)
     print(f"Files to zip - {f.resolve()}")
 ```
 
-This basic examples  show how `PathQL` hides the guts of the pathlib module and the os module from you with readable filter espressions.  The real power comes with actions that allow you to apply a function to all of the files that match your query, in parallel.
+These examples  show how `PathQL` hides the guts of the `pathlib` module and the `os` module from you with readable filter expressions.  The real power comes with actions that allow you to apply a function to all of the files that match your query, in parallel.
 
 
 
@@ -226,9 +62,13 @@ The query language implemented by `PathQL` should be thought of as a mathematica
 
 You must say
 
-`(AgeDays() < 2) & (Ext("txt))`
+`(AgeDays() < 2) & (Suffix("txt))`
 
-To make the implement an symbolic & operation.
+or
+
+`All(AgeDays()<2,Suffix("txt"))`
+
+
 
 **Short-Circuiting Behavior**
 
@@ -239,7 +79,7 @@ PathQL's filter composition is designed to short-circuit, just like Python's boo
 - For chained filters (e.g., `A & B & C`), evaluation stops at the first filter that fails for AND, or the first that succeeds for OR.
 - For `All(A,B,C)` or `Any(A,B,C)`, the operation will short circuit once a `All` sees a `False` or `Any` sees a `True`.
 
-This means that if you have expensive filters (such as those that read file contents or perform slow network operations), place them at the end of an and expression.
+These chaining operations allow you to build complex filter expressions that you can compose into more complex filter expressions.
 
 **Example 1**
 
@@ -291,7 +131,7 @@ state information.  Eliminating these checks can be VERY valuable.
 - Use `&`, `|`, and `~` to build complex queries.
 - Follow precedence rules (Size()>"1mb")
 - Short-circuiting ensures efficient evaluation and skips unnecessary work.
-- Place expensive filters down stream in your logic chains Fast=(Ext,Name,FileDate) slow = (Size,Type,Date,Age)
+- Place expensive filters down stream in your logic chains Fast=(Suffix,Name,FileDate) slow = (Size,Type,Date,Age)
 
 #### Example Filters
 
@@ -328,21 +168,32 @@ else:
 
 ## Query (engine)
 
-The `Query` class is the driver for PathQL. It walks the filesystem, gathers stat metadata, and applies filter expressions to decide which files to yield.
-It exposes a small API and supports both single-threaded and producer/consumer (threaded) modes for flexible performance characteristics.
+The `Query` class is the driver for PathQL. It walks the filesystem, gathers stat metadata, and applies filter expressions (now called `where_expr`) to decide which files to yield. It exposes a small API and supports both single-threaded and producer/consumer (threaded) modes for flexible performance characteristics.
 
 ### Overview
 
-- Purpose: efficiently find filesystem entries that match a filter expression. - Model: the filesystem walk (producer) is separated from filtering/consumption (consumer) so IO-bound directory traversal can proceed concurrently with CPU bound filter evaluation.
-- Key features: stat caching, optional threading, recursion control, and
-  eager or lazy collection via `select` and `files` respectively.
+- Purpose: efficiently find filesystem entries that match a filter expression (`where_expr`).
+- Model: the filesystem walk (producer) is separated from filtering/consumption (consumer) so IO-bound directory traversal can proceed concurrently with CPU bound filter evaluation.
+- Key features: stat caching, optional threading, recursion control, and eager or lazy collection via `select` and `files` respectively.
 
 ### Public API
 
-- `Query(filter_expr)` — construct a Query with a filter expression (any `Filter`).
-- `Query.match(path, now=None, stat_result=None)` — run the filter expression against a single `path`. Useful for programmatic checks or tests. `now` defaults to the current datetime `stat_result` can be provided to avoid an additional `stat()` call.
-- `Query.files(path, recursive=True, files=True, now=None, threaded=False)` — lazily yield matching `pathlib.Path` objects. Set `threaded=True` to enable  the producer/consumer mode.
-- `Query.select(path, ...)` — eagerly collect matches into a `ResultSet`.
+- `Query(where_expr, from_path=".")` — construct a Query with a filter expression (any `Filter`) and an optional default path (single path, list, or tuple). If no path is provided to `.select()` or `.files()`, the default is used.
+- `Query.match(path, now=None, stat_result=None)` — run the filter expression against a single `path`. Useful for programmatic checks or tests. `now` defaults to the current datetime; `stat_result` can be provided to avoid an additional `stat()` call.
+- `Query.files(paths=None, recursive=True, files=True, now=None, threaded=False)` — lazily yield matching `pathlib.Path` objects. If `paths` is not provided, uses the default `from_path`. Set `threaded=True` to enable the producer/consumer mode.
+- `Query.select(paths=None, ...)` — eagerly collect matches into a `ResultSet`. If `paths` is not provided, uses the default `from_path`.
+
+#### Example
+
+```python
+from pathql.query import Query
+from pathql.filters import Suffix, Size
+q = Query(where_expr=Suffix(".txt") & (Size() > 1000), from_path="/some/dir")
+for path in q.files():  # Uses from_path
+        print(path)
+for path in q.files("/other/dir"):  # Overrides from_path
+        print(path)
+```
 
 ### Threaded vs single-threaded
 
@@ -396,7 +247,7 @@ if q.match(pathlib.Path('notes.txt')):
 ### Edge cases and notes
 
 - The default queue max size (10) is a tradeoff between memory and producer progress; tuning may help for very large or very slow filesystems.
-- Filters should avoid calling `stat()` themselves when a cached `stat_result` is provided. (os.stat is expensive on network file systems)
+- Filters should avoid calling `stat()` themselves when a cached `stat_result` is provided. (`os.stat` is expensive on network file systems)
 - When using `now`, pass a fixed datetime in tests to make results deterministic.
 
 If you need more control (parallel consumers, custom traversal ordering, or different queueing semantics) you can implement your own driver that reuses the filter primitives exposed by PathQL.
@@ -421,7 +272,7 @@ File("*report*")      # matches any file with "report" in the name
 
 ### Suffix Filter
 
-The `Suffix` and `Ext` filters match file extensions by checking if the filename ends with the full extension, including the dot. Patterns like 'bmp' or '.bmp' are both accepted, but are normalized internally to '.bmp'.
+The `Suffix` matchs file extensions by checking if the filename ends with the full extension, including the dot. Patterns like 'bmp' or '.bmp' are both accepted, but are normalized internally to '.bmp'.
 
 - Any leading dot in the extension pattern is added if missing, so 'bmp' and '.bmp' are treated identically.
 - Matching is case-insensitive.
@@ -523,9 +374,9 @@ You almost never need to interact with the raw `datetime` objects if you are dea
 
 | Friendly name | stat attribute | Description                                                       |
 | ------------- | -------------- | ----------------------------------------------------------------- |
-| modified      | `st_mtime`   | File modification time (most commonly used for age calculations)  |
-| created       | `st_ctime`   | File creation time (platform-dependent: more reliable on Windows) |
-| accessed      | `st_atime`   | Last access time                                                  |
+| modified      | `st_mtime`     | File modification time (most commonly used for age calculations)  |
+| created       | `st_ctime`     | File creation time (platform-dependent: more reliable on Windows) |
+| accessed      | `st_atime`     | Last access time                                                  |
 
 You can also pass the raw stat attribute names (`"st_mtime"`, `"st_ctime"`, `"st_atime"`) to the datetime-part filters directly.
 
@@ -604,7 +455,7 @@ for path in Query("/data", query):
 
 # Files modified on October 16, 2025
 query = DayFilter(base=dt.datetime(2025, 10, 16))
-for path in Query("/data", query):
+for path in Query("/data", query).files():
     print(path)
 ```
 
@@ -616,18 +467,18 @@ from pathql import DayFilter, MonthFilter,Query
 
 # Files modified yesterday (-1day from now)
 query = DayFilter(offset=-1)
-for path in Query("/data", query):
+for path in Query("/data", query).files():
     print(path)
 
 # Files modified last month (-1 month  from this month)
 query = MonthFilter(offset=-1)
-for path in Query("/data", query):
+for path in Query("/data" query).files():
     print(path)
 
 # Files modified the day before Christmas 2023
 christmas = dt.datetime(2022, 12, 25)
 query = DayFilter(base=christmas, offset=-1)
-for path in Query("/data", query):
+for path in Query("/data", query).files():
     print(path)
 ```
 
@@ -857,26 +708,26 @@ PathQL includes a CLI demo for querying files using composable filters adding th
 
 Image files have the following color modes
 
-| Mode      | Description                                   | Bit Depth / Channels         |
-|-----------|-----------------------------------------------|-----------------------------|
-| 1         | 1-bit pixels, black and white                 | 1 bit                       |
-| L         | 8-bit pixels, grayscale                       | 8 bits                      |
-| P         | 8-bit pixels, palette-mapped                  | 8 bits                      |
-| RGB       | 3x8-bit pixels, true color                    | 24 bits (8x3)               |
-| RGBA      | 4x8-bit pixels, true color + alpha            | 32 bits (8x4)               |
-| CMYK      | 4x8-bit pixels, color separation              | 32 bits (8x4)               |
-| YCbCr     | 3x8-bit pixels, color video format            | 24 bits (8x3)               |
-| LAB       | 3x8-bit pixels, L*a*b color space             | 24 bits (8x3)               |
-| HSV       | 3x8-bit pixels, Hue, Saturation, Value        | 24 bits (8x3)               |
-| I         | 32-bit signed integer pixels                  | 32 bits                     |
-| F         | 32-bit floating point pixels                  | 32 bits                     |
-| LA        | L with alpha (grayscale + alpha)              | 16 bits (8x2)               |
-| PA        | P with alpha (palette + alpha)                | 16 bits (8x2)               |
-| RGBX      | RGB with padding                              | 32 bits (8x4)               |
-| RGBa      | RGB with premultiplied alpha                  | 32 bits (8x4)               |
-| I;16      | 16-bit unsigned integer pixels (grayscale)    | 16 bits                     |
-| I;16B     | 16-bit unsigned integer pixels, big-endian    | 16 bits                     |
-| I;16L     | 16-bit unsigned integer pixels, little-endian | 16 bits                     |
+| Mode  | Description                                   | Bit Depth / Channels |
+| ----- | --------------------------------------------- | -------------------- |
+| 1     | 1-bit pixels, black and white                 | 1 bit                |
+| L     | 8-bit pixels, grayscale                       | 8 bits               |
+| P     | 8-bit pixels, palette-mapped                  | 8 bits               |
+| RGB   | 3x8-bit pixels, true color                    | 24 bits (8x3)        |
+| RGBA  | 4x8-bit pixels, true color + alpha            | 32 bits (8x4)        |
+| CMYK  | 4x8-bit pixels, color separation              | 32 bits (8x4)        |
+| YCbCr | 3x8-bit pixels, color video format            | 24 bits (8x3)        |
+| LAB   | 3x8-bit pixels, L*a*b color space             | 24 bits (8x3)        |
+| HSV   | 3x8-bit pixels, Hue, Saturation, Value        | 24 bits (8x3)        |
+| I     | 32-bit signed integer pixels                  | 32 bits              |
+| F     | 32-bit floating point pixels                  | 32 bits              |
+| LA    | L with alpha (grayscale + alpha)              | 16 bits (8x2)        |
+| PA    | P with alpha (palette + alpha)                | 16 bits (8x2)        |
+| RGBX  | RGB with padding                              | 32 bits (8x4)        |
+| RGBa  | RGB with premultiplied alpha                  | 32 bits (8x4)        |
+| I;16  | 16-bit unsigned integer pixels (grayscale)    | 16 bits              |
+| I;16B | 16-bit unsigned integer pixels, big-endian    | 16 bits              |
+| I;16L | 16-bit unsigned integer pixels, little-endian | 16 bits              |
 
 If you want to find which images in a folder match one of these patterns it can often times be tedious to sort through the images.
 
@@ -918,14 +769,3 @@ Project-level conventions, contributor guidance, and release steps are maintaine
 in `AI_CONTEXT.md` in the repository root. Please consult that file for the
 latest instructions on coding style, testing, and release procedures.
 
----
-
-## Release Summary (v0.0.3, 2025-10-20)
-
-### Highlights
-
-- File filter now uses shell-style globbing (fnmatch) on full filenames.
-- Suffix filter supports dot-prefixed, fnmatch-compatible patterns and wildcards.
-- Curly-brace expansion is no longer supported in File filter.
-- All filters and tests are PEP8 and docstring compliant.
-- Improved documentation and test coverage.

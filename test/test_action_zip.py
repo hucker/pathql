@@ -47,7 +47,7 @@ def test_zip_files_flat_no_structure(test_dirs: tuple[pathlib.Path, pathlib.Path
     target_zip = destination / "flat_nostructure.zip"
     # Act
     result = zip_actions.zip_files(
-        files, source, target_zip, preserve_dir_structure=False
+        files, target_zip, preserve_dir_structure=False, root=source
     )
     # Assert
     assert result.status
@@ -67,7 +67,7 @@ def test_zip_files_flat_with_structure(test_dirs: tuple[pathlib.Path, pathlib.Pa
     target_zip = destination / "flat_structure.zip"
     # Act
     result = zip_actions.zip_files(
-        files, source, target_zip, preserve_dir_structure=True
+        files, target_zip, preserve_dir_structure=True, root=source
     )
     # Assert
     assert result.status
@@ -87,7 +87,7 @@ def test_zip_files_nested_no_structure(test_dirs: tuple[pathlib.Path, pathlib.Pa
     target_zip = destination / "nested_nostructure.zip"
     # Act
     result = zip_actions.zip_files(
-        files, source, target_zip, preserve_dir_structure=False
+        files, target_zip, preserve_dir_structure=False, root=source
     )
     # Assert
     assert result.status
@@ -109,7 +109,7 @@ def test_zip_files_nested_with_structure(test_dirs: tuple[pathlib.Path, pathlib.
     target_zip = destination / "nested_structure.zip"
     # Act
     result = zip_actions.zip_files(
-        files, source, target_zip, preserve_dir_structure=True
+        files, target_zip, preserve_dir_structure=True, root=source
     )
     # Assert
     assert result.status

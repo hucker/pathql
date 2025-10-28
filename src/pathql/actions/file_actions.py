@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from typing import Callable, Dict, List
 
 from ..filters.alias import PathList, StrPathOrListOfStrPath
+from ..utils import normalize_path
 
 EXCEPTIONS: tuple[type[Exception], ...] = (
     IOError,
@@ -23,17 +24,7 @@ EXCEPTIONS: tuple[type[Exception], ...] = (
     NotADirectoryError,
 )
 
-
-def _normalize_path(paths: StrPathOrListOfStrPath) -> PathList:
-    """Return a normalized absolute pathlib.Path."""
-    if isinstance(paths, list):
-        return [pathlib.Path(path) for path in paths]
-    elif isinstance(paths, str):
-        return [pathlib.Path(paths)]
-    elif isinstance(paths, pathlib.Path):
-        return [paths]
-
-    raise ValueError("Invalid path(s) provided.")
+PathQLActionTypes = StrPathOrListOfStrPath
 
 
 @dataclass
@@ -84,7 +75,7 @@ def apply_action(
         Also attaches timing info per file as .timings (dict: file -> seconds).
     """
 
-    normal_files: PathList = _normalize_path(files)
+    normal_files: PathList = normalize_path(files)
 
     result = FileActionResult(
         success=[], failed=[], errors={}, timings={}, total_time=0.0

@@ -1,14 +1,43 @@
-"""Tests for Query class and filter composition on a mini filesystem."""
+"""
+Tests for Query class and filter composition on a mini filesystem.
+Demonstrates Query initialization and method usage with from_path,
+including support for single path, list, pathlib.Path, and glob patterns.
+"""
 
 import pathlib
 import shutil
 
 import pytest
 
+from pathql.filters.file_type import FileType
 from pathql.filters.size import Size
 from pathql.filters.suffix import Suffix
-from pathql.filters.file_type import FileType
 from pathql.query import Query
+
+
+def test_query_select_list_of_paths(mini_fs: pathlib.Path) -> None:
+    """Test Query.select() with a list of paths."""
+    subdir = mini_fs / "subdir"
+    paths = [mini_fs, subdir]
+    q = Query(Suffix(".txt"))
+    files = sorted([p.name for p in q.select(paths)])
+    assert set(files) == {"foo.txt", "baz.txt", "qux.txt"}
+
+
+def test_query_files_subdir(mini_fs: pathlib.Path) -> None:
+    """Test Query.files() with a subdirectory path."""
+    subdir = mini_fs / "subdir"
+    q = Query(Suffix(".txt"))
+    files = sorted([p.name for p in q.files(subdir)])
+    assert files == ["qux.txt"]
+
+
+def test_query_select_subdir(mini_fs: pathlib.Path) -> None:
+    """Test Query.select() with a subdirectory path."""
+    subdir = mini_fs / "subdir"
+    q = Query(Suffix(".txt"))
+    files = sorted([p.name for p in q.select(subdir)])
+    assert files == ["qux.txt"]
 
 
 @pytest.fixture(name="hundred_files")
@@ -46,9 +75,11 @@ def _mini_fs(tmp_path: pathlib.Path) -> pathlib.Path:  # pyright: ignore[reportU
     [
         (True, set(["foo.txt", "bar.md", "baz.txt", "qux.txt"])),
         (False, set(["foo.txt", "bar.md", "baz.txt"])),
-    ]
+    ],
 )
-def test_query_no_filter_param(mini_fs: pathlib.Path, recursive: bool, expected_files: set[str]) -> None:
+def test_query_no_filter_param(
+    mini_fs: pathlib.Path, recursive: bool, expected_files: set[str]
+) -> None:
     """Test Query with no filter (matches all files), both recursive and non-recursive."""
     # Arrange
     q = Query()
@@ -57,6 +88,7 @@ def test_query_no_filter_param(mini_fs: pathlib.Path, recursive: bool, expected_
     actual_files = set(f.name for f in files)
     # Assert
     assert actual_files == expected_files
+
 
 def test_query_size_and_suffix(mini_fs: pathlib.Path) -> None:
     """Test Query with size and suffix filters."""
@@ -72,7 +104,7 @@ def test_query_size_and_suffix(mini_fs: pathlib.Path) -> None:
 def test_query_or_and(mini_fs: pathlib.Path) -> None:
     """Test Query with OR and AND filters."""
     # Arrange
-    q = Query((Size() > 250) & Suffix("txt")  | Suffix("md"))
+    q = Query((Size() > 250) & Suffix("txt") | Suffix("md"))
     # Act
     files = list(q.files(mini_fs, recursive=True, files=True, threaded=False))
     names = sorted(f.name for f in files)
@@ -80,6 +112,14 @@ def test_query_or_and(mini_fs: pathlib.Path) -> None:
     assert names == ["bar.md", "qux.txt"]
 
 
+def test_query_select_tuple_and_nested_tuple(mini_fs: pathlib.Path) -> None:
+    """Test Query.select() with tuple and nested tuple of paths."""
+    subdir = mini_fs / "subdir"
+    paths = (mini_fs, subdir)
+    q = Query(Suffix(".txt"))
+    files = sorted([p.name for p in q.select(paths)])
+    # Should find all .txt files in both mini_fs and subdir
+    assert set(files) == {"foo.txt", "baz.txt", "qux.txt"}
 
 
 def test_query_type_file_and_dir(mini_fs: pathlib.Path) -> None:
@@ -98,7 +138,7 @@ def test_query_type_file_and_dir(mini_fs: pathlib.Path) -> None:
 def test_query_complex(mini_fs: pathlib.Path) -> None:
     """Test Query with complex filter combinations."""
     # Arrange
-    q = Query((Suffix("txt") & (Size() > 50)) | (Suffix("md")  & (Size() < 300)))
+    q = Query((Suffix("txt") & (Size() > 50)) | (Suffix("md") & (Size() < 300)))
 
     # Act
     files = list(q.files(mini_fs, recursive=True, files=True, threaded=False))
@@ -107,7 +147,8 @@ def test_query_complex(mini_fs: pathlib.Path) -> None:
     # Assert
     assert names == ["bar.md", "foo.txt", "qux.txt"]
 
-#pytest.mark.timeout(10)
+
+# pytest.mark.timeout(10)
 def test_threaded_vs_unthreaded_equivalence_hundred(
     hundred_files: pathlib.Path,
 ) -> None:
@@ -136,6 +177,10 @@ def test_threaded_vs_unthreaded_equivalence_hundred(
     )
 
     # Assert
+    assert threaded == unthreaded
+    assert len(threaded) == 100
+    assert threaded == unthreaded
+    assert len(threaded) == 100
     assert threaded == unthreaded
     assert len(threaded) == 100
     assert threaded == unthreaded

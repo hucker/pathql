@@ -12,7 +12,7 @@ from __future__ import annotations
 import datetime as dt
 import os
 import pathlib
-from typing import TYPE_CHECKING, Type, TypeAlias
+from typing import TYPE_CHECKING, Type, TypeAlias, Sequence
 from .stat_proxy import StatProxy
 
 if TYPE_CHECKING:
@@ -41,7 +41,7 @@ PathOrNone: TypeAlias = pathlib.Path | None
 IntOrFloatOrNone: TypeAlias = int | float | None
 StrOrPath: TypeAlias = str | pathlib.Path
 IntOrFloat: TypeAlias = int | float
-StrOrListOfStr: TypeAlias = str | list[str]
-StrPathOrListOfStrPath: TypeAlias = StrOrPath | list[StrOrPath]
-PathList: TypeAlias = list[pathlib.Path]
+StrOrListOfStr: TypeAlias = str | Sequence[str]
+StrPathOrListOfStrPath: TypeAlias = StrOrPath | Sequence[StrOrPath]
+PathList: TypeAlias = Sequence[pathlib.Path]
 StatProxyOrNone: TypeAlias = StatProxy | None

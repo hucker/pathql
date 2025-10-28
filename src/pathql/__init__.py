@@ -4,7 +4,7 @@ from .filters.age import AgeDays, AgeHours, AgeMinutes, AgeYears
 from .filters.alias import StatProxy, StatProxyOrNone
 from .filters.base import Filter
 from .filters.between import Between
-from .filters.date_filename import filename_to_datetime
+from .filters.date_filename import filename_to_datetime,path_from_datetime,path_from_dt_ints
 from .filters.datetime_parts import (
     DayFilter,
     HourFilter,
@@ -20,6 +20,7 @@ from .filters.size import Size, parse_size
 from .filters.stem import Stem
 from .filters.suffix import Ext, Suffix
 from .query import Query
+from .utils import normalize_path
 
 __version__ = "0.0.4"
 
@@ -50,4 +51,7 @@ __all__ = [
     "StatProxyOrNone",
     "StatProxy",
     "filename_to_datetime",
+    "path_from_datetime",
+    "normalize_path",
+    "path_from_dt_ints",
 ]

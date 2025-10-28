@@ -31,7 +31,7 @@ import pytest
 
 from pathql.actions.file_actions import FileActionResult, apply_action
 
- # Constants for delay action and overhead estimate
+# Constants for delay action and overhead estimate
 DELAY_MS = 100
 DELAY_SEC = DELAY_MS / 1000.0
 OVERHEAD_ESTIMATE = 0.02  # 20ms
@@ -46,8 +46,9 @@ def delay_action(path: pathlib.Path, target_dir: pathlib.Path | None):
     """
     time.sleep(DELAY_SEC)
 
+
 @pytest.mark.parametrize("num_files", [5])
-def test_parallel_speedup(tmp_path:pathlib.Path, num_files:int):
+def test_parallel_speedup(tmp_path: pathlib.Path, num_files: int):
     """
     Verify parallel speedup for IO-bound tasks using apply_action.
     Arrange: Create dummy files and estimate overhead.
@@ -55,7 +56,7 @@ def test_parallel_speedup(tmp_path:pathlib.Path, num_files:int):
     Assert: Check timing results and correctness of parallel execution.
     """
     # Arrange: Create dummy files
-    files:list[pathlib.Path] = [tmp_path / f"file_{i}.txt" for i in range(num_files)]
+    files: list[pathlib.Path] = [tmp_path / f"file_{i}.txt" for i in range(num_files)]
     for f in files:
         f.write_text("test")
 
@@ -63,7 +64,7 @@ def test_parallel_speedup(tmp_path:pathlib.Path, num_files:int):
     threshold = OVERHEAD_ESTIMATE * 2
 
     # Act: Single-threaded test with delay_action
-    result:FileActionResult = apply_action(files, delay_action, workers=1)
+    result: FileActionResult = apply_action(files, delay_action, workers=1)
     elapsed_single = result.total_time
 
     # Assert: Single-threaded should take at least DELAY_SEC * num_files
@@ -77,7 +78,7 @@ def test_parallel_speedup(tmp_path:pathlib.Path, num_files:int):
         )
 
     # Act: Parallel test with delay_action
-    result:FileActionResult = apply_action(files, delay_action, workers=5)
+    result: FileActionResult = apply_action(files, delay_action, workers=5)
     elapsed_parallel = result.total_time
 
     # Assert: Parallel should be much faster
@@ -91,5 +92,4 @@ def test_parallel_speedup(tmp_path:pathlib.Path, num_files:int):
     for f in files:
         assert result.timings[f] >= DELAY_SEC, (
             f"File {f} timing too short: {result.timings[f]:.3f}s"
-        )
         )
