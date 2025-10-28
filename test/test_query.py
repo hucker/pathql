@@ -13,7 +13,7 @@ from pathql.filters.file_type import FileType
 from pathql.filters.size import Size
 from pathql.filters.suffix import Suffix
 from pathql.query import Query
-
+from pathql.filters.base import AllowAll
 
 def test_query_select_list_of_paths(mini_fs: pathlib.Path) -> None:
     """Test Query.select() with a list of paths."""
@@ -185,3 +185,29 @@ def test_threaded_vs_unthreaded_equivalence_hundred(
     assert len(threaded) == 100
     assert threaded == unthreaded
     assert len(threaded) == 100
+
+def test_query_where_expr_and_from_path(tmp_path: pathlib.Path) -> None:
+    """Test Query's where_expr and from_path keyword arguments."""
+    # Arrange
+    test_dir: pathlib.Path = tmp_path / "test_dir"
+    test_dir.mkdir()
+    file1: pathlib.Path = test_dir / "file1.txt"
+    file2: pathlib.Path = test_dir / "file2.log"
+    file1.write_text("hello")
+    file2.write_text("world")
+
+
+    # Act
+    q: Query = Query(where_expr=Suffix(".txt"), from_path=str(test_dir))
+    results = list(q.files())
+
+    # Assert
+    assert file1 in results
+    assert file2 not in results
+
+    # Act (override from_path)
+    q2: Query = Query(where_expr=AllowAll(), from_path=str(test_dir))
+    results2 = list(q2.files(paths=str(test_dir)))
+
+    # Assert
+    assert file1 in results2 and file2 in results2
