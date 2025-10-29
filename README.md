@@ -679,7 +679,7 @@ Project-level conventions, contributor guidance, and release steps are maintaine
 
 ## Release Summary
 
-### Version: **v0.0.7** &nbsp;|&nbsp; Date: 2025-10-29
+### Version: **v0.0.8** &nbsp;|&nbsp; Date: 2025-10-29
 
 #### Highlights
 
