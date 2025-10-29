@@ -8,7 +8,7 @@ from .actions.zip import (zip_copy_files,
 )
 from .filters.age import AgeDays, AgeHours, AgeMinutes, AgeYears
 from .filters.alias import StatProxy, StatProxyOrNone
-from .filters.base import All, AllowAll, AndFilter, Any, Filter, NotFilter, OrFilter
+from .filters.base import All, AllowAll,AllowNone, AndFilter, Filter, NotFilter, OrFilter
 from .filters.between import Between
 from .filters.date_filename import filename_to_datetime,path_from_datetime,path_from_dt_ints
 from .filters.datetime_parts import (
@@ -26,7 +26,6 @@ from .filters.filedate import FileDate
 from .filters.size import Size, parse_size
 from .filters.stem import Stem
 from .filters.suffix import Suffix
-from .filters.callback import MatchCallback, PathCallback
 from .query import Query
 from .utils import normalize_path
 from .filters.date_filename import DateFilenameParts
@@ -42,8 +41,8 @@ __all__ = [
     "AgeYears",
     "All",
     "AllowAll",
+    "AllowNone",
     "AndFilter",
-    "Any",
     "Between",
     "DateFilenameParts",
     "DayFilter",
@@ -56,13 +55,11 @@ __all__ = [
     "FilenameAgeYears",
     "Filter",
     "HourFilter",
-    "MatchCallback",
     "MinuteFilter",
     "MonthFilter",
     "NotFilter",
     "OrFilter",
     "parse_size",
-    "PathCallback",
     "path_from_datetime",
     "path_from_dt_ints",
     "Query",

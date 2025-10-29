@@ -52,7 +52,7 @@ def test_stat_proxy_call_count(tmp_path:pathlib.Path, filter_expr:Filter, expect
     file:pathlib.Path = tmp_path / "testfile.txt"
     file.write_bytes(b"x" * 50)
     proxy = StatProxy(file)
-    query = Query(filter_expr)
+    query = Query(where_expr=filter_expr)
 
     # Act: run the query
     query.match(file, proxy)

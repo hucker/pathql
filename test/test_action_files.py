@@ -68,7 +68,7 @@ def test_copy_files_flat(test_dirs: tuple[pathlib.Path, pathlib.Path]):
     source: pathlib.Path
     destination: pathlib.Path
     source, destination = test_dirs
-    q = Query(Suffix("txt"))
+    q = Query(where_expr=Suffix("txt"))
     files = list(q.files(source, recursive=False))
 
     # Act
@@ -89,7 +89,7 @@ def test_copy_files_nested(test_dirs: tuple[pathlib.Path, pathlib.Path]):
     source: pathlib.Path
     destination: pathlib.Path
     source, destination = test_dirs
-    q = Query(Suffix("txt"))
+    q = Query(where_expr=Suffix("txt"))
     files = list(q.files(source, recursive=True))
 
     # Act
@@ -110,7 +110,7 @@ def test_move_files_flat(test_dirs: tuple[pathlib.Path, pathlib.Path]):
     source: pathlib.Path
     destination: pathlib.Path
     source, destination = test_dirs
-    q = Query(Suffix("txt"))
+    q = Query(where_expr=Suffix("txt"))
     files = list(q.files(source, recursive=False))
 
     # Act
@@ -134,7 +134,7 @@ def test_move_files_nested(test_dirs: tuple[pathlib.Path, pathlib.Path]):
     source: pathlib.Path
     destination: pathlib.Path
     source, destination = test_dirs
-    q = Query(Suffix("txt"))
+    q = Query(where_expr=Suffix("txt"))
     files = list(q.files(source, recursive=True))
 
     # Act
@@ -157,7 +157,7 @@ def test_delete_files_flat(test_dirs: tuple[pathlib.Path, pathlib.Path]):
 
     # Arrange
     source, _ = test_dirs
-    q = Query(Suffix("txt"))
+    q = Query(where_expr=Suffix("txt"))
     files = list(q.files(source, recursive=False))
 
     # Act
@@ -176,7 +176,7 @@ def test_delete_files_nested(test_dirs: tuple[pathlib.Path, pathlib.Path]):
 
     # Arrange
     source, _ = test_dirs
-    q = Query(Suffix("txt"))
+    q = Query(where_expr=Suffix("txt"))
     files = list(q.files(source, recursive=True))
 
     # Act

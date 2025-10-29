@@ -31,9 +31,11 @@ Use --recursive to search subdirectories.
     )
     args = parser.parse_args()
 
-    query = Query(File(args.pattern))
+    query = Query(where_expr=File(args.pattern))
     print("PathQL v" + __version__)
-    for f in query.files(paths=pathlib.Path("."), recursive=args.recursive, files=True):
+    for f in query.files(
+        from_paths=pathlib.Path("."), recursive=args.recursive, files_only=True
+    ):
         print(f)
 
 

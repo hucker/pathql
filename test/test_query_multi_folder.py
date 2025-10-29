@@ -7,8 +7,9 @@ import pathlib
 
 import pytest
 
-from pathql.query import Query
 from pathql.filters.base import AllowAll
+from pathql.query import Query
+
 
 @pytest.fixture
 def multi_folder_fixture(tmp_path: pathlib.Path) -> list[pathlib.Path]:
@@ -19,7 +20,7 @@ def multi_folder_fixture(tmp_path: pathlib.Path) -> list[pathlib.Path]:
     """
     # Arrange
     folder_names = ["alpha", "beta", "gamma"]
-    folders = []
+    folders:list[pathlib.Path] = []
     for name in folder_names:
         folder = tmp_path / name
         folder.mkdir()
@@ -51,8 +52,8 @@ def test_query_select_multi_folder(
     selected_folders = [name_to_folder[name] for name in folder_combo[0]]
 
     # Act
-    q = Query(AllowAll())
-    result = q.select(selected_folders, recursive=False, files=True)
+    q = Query(where_expr=AllowAll())
+    result = q.select(selected_folders, recursive=False, files_only=True)
     actual_files = list(result)
 
     # Assert

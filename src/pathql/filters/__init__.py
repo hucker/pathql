@@ -5,7 +5,6 @@ from .age import AgeDays, AgeHours, AgeMinutes, AgeYears
 from .alias import NumericFilterType
 from .base import Filter
 from .between import Between
-from .callback import MatchCallback, PathCallback
 from .datetime_parts import (
     DayFilter,
     HourFilter,
@@ -45,7 +44,5 @@ __all__ = [
     "Exec",
     "RdWt",
     "RdWtEx",
-    "PathCallback",
-    "MatchCallback",
     "NumericFilterType",
 ]

@@ -47,9 +47,9 @@ def test_query_files_non_recursive(tmp_path: pathlib.Path):
     # Arrange
     make_file(tmp_path, "foo.txt")
     make_file(tmp_path, "bar.txt")
-    q = Query(AlwaysTrue())
+    q = Query(where_expr=AlwaysTrue())
     # Act
-    files = list(q.files(tmp_path, recursive=False, files=True, threaded=False))
+    files = list(q.files(tmp_path, recursive=False, files_only=True, threaded=False))
     names = sorted(f.name for f in files)
     # Assert
     assert set(names) >= {"foo.txt", "bar.txt"}
@@ -61,10 +61,10 @@ def test_query_files_dirs(tmp_path: pathlib.Path):
     d: pathlib.Path = tmp_path / "a_dir"
     d.mkdir()
     make_file(d, "foo.txt")
-    q = Query(AlwaysTrue())
+    q = Query(where_expr=AlwaysTrue())
     # Act
     # files=False yields directories
-    dirs = list(q.files(tmp_path, recursive=True, files=False, threaded=False))
+    dirs = list(q.files(tmp_path, recursive=True, files_only=False, threaded=False))
     # Assert
     assert any(x.is_dir() for x in dirs)
 
@@ -97,7 +97,7 @@ def test_query_files_stat_error(tmp_path: pathlib.Path):
             return str(self._p)
 
     bad = BadPath(tmp_path / "bad.txt")
-    q = Query(AlwaysTrue())
+    q = Query(where_expr=AlwaysTrue())
     # Act and Assert - should handle stat error and return True
     # Accessing _p for test purposes
     assert q.match(cast(Any, bad), StatProxy(bad._p)) is True  # type: ignore[attr-defined]
@@ -123,7 +123,7 @@ def test_query_match_stat_error(tmp_path: pathlib.Path):
             return str(self._p)
 
     bad = BadPath(tmp_path / "bad.txt")
-    q = Query(AlwaysFalse())
+    q = Query(where_expr=AlwaysFalse())
     # Act and Assert - should not raise, just return False
     # Accessing _p for test purposes
     assert q.match(cast(Any, bad), StatProxy(bad._p)) is False  # type: ignore[attr-defined]

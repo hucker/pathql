@@ -43,7 +43,7 @@ def test_zip_files_flat_no_structure(test_dirs: tuple[pathlib.Path, pathlib.Path
     """Test zipping flat files from source without preserving structure."""
     # Arrange
     source, destination = test_dirs
-    files = Query(Suffix("txt")).select(source, recursive=False)
+    files = Query(where_expr=Suffix("txt")).select(source, recursive=False)
     target_zip = destination / "flat_nostructure.zip"
     # Act
     result = zip_actions.zip_files(
@@ -63,7 +63,7 @@ def test_zip_files_flat_with_structure(test_dirs: tuple[pathlib.Path, pathlib.Pa
     """Test zipping flat files from source with preserving structure (should be same as no structure for flat)."""
     # Arrange
     source, destination = test_dirs
-    files = Query(Suffix("txt")).select(source, recursive=False)
+    files = Query(where_expr=Suffix("txt")).select(source, recursive=False)
     target_zip = destination / "flat_structure.zip"
     # Act
     result = zip_actions.zip_files(
@@ -83,7 +83,7 @@ def test_zip_files_nested_no_structure(test_dirs: tuple[pathlib.Path, pathlib.Pa
     """Test zipping nested files from source without preserving structure."""
     # Arrange
     source, destination = test_dirs
-    files = Query(Suffix("txt")).select(source, recursive=True)
+    files = Query(where_expr=Suffix("txt")).select(source, recursive=True)
     target_zip = destination / "nested_nostructure.zip"
     # Act
     result = zip_actions.zip_files(
@@ -105,7 +105,7 @@ def test_zip_files_nested_with_structure(test_dirs: tuple[pathlib.Path, pathlib.
     """Test zipping nested files from source with preserving structure."""
     # Arrange
     source, destination = test_dirs
-    files = Query(Suffix("txt")).select(source, recursive=True)
+    files = Query(where_expr=Suffix("txt")).select(source, recursive=True)
     target_zip = destination / "nested_structure.zip"
     # Act
     result = zip_actions.zip_files(

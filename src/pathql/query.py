@@ -33,7 +33,14 @@ class Query(Filter):
     """
 
     def __init__(
-        self, where_expr: Filter | None = None, from_path: StrPathOrListOfStrPath = "."
+        self,
+        *,
+        where_expr: Filter | None = None,
+        from_paths: StrPathOrListOfStrPath = ".",
+        recursive: bool = True,
+        now: DatetimeOrNone = None,
+        files_only: bool = True,
+        threaded: bool = False,
     ) -> None:
         """
         Initialize Query.
@@ -44,17 +51,24 @@ class Query(Filter):
         to use for files/select if not specified at call time.
 
         Args:
-            where_expr (Filter): The filter expression to apply to files.
+            where_expr (Filter): The filter expression to apply to each file found in from_path
             from_path (str | Path | list | tuple): Default path(s) for files/select.
         """
         self.where_expr: Filter = where_expr or AllowAll()
-        self.from_path: StrPathOrListOfStrPath = from_path
+
+
+        # These serve as default values for files/select if not provided at call time
+        self.from_paths: StrPathOrListOfStrPath = from_paths
         self.results: list[pathlib.Path] = []
+        self.recursive: bool = recursive
+        self.files_only: bool = files_only
+        self.now: DatetimeOrNone = now
+        self.threaded: bool = threaded
 
     def match(
         self,
         path: pathlib.Path,
-        stat_proxy: StatProxyOrNone = None,  # type: ignore[name-defined]
+        stat_proxy: StatProxyOrNone = None,
         now: DatetimeOrNone = None,
     ) -> bool:
         """
@@ -62,7 +76,8 @@ class Query(Filter):
         """
         if now is None:
             now = dt.datetime.now()
-            return self.where_expr.match(path, stat_proxy, now=now)
+
+        return self.where_expr.match(path, stat_proxy, now=now)
 
     def _unthreaded_files(
         self,
@@ -125,9 +140,9 @@ class Query(Filter):
 
     def files(
         self,
-        paths: StrPathOrListOfStrPath | None = None,
-        recursive: bool = True,
-        files: bool = True,
+        from_paths: StrPathOrListOfStrPath | None = None,
+        recursive: bool | None = None,
+        files_only: bool | None = None,
         now: DatetimeOrNone = None,
         threaded: bool = False,
     ) -> Iterator[pathlib.Path]:
@@ -135,28 +150,38 @@ class Query(Filter):
         Yield files matching the filter expression for a single path or a list of paths.
         Handles both threaded and non-threaded modes. Uses default from_path if paths not given.
         """
-        if paths is None:
-            paths = self.from_path
-        if isinstance(paths, (str, pathlib.Path)):
-            path_list = [paths]
+        if from_paths is None:
+            from_paths = self.from_paths
+
+        if recursive is None:
+            recursive = self.recursive
+
+        if files_only is None:
+            files_only = self.files_only
+
+        if now is None:
+            now = dt.datetime.now()
+
+        if isinstance(from_paths, (str, pathlib.Path)):
+            path_list = [from_paths]
         else:
-            path_list = list(paths)
+            path_list = list(from_paths)
         path_list = [pathlib.Path(p) for p in path_list]
         for path in path_list:
             if threaded:
                 yield from self._threaded_files(
-                    path, recursive=recursive, files=files, now=now
+                    path, recursive=recursive, files=files_only, now=now
                 )
             else:
                 yield from self._unthreaded_files(
-                    path, recursive=recursive, files=files, now=now
+                    path, recursive=recursive, files=files_only, now=now
                 )
 
     def select(
         self,
-        paths: StrPathOrListOfStrPath | None = None,
-        recursive: bool = True,
-        files: bool = True,
+        from_paths: StrPathOrListOfStrPath | None = None,
+        recursive: bool | None = None,
+        files_only: bool | None = None,
         now: DatetimeOrNone = None,
         threaded: bool = False,
     ) -> ResultSet:
@@ -164,4 +189,4 @@ class Query(Filter):
         Return a ResultSet of files matching the filter expr for a path or a list of paths.
         Uses default from_path if paths not given.
         """
-        return ResultSet(self.files(paths, recursive, files, now, threaded))
+        return ResultSet(self.files(from_paths, recursive, files_only, now, threaded))

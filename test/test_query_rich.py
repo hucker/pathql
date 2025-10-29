@@ -5,10 +5,10 @@ from pathlib import Path
 from typing import Tuple
 
 from pathql.filters.age import AgeSeconds
+from pathql.filters.file_type import FileType
 from pathql.filters.size import Size
 from pathql.filters.stem import Stem
 from pathql.filters.suffix import Suffix
-from pathql.filters.file_type import FileType
 from pathql.query import Query
 
 
@@ -20,10 +20,10 @@ def test_all_files_bigger_than_50(
     root, now = rich_filesystem
     now_dt = dt.datetime.fromtimestamp(now)
     root_path = Path(root)
-    q = Query(Size() > 50)
+    q = Query(where_expr=Size() > 50)
 
     # Act
-    files = list(q.files(root_path, recursive=True, files=True, now=now_dt))
+    files = list(q.files(root_path, recursive=True, files_only=True, now=now_dt))
 
     # Assert
     assert all(f.stat().st_size > 50 for f in files)
@@ -39,10 +39,10 @@ def test_txt_files_older_than_20_seconds(
     root, now = rich_filesystem
     root_path = Path(root)
     now_dt = dt.datetime.fromtimestamp(now)
-    q = Query(Suffix('txt') & (AgeSeconds() > 20))
+    q = Query(where_expr=Suffix("txt") & (AgeSeconds() > 20))
 
     # Act
-    files = list(q.files(root_path, recursive=True, files=True, now=now_dt))
+    files = list(q.files(root_path, recursive=True, files_only=True, now=now_dt))
 
     # Assert
     for f in files:
@@ -59,10 +59,10 @@ def test_bmp_files_size_and_age(
     root, now = rich_filesystem
     root_path = Path(root)
     now_dt = dt.datetime.fromtimestamp(now)
-    q = Query(Suffix("bmp")  & (Size() > 30) & (AgeSeconds() > 1))
+    q = Query(where_expr=Suffix("bmp") & (Size() > 30) & (AgeSeconds() > 1))
 
     # Act
-    files = list(q.files(root_path, recursive=True, files=True, now=now_dt))
+    files = list(q.files(root_path, recursive=True, files_only=True, now=now_dt))
 
     # Assert
     for f in files:
@@ -79,10 +79,10 @@ def test_stem_pattern_and_type(
     root, now = rich_filesystem
     root_path = Path(root)
     now_dt = dt.datetime.fromtimestamp(now)
-    q = Query((Stem(r"^g.*") & (FileType().file)))
+    q = Query(where_expr=(Stem(r"^g.*") & (FileType().file)))
 
     # Act
-    files = list(q.files(root_path, recursive=True, files=True, now=now_dt))
+    files = list(q.files(root_path, recursive=True, files_only=True, now=now_dt))
 
     # Assert
     for f in files:
@@ -98,10 +98,12 @@ def test_complex_combination(
     root, now = rich_filesystem
     root_path = Path(root)
     now_dt = dt.datetime.fromtimestamp(now)
-    q = Query(Suffix("txt") & (Size() > 20) & (AgeSeconds() > 10) & Stem(r"d"))
+    q = Query(
+        where_expr=Suffix("txt") & (Size() > 20) & (AgeSeconds() > 10) & Stem(r"d")
+    )
 
     # Act
-    files = list(q.files(root_path, recursive=True, files=True, now=now_dt))
+    files = list(q.files(root_path, recursive=True, files_only=True, now=now_dt))
 
     # Assert
     for f in files:
@@ -119,10 +121,10 @@ def test_all_files_type_file(
     root, now = rich_filesystem
     root_path = Path(root)
     now_dt = dt.datetime.fromtimestamp(now)
-    q = Query(FileType().file)
+    q = Query(where_expr=FileType().file)
 
     # Act
-    files = list(q.files(root_path, recursive=True, files=True, now=now_dt))
+    files = list(q.files(root_path, recursive=True, files_only=True, now=now_dt))
 
     # Assert
     for f in files:
@@ -132,15 +134,35 @@ def test_all_files_type_file(
 def test_all_files_type_directory(
     rich_filesystem: Tuple[str, float],
 ) -> None:
+    """All matched entries are directories when files_only=False is used."""
+    # Arrange
+    root, now = rich_filesystem
+    root_path = Path(root)
+    now_dt = dt.datetime.fromtimestamp(now)
+    q = Query(where_expr=FileType().directory)
+
+    # Act
+    files = list(q.files(root_path, recursive=True, files_only=False, now=now_dt))
+
+    # Assert
+    for f in files:
+        assert f.is_dir()
+
+
+def test_all_files_type_directory_from_root(
+    rich_filesystem: Tuple[str, float],
+) -> None:
     """All matched entries are directories when files=False is used."""
     # Arrange
     root, now = rich_filesystem
     root_path = Path(root)
     now_dt = dt.datetime.fromtimestamp(now)
-    q = Query(FileType().directory)
+    q = Query(where_expr=FileType().directory, from_paths=root_path)
 
     # Act
-    files = list(q.files(root_path, recursive=True, files=False, now=now_dt))
+
+    # Note here that from_path is picked up from the Query
+    files = list(q.files(recursive=True, files_only=False, now=now_dt))
 
     # Assert
     for f in files:

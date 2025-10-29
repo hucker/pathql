@@ -1,13 +1,9 @@
-<!-- Badges -->
 
-![pytest](https://img.shields.io/badge/pytest-233-blue)
-![coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)
-![mypy](https://img.shields.io/badge/mypy-13-orange)
-![ruff](https://img.shields.io/badge/ruff-passed-brightgreen)
+![pytest](https://img.shields.io/badge/pytest-547-brightgreen) ![ruff](https://img.shields.io/badge/ruff-passed-brightgreen) ![Python 3.10–3.14](https://img.shields.io/badge/python-3.10--3.14-blue.svg)
 
 # PathQL: Declarative SQL Layer For Pathlib
 
-PathQL allows you to query `pathlib.Path` objects using a declarative syntax reminiscent of SQL.
+PathQL allows you to query `pathlib.Path` objects using a declarative syntax reminiscent of SQL. Queries cache os.stat_results for efficientcy on networks and direct support for threaded file crawling.
 
 ## Table of Contents
 
@@ -26,22 +22,23 @@ PathQL allows you to query `pathlib.Path` objects using a declarative syntax rem
 
 ## Quick Examples
 
+
 ```python
-from pathql import AgeYears, Ext, Query
-for f in Query("c:/logs", (AgeYears() > 1) & Ext(".bak")):
+from pathql import AgeYears, Suffix, Query
+for f in Query(where_expr=(AgeYears() > 1) & Suffix(".bak"), from_paths="c:/logs"):
     print(f"Files to delete - {f.resolve()}")
 ```
 
 ```python
-from pathql import AgeDays, Size, FileType
-for f in Query(r"C:/logs", (AgeDays() == 0) & (Size() > "10 mb") & Ext("log"), threaded=True):
+from pathql import AgeDays, Size, FileType, Suffix, Query
+for f in Query(where_expr=(AgeDays() == 0) & (Size() > "10 mb") & Suffix("log"), from_paths=r"C:/logs", threaded=True):
     print(f"Files to zip - {f.resolve()}")
 ```
 
 ```python
 from pathql import DayFilter
 import datetime as dt
-for f in Query(r"C:/logs", DayFilter(base=dt.datetime(year=2020, month=1, day=1))):
+for f in Query(rfrom_paths="C:/logs", where_expr=DayFilter(base=dt.datetime(year=2020, month=1, day=1))):
     print(f"Files to zip - {f.resolve()}")
 ```
 
@@ -57,56 +54,53 @@ for f in Query(r"C:/logs", DayFilter(base=dt.datetime(year=2020, month=1, day=1)
 
 Filters are composable objects that match files based on attributes like size, age, suffix, stem, or type. Combine filters using Python’s boolean operators.
 
-### Filter Reference
+### Threaded vs Single-Threaded
 
-- `Size() <= 1_000_000` — files up to 1MB
-- `Suffix() == "jpg"` — files with .png or .jpg extension
-- `Stem("report_*")` — files whose stem matches a glob pattern
-- `FileType().file` — file, dir, link
-- `AgeMinutes() < 10` — modified in the last 10 minutes
-- `Between(Size(), 1000, 2000)` — size in range
-- `YearFilter(2024)`, `MonthFilter("May")`, etc.
+- Single-threaded (`threaded=False`) walks the tree and filters each entry in a single loop. Simpler and predictable; good for small trees or when threading is not desired.
+- Threaded (`threaded=True`) starts a producer thread that walks the filesystem and pushes `(path, stat_result)` tuples into a bounded `queue.Queue` (default maxsize: 10). The consumer (caller) reads from the queue and runs the filter expression. This can improve throughput when the filesystem is slow or when filter evaluation is relatively expensive.
+- The producer places a `None` sentinel on the queue when traversal completes; the consumer stops after seeing the sentinel and joins the producer thread.
 
-## Boolean Operators, Any, All & Short-Circuiting
+### Stat Caching and `stat_result`
 
-- `&` (AND): Both filters must match.
-- `|` (OR): Either filter matches (short-circuits if first matches).
-- `~` (NOT): Inverts the filter.
-- **Any/All** keywords allow short circuited composition of query
+- The producer (threaded mode) or the single-threaded walker performs `path.stat()` once per file (at most) and passes the `stat_result` along with the path to the filters. Filters should accept and refer to the provided `stat_result` to avoid extra system calls.
+- `stat_result` is only generated when it is actually used and if other filter expressions require stat, they use a cached version.
+- All filters in PathQL accept optional `now` and `stat_result` parameters so that a single `now` timestamp can be used for consistent comparisons and so callers can reuse stat results.
 
-**Short-circuiting:**
-For `A & B`, if `A` fails, `B` is not evaluated.
-For `A | B`, if `A` matches, `B` is not evaluated.
+### Timing
 
-**Precedence:**
-Use parentheses for clarity: `(AgeDays() < 2) & Ext("txt") `
+In large directory trees with hundreds or thousands of files, the time changes between the beginning and end of a query, sometimes by many seconds or more. This can lead to race conditions when ages are calculated. The design decision is that at the start of a query the current time is read (or a user-provided one is used) for all datetime calculations. This is imperfect because there are many possible issues. For example, a file existed when you started the run but was deleted when you finished. There are many ways that this problem could be solved with varying degrees of "quality".
 
-## Query Engine
+### Recursion, Files vs Directories
 
-- `Query(filter_expr)` — construct a query
-- `Query.match(path, stat_proxy=None, now=None)` — check a single file
-- `Query.files(path_or_paths, ...)` — lazily yield matches from a single folder or a list of folders
-- `Query.select(path_or_paths, ...)` — collect matches eagerly from a single folder or a list of folders
+- `recursive=True` (default) uses `rglob("*")` to walk the tree; set `recursive=False` to restrict to the top-level directory via `glob("*")`.
+- `files_only=True` (default) filters out non-files; set `files_only=False` to include directories in the results.
 
-Both `files` and `select` accept either a single path (str or Path) or a list of paths. This allows you to query multiple folders in one call:
+### Result Collection
+
+- `files(...)` is lazy and yields matches as they are found. Use this when you want streaming behavior or to process very large trees without building a large in-memory list.
+- `select(...)` eagerly collects matches into a `ResultSet` (which wraps the iterator into a list-like object). Use `select` for aggregations or when an in-memory snapshot is required.
+
+### Examples (Updated for Keyword-Only API)
 
 ```python
-# Query a single folder
-for f in Query(Suffix('.txt')).files('/data/folder1'):
-    print(f)
+from pathql.query import Query
+from pathql.filters import Suffix, AgeDays
+import pathlib
 
-# Query multiple folders
-folders = ['/data/folder1', '/data/folder2', '/data/folder3']
-for f in Query(Suffix('.txt')).files(folders):
-    print(f)
+# Lazy, single-threaded: iterate matches as they are found
+q = Query(where_expr=Suffix('.log') & (AgeDays() > 30), from_paths=pathlib.Path('/var/log'))
+for p in q.files(from_paths=pathlib.Path('/var/log'), threaded=False):
+        print(p)
 
-# Collect all matches from multiple folders
-result = Query(Suffix('.txt')).select(folders)
-print(list(result))
+# Eager, threaded: traversal runs in a background producer thread
+for p in Query(where_expr=Suffix('.txt'), from_paths=pathlib.Path('/data')).files(from_paths=pathlib.Path('/data'), threaded=True):
+        process(p)
+
+# Programmatic single-match check
+q = Query(where_expr=AgeDays() > 7, from_paths=pathlib.Path('notes.txt'))
+if q.match(pathlib.Path('notes.txt')):
+        print('old')
 ```
-
-Supports threaded and single-threaded modes, stat caching, recursion, and result collection.
-
 ## Datetime & Age Filters
 
 - `YearFilter`, `MonthFilter`, `DayFilter`, etc. — match by parts of file timestamps
@@ -202,7 +196,7 @@ for f in Query(r"C:/logs", DayFilter(base=dt.datetime(year=2020, month=1, day=1)
     print(f"Files to zip - {f.resolve()}")
 ```
 
-This basic examples  show how `PathQL` hides the guts of the pathlib module and the os module from you with readable filter espressions.  The real power comes with actions that allow you to apply a function to all of the files that match your query, in parallel.
+This basic examples  show how `PathQL` hides the guts of the pathlib module and the os module from you with readable filter epressions.  The real power comes with actions that allow you to apply a function to all of the files that match your query, in parallel.
 
 
 
@@ -275,7 +269,7 @@ result = combined.match(pathlib.Path("somefile.txt"))  # Fast, no delay
 combined = All(FalseFilter(), ExpensiveFilter())
 result = combined.match(pathlib.Path("somefile.txt"))  # Fast, no delay
 
-# ExpensiveFilter will NOT be called because CheapFilter succeeds.  Any funcion mimics 'or'
+# ExpensiveFilter will NOT be called because CheapFilter succeeds.  Any function mimics 'or'
 combined = Any(TrueFilter(), ExpensiveFilter())
 result = combined.match(pathlib.Path("somefile.txt"))  # Fast, no delay
 ```
@@ -340,7 +334,7 @@ It exposes a small API and supports both single-threaded and producer/consumer (
 
 - `Query(filter_expr)` — construct a Query with a filter expression (any `Filter`).
 - `Query.match(path, now=None, stat_result=None)` — run the filter expression against a single `path`. Useful for programmatic checks or tests. `now` defaults to the current datetime `stat_result` can be provided to avoid an additional `stat()` call.
-- `Query.files(path, recursive=True, files=True, now=None, threaded=False)` — lazily yield matching `pathlib.Path` objects. Set `threaded=True` to enable  the producer/consumer mode.
+- `Query.files(path, recursive=True, files_only=True, now=None, threaded=False)` — lazily yield matching `pathlib.Path` objects. Set `threaded=True` to enable  the producer/consumer mode.
 - `Query.select(path, ...)` — eagerly collect matches into a `ResultSet`.
 
 ### Threaded vs single-threaded
@@ -366,41 +360,66 @@ IN large directory trees with 100's or 1000's of files the time changes between 
 ### Recursion, files vs directories
 
 - `recursive=True` (default) uses `rglob("*")` to walk the tree; set `recursive=False` to restrict to the top-level directory via `glob("*")`.
-- `files=True` (default) filters out non-files; set `files=False` to include directories in the results.
+- `files_only=True` (default) filters out non-files; set `files=False` to include directories in the results.
 
-### Result collection
+## ResultSet and ResultField
 
-- `files(...)` is lazy and yields matches as they are found. Use this when you want streaming behavior or to process very large trees without building a large in-memory list.
-- `select(...)` eagerly collects matches into a `ResultSet` (which wraps the iterator into a list-like object). Use `select` for aggregations or when an in-memory snapshot is required.
+PathQL’s `ResultSet` is a materialized list of `pathlib.Path` objects returned by `Query.select()`. It provides aggregation, sorting, and statistical methods for analyzing query results. You can use `ResultField` to specify which file attribute to operate on.
+
+### ResultSet Operations
+
+| Operation      | Description                                               |
+|----------------|----------------------------------------------------------|
+| `count_()`     | Number of items in the result set                        |
+| `sort_(field, ascending)` | Sort by a field (ascending/descending)         |
+| `top_n(field, n)` | Top N items by field                                  |
+| `bot_n(field, n)` | Bottom N items by field                               |
+| `max(field)`   | Maximum value for a field                                |
+| `min(field)`   | Minimum value for a field                                |
+| `average(field)` | Average value for a field                              |
+| `median(field)` | Median value for a field                                |
+
+### ResultField Options
+
+| Field                | Description                       |
+|----------------------|-----------------------------------|
+| `SIZE`               | File size in bytes                |
+| `MTIME`              | Modification time (timestamp)     |
+| `CTIME`              | Creation time (timestamp)         |
+| `ATIME`              | Access time (timestamp)           |
+| `MTIME_DT`           | Modification time (datetime)      |
+| `CTIME_DT`           | Creation time (datetime)          |
+| `ATIME_DT`           | Access time (datetime)            |
+| `NAME`               | File name                         |
+| `SUFFIX`             | File extension                    |
+| `STEM`               | File stem (name without extension)|
+| `PATH`               | Full path as string               |
+| `PARENT`             | Parent directory                  |
+| `PARENTS`            | All parent directories (tuple)    |
+| `PARENTS_STEM_SUFFIX`| (Parents, stem, suffix) tuple     |
 
 ### Examples
 
-```py
+```python
 from pathql.query import Query
-from pathql.filters import Suffix, AgeDays
+from pathql.result_fields import ResultField
 
-# Lazy, single-threaded: iterate matches as they are found
-q = Query(Suffix('.log') & (AgeDays() > 30))
-for p in q.files(pathlib.Path('/var/log'), threaded=False):
-    print(p)
+# Get a result set of all .log files
+result_set = Query(where_expr=Suffix(".log"), from_paths="./logs").select()
 
-# Eager, threaded: traversal runs in a background producer thread
-for p in Query(Suffix('.txt')).files(pathlib.Path('/data'), threaded=True):
-        process(p)
+# Count files
+print(result_set.count_())
 
-# Programmatic single-match check
-q = Query(AgeDays > 7)
-if q.match(pathlib.Path('notes.txt')):
-    print('old')
+# Get top 3 largest files
+top_3 = result_set.top_n(ResultField.SIZE, 3)
+
+# Sort by creation time (ascending)
+sorted_by_ctime = result_set.sort_(ResultField.CTIME, ascending=True)
+
+# Get file with latest modification time
+latest = result_set.max(ResultField.MTIME)
 ```
 
-### Edge cases and notes
-
-- The default queue max size (10) is a tradeoff between memory and producer progress; tuning may help for very large or very slow filesystems.
-- Filters should avoid calling `stat()` themselves when a cached `stat_result` is provided. (os.stat is expensive on network file systems)
-- When using `now`, pass a fixed datetime in tests to make results deterministic.
-
-If you need more control (parallel consumers, custom traversal ordering, or different queueing semantics) you can implement your own driver that reuses the filter primitives exposed by PathQL.
 
 ## File and Suffix Filter Semantics
 
@@ -422,7 +441,7 @@ File("*report*")      # matches any file with "report" in the name
 
 ### Suffix Filter
 
-The `Suffix` and `Ext` filters match file extensions by checking if the filename ends with the full extension, including the dot. Patterns like 'bmp' or '.bmp' are both accepted, but are normalized internally to '.bmp'.
+The `Suffix` filter match file extensions by checking if the filename ends with the full extension, including the dot. Patterns like 'bmp' or '.bmp' are both accepted, but are normalized internally to '.bmp'.
 
 - Any leading dot in the extension pattern is added if missing, so 'bmp' and '.bmp' are treated identically.
 - Matching is case-insensitive.
@@ -463,23 +482,42 @@ for p in Query("/images", Suffix("{tif,jpg}")):
     print(p)
 ```
 
-Example: simple content-based filter written as a function and wrapped with `PathCallback`:
+## Custom Filter Classes
 
+PathQL lets you extend filtering by sub-classing the `Filter` base class.
+
+
+**Performance Note:**
+Filters that read file contents (e.g., searching for keywords) are typically much slower than metadata checks.
+To maximize efficiency, place custom filters at the end of your filter expressions so that fast filters (like `Suffix` or `Age`) can short-circuit and avoid unnecessary file processing.
+
+
+### Custom Filter Classes
+
+For more advanced logic, subclass `Filter` and implement the `match()` method. This gives you full control over how files are evaluated.
+
+**Example: Custom Filter for minimum line count**
 ```python
-from pathql.filters import PathCallback
+from pathql.filters.base import Filter
+from pathql.query import Query
+from pathql.filters import Suffix
 
-def contains_keyword(path: pathlib.Path, keyword: str) -> bool:
-    """Return True if the file contains the given keyword (simple UTF-8 search)."""
-    try:
-        return keyword in path.read_text(encoding="utf-8")
-    except Exception:
-        return False
+class MinLinesFilter(Filter):
+    def __init__(self, min_lines: int):
+        self.min_lines = min_lines
 
-todo_filter = PathCallback(contains_keyword)("TODO")
+    def match(self, path: pathlib.Path, now=None, stat_result=None) -> bool:
+        try:
+            return sum(1 for _ in path.open()) >= self.min_lines
+        except (IOError,PermissionError,FileNotFoundError):
+            return False
 
-for p in Query("/project", todo_filter & Suffix(".py")):
+# Place Suffix first for short-circuiting, then MinLinesFilter
+for p in Query(where_expr=Suffix(".txt") & MinLinesFilter(100), from_paths="./docs"):
     print(p)
 ```
+
+See `test/test_override.py` for more examples and patterns.
 
 ## Datetime Part Filters
 
@@ -521,16 +559,16 @@ You almost never need to interact with the raw `datetime` objects if you are dea
 
 ### Examples
 
-| FilterName   | base_time                  | offset   | attr    | Description                                                      |
-|--------------|---------------------------|----------|---------|------------------------------------------------------------------|
-| HourFilter   | datetime(2022,10,28,11,0) | 2        | mtime   | Files will match if modified in the hour 13:00 on 2022-10-28     |
-| HourFilter   | None (current_time)        | 0        | ctime   | Files will match if created in the current hour                  |
-| DayFilter    | datetime(2022,1,1)        | 0        | atime   | Files will match if accessed on 2022-01-01                       |
-| DayFilter    | None (current_time)        | -1       | mtime   | Files will match if modified yesterday                           |
-| MonthFilter  | datetime(2023,6,1)        | -1       | ctime   | Files will match if created in May 2023                          |
-| MonthFilter  | None (current_time)        | 0        | mtime   | Files will match if modified this month                          |
-| YearFilter   | datetime(2020,1,1)        | 1        | mtime   | Files will match if modified in 2021                             |
-| YearFilter   | None (current_time)        | 0        | ctime   | Files will match if created this year                            |
+| FilterName  | base_time                 | offset | attr  | Description                                                  |
+| ----------- | ------------------------- | ------ | ----- | ------------------------------------------------------------ |
+| HourFilter  | datetime(2022,10,28,11,0) | 2      | mtime | Files will match if modified in the hour 13:00 on 2022-10-28 |
+| HourFilter  | None (current_time)       | 0      | ctime | Files will match if created in the current hour              |
+| DayFilter   | datetime(2022,1,1)        | 0      | atime | Files will match if accessed on 2022-01-01                   |
+| DayFilter   | None (current_time)       | -1     | mtime | Files will match if modified yesterday                       |
+| MonthFilter | datetime(2023,6,1)        | -1     | ctime | Files will match if created in May 2023                      |
+| MonthFilter | None (current_time)       | 0      | mtime | Files will match if modified this month                      |
+| YearFilter  | datetime(2020,1,1)        | 1      | mtime | Files will match if modified in 2021                         |
+| YearFilter  | None (current_time)       | 0      | ctime | Files will match if created this year                        |
 
 **Example usage:**
 ```python
@@ -637,7 +675,7 @@ Ideally, if you have a datetime value in your code you will never need to deal w
 
 ## File Age Filters
 
-PathQL supports filtering files by age using either filesystem timestamps or the date encoded in the filename. Using filename dating allows for a (possibly) more reliable way to target creation time in log files.  Instead of using the operating system timing data we use the file naming convention where the file name starts with YYYY-MM-DD-HH-, YYYY-MM-DD_, YY-MM_, YY_ Using this time can get around issues with creation tme not being reliable across operrating systems, modification times being changed by mistake.  System clocks not be correct.
+PathQL supports filtering files by age using either filesystem timestamps or the date encoded in the filename. Using filename dating allows for a (possibly) more reliable way to target creation time in log files.  Instead of using the operating system timing data we use the file naming convention where the file name starts with YYYY-MM-DD-HH-, YYYY-MM-DD_, YY-MM_, YY_ Using this time can get around issues with creation tme not being reliable across operating systems, modification times being changed by mistake.  System clocks not be correct.
 
 For the purpose of matching if a valid file date is not found the match does not occur, it is not an error.
 
@@ -664,7 +702,7 @@ Filename-based filters allow you to query files based on their logical age, inde
 
 ### File Actions
 
-PathQL provides utilities for batch file operations on lists of `pathlib.Path` objects (or `ResultSet`). You can use a query to select files, then copy, move, or delete them:
+PathQL provides utilities for batch file operations on lists of `pathlib.Path` objects (or `ResultSet`). You can use a query to select files, then copy, move, delete or zip them:
 
 ```python
 from pathql.actions import copy_files, move_files, delete_files
@@ -732,7 +770,7 @@ zip_delete_files(files, root, target_zip)
 
 ### 1. Find all PNG or BMP images under 1MB, modified in the last 10 minutes
 
-`PathQL` has a small CLI app called `pql.py1` that can be run from the command line using `uv`. It is a basic app that pulls in `pathql` and `PIL` and runs from the command line.  It has a custom filter object that looks into image file metadata and extracts the color depth.  This allow you to create filters that filter by color depth.  The demo enables color depth age and file size filtering.
+`PathQL` has a small CLI app called `pql.py1` that can be run from the command line using `uv`. It is a basic app that pulls in `pathql` and `PIL` and runs from the command line.  It has a custom filter object that looks into image file metadata and extracts the color depth allowing you filter files by color depth.  The demo enables color depth age and size filtering.
 
 
 
@@ -773,18 +811,13 @@ This will:
 
 ## Note on Types: Operator Overloads in DSLs
 
-PathQL filter classes (like `Size`, `AgeDays`, etc.) intentionally override Python's
-comparison and boolean operator methods (`__eq__`, `__lt__`, etc.) to return filter
-objects, not `bool`. This enables expressive, composable query logic:
+PathQL filter classes (like `Size`, `AgeDays`, etc.) intentionally override Python's comparison and boolean operator methods (`__eq__`, `__lt__`, etc.) to return filter objects, not `bool`. This enables expressive, composable query logic:
 
 ```python
 Size() > "10MB"   # returns a filter, not a bool
 ```
 
-This pattern is common in query builders and DSLs, but it conflicts with Python's
-type system and expectations for these dunder methods (which are supposed to return
-`bool`). As a result, type checkers (like mypy, Pyright) and some linters will
-report errors or warnings about return types and operator overloads.
+This pattern is common in query builders and DSLs, but it conflicts with Python's type system and expectations for these dunder methods (which are supposed to return `bool`). As a result, type checkers (like mypy, Pyright) and some linters will report errors or warnings about return types and operator overloads.
 
 **Why?**
 - Python expects `__eq__`, `__lt__`, etc. to return `bool` for built-in types.
@@ -818,7 +851,7 @@ latest instructions on coding style, testing, and release procedures.
 - Query API refactored: supports SQL-like `where_expr` and default path (`from_path`).
 - Major normalization and extensibility improvements for filters and actions.
 - All public API exports (`__all__`) now match implementation; missing exports added.
-- Docstrings and comments audited and wrapped to line length limits (≤88 chars).
+- Doc-strings and comments audited and wrapped to line length limits (≤88 chars).
 - README updated for new API, usage, and developer notes on type system issues.
 - Robust parameterized tests for edge cases and error handling.
 - Improved error reporting and test coverage for query and filter logic.
@@ -833,7 +866,4 @@ latest instructions on coding style, testing, and release procedures.
 ### Developer Notes
 
 - See new README section on operator overloads and typechecker limitations for DSLs.
-- All docstrings and comments are PEP8-compliant and wrapped to ≤88 chars/line.
-
----
-
+- All doc-strings and comments are PEP8-compliant and wrapped to ≤88 chars/line.

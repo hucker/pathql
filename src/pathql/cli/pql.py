@@ -17,6 +17,7 @@ from pathql.filters.age import AgeDays
 from pathql.filters.alias import DatetimeOrNone, StatProxyOrNone
 from pathql.filters.base import Filter
 from pathql.filters.size import Size
+from pathql.filters.file import File
 
 
 class ColorMode(Filter):
@@ -39,7 +40,7 @@ class ColorMode(Filter):
         try:
             with Image.open(path) as img:
                 return img.mode.lower() in self.valid_modes
-        except Exception:
+        except (IOError, OSError, PermissionError):
             return False
 
 
@@ -83,7 +84,7 @@ def main():
     args = parser.parse_args()
 
     # Build filter expression
-    filter_expr = pathql.filters.File(args.pattern)
+    filter_expr:Filter = File(args.pattern)
     color_modes = [m.strip().upper() for m in args.col_mode.split(",") if m.strip()]
     color_filter = None
     for m in color_modes:
@@ -95,7 +96,7 @@ def main():
     filter_expr &= AgeDays() >= args.min_age
     filter_expr &= AgeDays() <= args.max_age
 
-    for path in pathql.Query(filter_expr).files(args.root):
+    for path in pathql.Query(where_expr==filter_expr).files(args.root):
         print(path)
 
 

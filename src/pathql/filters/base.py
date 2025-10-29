@@ -224,3 +224,24 @@ class AllowAll(Filter):
     ) -> bool:
         """All files pass through"""
         return True
+
+class AllowNone(Filter):
+    """
+    Lets all files pass through.  Good for testing
+
+    Supports: AllowNone([f1, f2, f3]) or AllowNone(f1, f2, f3)
+
+    """
+
+    def __init__(self, *filters: Filter):
+        # Just ignore filters, we aren't going to use them.  Don't depend on side effects.
+        pass
+
+    def match(
+        self,
+        path: pathlib.Path,
+        stat_proxy: StatProxyOrNone = None,
+        now: DatetimeOrNone = None,
+    ) -> bool:
+        """No files pass through"""
+        return False

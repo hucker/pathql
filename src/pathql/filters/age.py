@@ -24,7 +24,7 @@ Created < some_datetime
 This will use the created timestamp and will often be correct, surprisingly working
 better on Windows than on Unix-like systems.
 """
-
+import datetime as dt
 import operator
 import pathlib
 from typing import Any, Callable
@@ -72,10 +72,9 @@ class AgeBase(AttributeFilter):
             """
             if stat_proxy is None:
                 raise ValueError("stat_proxy required for age extraction")
-            import datetime
 
             if now is None:
-                now = datetime.datetime.now()
+                now = dt.datetime.now()
             st = stat_proxy.stat()
             mtime_ts = getattr(st, self._stat_field)
             now_ts = now.timestamp()

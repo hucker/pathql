@@ -160,7 +160,7 @@ def test_min_max_mtime(test_result_files_with_mtime: list[pathlib.Path]) -> None
 def test_end_to_end_query_and_aggregations(test_result_folder: pathlib.Path) -> None:
     """End-to-end: filter files, aggregate, and verify results."""
     # Arrange
-    query = Query(Suffix("txt"))
+    query = Query(where_expr=Suffix("txt"))
 
     # Act
     expected_files: int = 15  # Should return 15 files.

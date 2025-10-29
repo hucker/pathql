@@ -30,6 +30,7 @@ def multi_folder_fixture(tmp_path: pathlib.Path) -> list[pathlib.Path]:
         folders.append(folder)
     return folders
 
+
 @pytest.mark.parametrize(
     "folder_combo",
     [
@@ -54,11 +55,15 @@ def test_query_files_multi_folder(
     name_to_folder = {
         name: folder for name, folder in zip(folder_names, multi_folder_fixture)
     }
-    selected_folders: list[pathlib.Path] = [name_to_folder[name] for name in folder_combo]
+    selected_folders: list[pathlib.Path] = [
+        name_to_folder[name] for name in folder_combo
+    ]
 
     # Act
-    query = Query(AllowAll())
-    actual_files = list(query.files(selected_folders, recursive=False, files=True))
+    query = Query(where_expr=AllowAll())
+    actual_files = list(
+        query.files(from_paths=selected_folders, recursive=False, files_only=True)
+    )
 
     # Assert
     expected_count = 2 * len(selected_folders)
@@ -70,4 +75,3 @@ def test_query_files_multi_folder(
         assert any(str(f).startswith(str(folder)) for folder in selected_folders), (
             f"File {f} not in selected folders {selected_folders}"
         )
-
