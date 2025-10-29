@@ -206,7 +206,6 @@ def test_query_where_expr_and_from_path(tmp_path: pathlib.Path) -> None:
     q: Query = Query(where_expr=Suffix(".txt"), from_paths=str(test_dir))
     results = list(q.files())
 
-
     # Assert
     assert file1 in results
     assert file2 not in results
@@ -220,7 +219,7 @@ def test_query_where_expr_and_from_path(tmp_path: pathlib.Path) -> None:
     assert file1 in results2 and file2 in results2
 
 
-def test_query_files_override_defaults(tmp_path:pathlib.Path):
+def test_query_files_override_defaults(tmp_path: pathlib.Path):
     # Arrange: create files
     file1 = tmp_path / "file1.txt"
     file1.write_text("data")
@@ -232,16 +231,21 @@ def test_query_files_override_defaults(tmp_path:pathlib.Path):
     file3.write_text("data")
 
     # Set defaults: recursive=False, so only top-level files should be found
-    q = Query(where_expr=AllowAll(), from_paths=tmp_path, recursive=False, files_only=True)
+    q = Query(
+        where_expr=AllowAll(), from_paths=tmp_path, recursive=False, files_only=True
+    )
     files_default = list(q.files())
     assert file1 in files_default and file2 in files_default
     assert file3 not in files_default  # Should not find file3.txt in subdir
 
     # Override: recursive=True, should find file3.txt as well
     files_override = list(q.files(recursive=True))
-    assert file1 in files_override and file2 in files_override and file3 in files_override
+    assert (
+        file1 in files_override and file2 in files_override and file3 in files_override
+    )
 
-def test_query_select_override_defaults(tmp_path:pathlib.Path):
+
+def test_query_select_override_defaults(tmp_path: pathlib.Path):
     # Arrange: create files
     file1 = tmp_path / "file1.txt"
     file1.write_text("data")
@@ -260,4 +264,8 @@ def test_query_select_override_defaults(tmp_path:pathlib.Path):
     # Override: files_only=True and recursive=False, should not find directories or subdir files
     files_override = list(q.select(files_only=True, recursive=False))
     assert subdir not in files_override
-    assert file1 in files_override and file2 in files_override and file3 not in files_override
+    assert (
+        file1 in files_override
+        and file2 in files_override
+        and file3 not in files_override
+    )
