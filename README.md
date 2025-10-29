@@ -1,5 +1,5 @@
 
-![pytest](https://img.shields.io/badge/pytest-547-brightgreen) ![ruff](https://img.shields.io/badge/ruff-passed-brightgreen) ![Python 3.10–3.14](https://img.shields.io/badge/python-3.10--3.14-blue.svg)
+![pytest](https://img.shields.io/badge/pytest-530-brightgreen) ![ruff](https://img.shields.io/badge/ruff-passed-brightgreen) ![Python 3.10–3.14](https://img.shields.io/badge/python-3.10--3.14-blue.svg)
 
 # PathQL: Declarative SQL Layer For Pathlib
 
@@ -368,35 +368,35 @@ PathQL’s `ResultSet` is a materialized list of `pathlib.Path` objects returned
 
 ### ResultSet Operations
 
-| Operation      | Description                                               |
-|----------------|----------------------------------------------------------|
-| `count_()`     | Number of items in the result set                        |
-| `sort_(field, ascending)` | Sort by a field (ascending/descending)         |
-| `top_n(field, n)` | Top N items by field                                  |
-| `bot_n(field, n)` | Bottom N items by field                               |
-| `max(field)`   | Maximum value for a field                                |
-| `min(field)`   | Minimum value for a field                                |
-| `average(field)` | Average value for a field                              |
-| `median(field)` | Median value for a field                                |
+| Operation                 | Description                            |
+| ------------------------- | -------------------------------------- |
+| `count_()`                | Number of items in the result set      |
+| `sort_(field, ascending)` | Sort by a field (ascending/descending) |
+| `top_n(field, n)`         | Top N items by field                   |
+| `bot_n(field, n)`         | Bottom N items by field                |
+| `max(field)`              | Maximum value for a field              |
+| `min(field)`              | Minimum value for a field              |
+| `average(field)`          | Average value for a field              |
+| `median(field)`           | Median value for a field               |
 
 ### ResultField Options
 
-| Field                | Description                       |
-|----------------------|-----------------------------------|
-| `SIZE`               | File size in bytes                |
-| `MTIME`              | Modification time (timestamp)     |
-| `CTIME`              | Creation time (timestamp)         |
-| `ATIME`              | Access time (timestamp)           |
-| `MTIME_DT`           | Modification time (datetime)      |
-| `CTIME_DT`           | Creation time (datetime)          |
-| `ATIME_DT`           | Access time (datetime)            |
-| `NAME`               | File name                         |
-| `SUFFIX`             | File extension                    |
-| `STEM`               | File stem (name without extension)|
-| `PATH`               | Full path as string               |
-| `PARENT`             | Parent directory                  |
-| `PARENTS`            | All parent directories (tuple)    |
-| `PARENTS_STEM_SUFFIX`| (Parents, stem, suffix) tuple     |
+| Field                 | Description                        |
+| --------------------- | ---------------------------------- |
+| `SIZE`                | File size in bytes                 |
+| `MTIME`               | Modification time (timestamp)      |
+| `CTIME`               | Creation time (timestamp)          |
+| `ATIME`               | Access time (timestamp)            |
+| `MTIME_DT`            | Modification time (datetime)       |
+| `CTIME_DT`            | Creation time (datetime)           |
+| `ATIME_DT`            | Access time (datetime)             |
+| `NAME`                | File name                          |
+| `SUFFIX`              | File extension                     |
+| `STEM`                | File stem (name without extension) |
+| `PATH`                | Full path as string                |
+| `PARENT`              | Parent directory                   |
+| `PARENTS`             | All parent directories (tuple)     |
+| `PARENTS_STEM_SUFFIX` | (Parents, stem, suffix) tuple      |
 
 ### Examples
 
@@ -844,26 +844,31 @@ latest instructions on coding style, testing, and release procedures.
 
 ---
 
-## Release Summary (v0.0.5, 2025-10-28)
 
-### Highlights
+## Release Summary
 
-- Query API refactored: supports SQL-like `where_expr` and default path (`from_path`).
-- Major normalization and extensibility improvements for filters and actions.
-- All public API exports (`__all__`) now match implementation; missing exports added.
-- Doc-strings and comments audited and wrapped to line length limits (≤88 chars).
-- README updated for new API, usage, and developer notes on type system issues.
-- Robust parameterized tests for edge cases and error handling.
-- Improved error reporting and test coverage for query and filter logic.
-- CLI help and usage examples expanded.
+### Version: **v0.0.6** &nbsp;|&nbsp; Date: 2025-10-29
 
-### Breaking Changes
+#### Highlights
 
-- Query constructor now prefers `where_expr` for SQL-like semantics.
-- Some filter and action APIs have stricter type normalization.
-- All filters and actions require explicit stat/caching for performance.
+- **Query API refactored:** Now supports SQL-like `where_expr` and default path (`from_paths`).
+- **Normalization and extensibility:** Major improvements for filters and actions.
+- **Public API exports:** All `__all__` exports now match implementation; missing exports added.
+- **Documentation:** Docstrings and comments audited and wrapped to line length limits (≤88 chars).
+- **README:** Updated for new API, usage, and developer notes on type system issues.
+- **Testing:** Robust parameterized tests for edge cases and error handling.
+- **Error reporting:** Improved error reporting and test coverage for query and filter logic.
+- **CLI:** Help and usage examples expanded.
+- **Docstring coverage:** All modules and most classes now have docstrings; method/function docstrings in progress.
+- **Line length compliance:** Docstrings and comments wrapped to ≤88 chars/line (≤100 chars for code).
 
-### Developer Notes
+#### Breaking Changes
+
+- **Query constructor:** Now prefers `where_expr` for SQL-like semantics.
+- **Filter and action APIs:** Stricter type normalization.
+- **Stat/caching:** All filters and actions require explicit stat/caching for performance.
+
+#### Developer Notes
 
 - See new README section on operator overloads and typechecker limitations for DSLs.
-- All doc-strings and comments are PEP8-compliant and wrapped to ≤88 chars/line.
+- All docstrings and comments are PEP8-compliant and wrapped to ≤88 chars/line.
