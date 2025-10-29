@@ -1,16 +1,29 @@
 """Top-level PathQL package exports and convenience imports."""
 
 from .actions.file_actions import FileActionResult
-from .actions.zip import (zip_copy_files,
+from .actions.zip import (
+    zip_copy_files,
     zip_delete_files,
     zip_files,
     zip_move_files,
 )
 from .filters.age import AgeDays, AgeHours, AgeMinutes, AgeYears
 from .filters.alias import StatProxy, StatProxyOrNone
-from .filters.base import All, AllowAll,AllowNone, AndFilter, Filter, NotFilter, OrFilter
+from .filters.base import (
+    All,
+    AllowAll,
+    AllowNone,
+    AndFilter,
+    Filter,
+    NotFilter,
+    OrFilter,
+)
 from .filters.between import Between
-from .filters.date_filename import filename_to_datetime,path_from_datetime,path_from_dt_ints
+from .filters.date_filename import (
+    filename_to_datetime,
+    path_from_datetime,
+    path_from_dt_ints,
+)
 from .filters.datetime_parts import (
     DayFilter,
     HourFilter,
@@ -32,7 +45,7 @@ from .filters.date_filename import DateFilenameParts
 from .result_fields import ResultField
 from .result_set import ResultSet
 
-__version__ = "0.0.6"
+__version__ = "0.0.7"
 
 __all__ = [
     "AgeDays",
