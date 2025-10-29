@@ -4,7 +4,7 @@
 
 ## PathQL: Declarative Filesystem Query Language for Python
 
-PathQL is a declarative, composable, and efficient query language for filesystem operations in Python. It enables expressive, readable, and powerful queries over files and directories, inspired by `pathlib` and modern query languages. PathQL is designed for performance (stat caching), extensibility, and testability, with robust operator overloading and a familiar, Pythonic API.
+PathQL is a declarative, composable, and efficient query language for filesystem operations in Python. It enables expressive, readable, and powerful queries over files and directories, inspired by `pathlib` and modern query languages. PathQL is designed for performance (stat caching), extensibility, and testability, with robust operator overloading and a familiar, Pythonic API requiring no (or VERY few) interactions and conversions with `datetimes`, `timestaps` and vaguaries of the `os.stat_result` object.
 
 ## Features
 
@@ -20,25 +20,34 @@ PathQL is a declarative, composable, and efficient query language for filesystem
 PathQL lets you write queries against the file system in a composable form:
 
 ```python
-from pathql import AgeYears, Ext, Query
-for f in Query("c:/logs", (AgeYears() > 1) & Ext(".bak")):
+from pathql import AgeYears, Suffix, Query
+for f in Query(where_expr=(AgeYears() > 1) & Suffix(".bak"), from_paths="c:/logs").files():
     print(f"Files to delete - {f.resolve()}")
 ```
 
 ```python
-from pathql import AgeDays, Size, FileType
-for f in Query(r"C:/logs", (AgeDays() == 0) & (Size() > "10 mb") & Ext("log"), threaded=True):
+from pathql import AgeDays, Size, FileType, Suffix, Query
+for f in Query(where_expr=(AgeDays() == 0) & (Size() > "10 mb") & Suffix("log"), from_paths="C:/logs", threaded=True).files():
     print(f"Files to zip - {f.resolve()}")
 ```
 
 ```python
-from pathql import DayFilter
-import datetime as dt
-for f in Query(r"C:/logs", DayFilter(base=dt.datetime(year=2020, month=1, day=1))):
-    print(f"Files to zip - {f.resolve()}")
+from pathql import AgeDays, Size, Suffix, Query,ResultField
+
+# Count, largest file size, and oldest file in the result set
+query = Query(
+    where_expr=(AgeDays() == 0) & (Size() > "10 mb") & Suffix("log"),
+    from_paths="C:/logs",
+    threaded=True
+)
+result_set = query.select()
+
+print(f"Number of files to zip: {result_set.count_()}")
+print(f"Largest file size: {result_set.max(ResultField.SIZE)} bytes")
+print(f"Oldest file: {result_set.min(ResultField.MTIME)}")
 ```
 
-This basic examples  show how `PathQL` hides the guts of the pathlib module and the os module from you with readable filter epressions.  The real power comes with actions that allow you to apply a function to all of the files that match your query, in parallel.
+These examples show how `PathQL` hides the guts of the pathlib module and the os module from you with readable filter expressions.  The real power comes with actions that allow you to apply a function to all of the files that match your query, in parallel.
 
 
 
@@ -61,9 +70,9 @@ The query language implemented by `PathQL` should be thought of as a mathematica
 
 You must say
 
-`(AgeDays() < 2) & (Ext("txt))`
+`(AgeDays() < 2) & (Suffix("txt))`
 
-for precedence to work as you expect.
+for precedence to work as you expect, or use the `All`/`Any` methods.
 
 **Short-Circuiting Behavior**
 
