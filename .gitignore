@@ -1,5 +1,8 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
+**/__pycache__/
+**/.pycache/
+**/pycache/
 *.py[cod]
 *$py.class
 
@@ -8,10 +11,6 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-<<<<<<< HEAD
-env/
-=======
->>>>>>> feature/dates
 eggs/
 .eggs/
 lib/
@@ -108,10 +107,9 @@ Thumbs.db
 # Ruff
 .ruff_cache/
 
-# Distributin
+# Distribution
 dist/
 
 # Git
 .git/
->>>>>>> feature/dates
 .pypirc

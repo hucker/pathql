@@ -4,6 +4,7 @@ StatProxy: Lazy, cached stat() for PathQL filters, with stat call counting.
 
 import os
 import pathlib
+import threading
 
 
 class StatProxy:
@@ -16,6 +17,7 @@ class StatProxy:
         self._stat = None
         self._stat_error = None
         self._stat_calls = 0
+        self._lock = threading.Lock()
 
     def stat(self) -> os.stat_result:
         """
@@ -25,16 +27,17 @@ class StatProxy:
         Raises:
             Exception: If stat() fails, the error is cached and re-raised.
         """
-        self._stat_calls += 1
-        if self._stat is None and self._stat_error is None:
-            try:
-                self._stat = self.path.stat()
-            except Exception as e:
-                self._stat_error = e
-                raise
-        if self._stat_error:
-            raise self._stat_error
-        return self._stat
+        with self._lock:
+            self._stat_calls += 1
+            if self._stat is None and self._stat_error is None:
+                try:
+                    self._stat = self.path.stat()
+                except Exception as e:
+                    self._stat_error = e
+                    raise
+            if self._stat_error:
+                raise self._stat_error
+            return self._stat
 
     @property
     def stat_calls(self) -> int:
