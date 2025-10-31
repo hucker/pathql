@@ -1,5 +1,5 @@
 
-![pytest](https://img.shields.io/badge/pytest-530-brightgreen) ![ruff](https://img.shields.io/badge/ruff-passed-brightgreen) ![Python 3.10–3.14](https://img.shields.io/badge/python-3.10--3.14-blue.svg)
+![pytest](https://img.shields.io/badge/pytest-597-brightgreen) ![ruff](https://img.shields.io/badge/ruff-passed-brightgreen) ![Python 3.10–3.14](https://img.shields.io/badge/python-3.10--3.14-blue.svg)
 
 
 ## PathQL: Declarative Filesystem Query Language for Python
@@ -34,13 +34,14 @@ for f in Query(where_expr=(AgeDays() == 0) & (Size() > "10 mb") & (Suffix()=="lo
 ```python
 from pathql import AgeDays, Size, Suffix, Query,ResultField
 
-# Count, largest file size, and oldest file in the result set
-query = Query(
-    where_expr=(AgeDays() == 0) & (Size() > "10 mb") & (Suffix() == "log"),
-    from_paths="C:/logs",
-    threaded=True
+# Use fluent interface
+result_set = (
+    Query()
+    .from_paths("C:/logs")
+    .where((AgeDays() == 0) & (Size() > "10 mb") & (Suffix() == "log"))
+    .threaded(True)
+    .select()
 )
-result_set = query.select()
 
 print(f"Number of files to zip: {result_set.count_()}")
 print(f"Largest file size: {result_set.max(ResultField.SIZE)} bytes")

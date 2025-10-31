@@ -15,6 +15,7 @@ from pathql.filters.datetime_parts import (
     MonthFilter,
     SecondFilter,
     YearFilter,
+    normalize_attr,
 )
 from pathql.filters.stat_proxy import StatProxy
 
@@ -207,3 +208,36 @@ def test_filters_raise_on_invalid_attr(cls: Type[Filter]) -> None:
             cls(0, attr=invalid_attr)
         elif cls is SecondFilter:
             cls(0, attr=invalid_attr)
+
+
+def test_normalize_attr_invalid():
+    """normalize_attr raises ValueError for unknown attribute."""
+    # Arrange
+    invalid_attr = "not_a_real_attr"
+    # Act & Assert
+    with pytest.raises(ValueError):
+        normalize_attr(invalid_attr)
+
+def test_month_filter_invalid_month():
+    """MonthFilter raises ValueError for unknown month."""
+    # Arrange
+    invalid_month = "notamonth"
+    # Act & Assert
+    with pytest.raises(ValueError):
+        MonthFilter(invalid_month)
+
+@pytest.mark.parametrize("filter_cls, args", [
+    (YearFilter, [2025]),
+    (MonthFilter, ["jan"]),
+    (DayFilter, [1]),
+    (HourFilter, [1]),
+    (MinuteFilter, [1]),
+    (SecondFilter, [1]),
+])
+def test_filters_missing_stat_proxy(filter_cls, args):
+    """All datetime part filters raise ValueError if stat_proxy is missing."""
+    # Arrange
+    f = filter_cls(*args)
+    # Act & Assert
+    with pytest.raises(ValueError):
+        f.match(pathlib.Path("foo.txt"), stat_proxy=None)

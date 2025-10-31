@@ -1,7 +1,6 @@
 """
 Unit tests for Suffix and Ext filters in PathQL.
 Tests nosplit, case-insensitive matching, and operator overloads.
-All lines ≤88 chars for docstring compliance.
 """
 
 import pathlib

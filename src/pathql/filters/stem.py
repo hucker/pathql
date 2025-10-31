@@ -141,6 +141,12 @@ class Stem(Filter):
     def __lt__(self, other):
         raise NotImplementedError("Stem does not support '<' operator")
 
+    def __add__(self, other):
+        raise NotImplementedError("Stem does not support '+' operator")
+
+    def __sub__(self, other):
+        raise NotImplementedError("Stem does not support '-' operator")
+
     def __le__(self, other):
         raise NotImplementedError("Stem does not support '<=' operator")
 

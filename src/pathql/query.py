@@ -3,6 +3,10 @@ Query engine for pathql: threaded producer-consumer file search and filtering.
 
 This module defines the Query class, which uses a producer thread to walk the filesystem
 and a consumer (main thread) to filter files using pathql filters.
+
+Supports both classic constructor configuration and fluent/builder-style chained setup:
+    Query(from_paths="...", where_expr=Suffix() == ".txt")
+    Query().from_paths("...").where(Suffix() == ".txt")
 """
 
 import datetime as dt
@@ -23,48 +27,110 @@ from .result_set import ResultSet
 
 
 class Query(Filter):
+
     """
     Query engine for pathql.
 
     Uses a threaded producer-consumer model to walk the filesystem and filter files.
 
-    Args:
-        filter_expr (Filter): The filter expression to apply to files.
+    Supports both classic constructor configuration and fluent/builder-style chained setup.
     """
 
     def __init__(
         self,
         *,
-        where_expr: Filter | None = None,
         from_paths: StrPathOrListOfStrPath = ".",
+        where_expr: Filter | None = None,
         recursive: bool = True,
-        now: DatetimeOrNone = None,
         files_only: bool = True,
+        now: DatetimeOrNone = None,
         threaded: bool = False,
     ) -> None:
         """
         Initialize Query.
 
-        If you don't provide a where_expr a MatchAll filter is used
-        and all files in the folder will be match.
-        Optionally, set from_path to provide a default path or list/tuple of paths
-        to use for files/select if not specified at call time.
-
         Args:
+            from_paths (str | Path | list | tuple): Default path(s) for files/select.
             where_expr (Filter): The filter expression to apply to each file found in from_path
-            from_path (str | Path | list | tuple): Default path(s) for files/select.
+            recursive (bool): Whether to search recursively.
+            files_only (bool): Whether to include only files.
+            now (datetime | None): Reference time for filters.
+            threaded (bool): Whether to use threaded search.
         """
-        self.where_expr: Filter = where_expr or AllowAll()
+        self._from_paths: StrPathOrListOfStrPath = from_paths
+        self._where_expr: Filter = where_expr or AllowAll()
+        self._recursive: bool = recursive
+        self._files_only: bool = files_only
+        self._now: DatetimeOrNone = now
+        self._threaded: bool = threaded
+
+    # --- Builder/Fluent API methods ---
+    def from_paths(self, paths: StrPathOrListOfStrPath) -> "Query":
+        """Set the source path(s) for the query."""
+        self._from_paths = paths
+        return self
+
+    def where(self, expr: Filter) -> "Query":
+        """Set the filter expression for the query."""
+        self._where_expr = expr
+        return self
 
 
-        # These serve as default values for files/select if not provided at call time
-        self.from_paths: StrPathOrListOfStrPath = from_paths
-        self.results: list[pathlib.Path] = []
-        self.recursive: bool = recursive
-        self.files_only: bool = files_only
-        self.now: DatetimeOrNone = now
-        self.threaded: bool = threaded
+    def recursive(self, value: bool = True) -> "Query":
+        """Set whether to search recursively."""
+        self._recursive = value
+        return self
 
+    def files_only(self, value: bool = True) -> "Query":
+        """Set whether to include only files."""
+        self._files_only = value
+        return self
+
+    def at_time(self, now: DatetimeOrNone) -> "Query":
+        """Set the reference time for filters."""
+        self._now = now
+        return self
+
+    def threaded(self, value: bool = True) -> "Query":
+        """Set whether to use threaded search."""
+        self._threaded = value
+        return self
+
+
+    # --- Property getters for testing fluent interface ---
+    # These are provided to allow tests to verify internal state after using builder methods.
+    @property
+    def get_from_paths(self):
+        """For test support: get internal from_paths value."""
+        return self._from_paths
+
+    @property
+    def get_where_expr(self):
+        """For test support: get internal where_expr value."""
+        return self._where_expr
+
+    @property
+    def get_recursive(self):
+        """For test support: get internal recursive value."""
+        return self._recursive
+
+    @property
+    def get_files_only(self):
+        """For test support: get internal files_only value."""
+        return self._files_only
+
+    @property
+    def get_now(self):
+        """For test support: get internal now value."""
+        return self._now
+
+    @property
+    def get_threaded(self):
+        """For test support: get internal threaded value."""
+        return self._threaded
+
+
+    # --- Query logic ---
     def match(
         self,
         path: pathlib.Path,
@@ -76,8 +142,7 @@ class Query(Filter):
         """
         if now is None:
             now = dt.datetime.now()
-
-        return self.where_expr.match(path, stat_proxy, now=now)
+        return self._where_expr.match(path, stat_proxy, now=now)
 
     def _unthreaded_files(
         self,
@@ -91,7 +156,6 @@ class Query(Filter):
         """
         if isinstance(path, str):
             path = pathlib.Path(path)
-
         if now is None:
             now = dt.datetime.now()
         iterator = path.rglob("*") if recursive else path.glob("*")
@@ -99,7 +163,7 @@ class Query(Filter):
             if files and not p.is_file():
                 continue
             stat_proxy = StatProxy(p)
-            if self.where_expr.match(p, stat_proxy, now=now):
+            if self._where_expr.match(p, stat_proxy, now=now):
                 yield p
 
     def _threaded_files(
@@ -114,7 +178,6 @@ class Query(Filter):
         """
         if isinstance(path, str):
             path = pathlib.Path(path)
-
         if now is None:
             now = dt.datetime.now()
         q: queue.Queue[pathlib.Path | None] = queue.Queue(maxsize=10)
@@ -134,7 +197,7 @@ class Query(Filter):
             if p is None:
                 break
             stat_proxy = StatProxy(p)
-            if self.where_expr.match(p, stat_proxy, now=now):
+            if self._where_expr.match(p, stat_proxy, now=now):
                 yield p
         t.join()
 
@@ -144,24 +207,22 @@ class Query(Filter):
         recursive: bool | None = None,
         files_only: bool | None = None,
         now: DatetimeOrNone = None,
-        threaded: bool = False,
+        threaded: bool | None = None,
     ) -> Iterator[pathlib.Path]:
         """
         Yield files matching the filter expression for a single path or a list of paths.
         Handles both threaded and non-threaded modes. Uses default from_path if paths not given.
         """
         if from_paths is None:
-            from_paths = self.from_paths
-
+            from_paths = self._from_paths
         if recursive is None:
-            recursive = self.recursive
-
+            recursive = self._recursive
         if files_only is None:
-            files_only = self.files_only
-
+            files_only = self._files_only
         if now is None:
-            now = dt.datetime.now()
-
+            now = self._now or dt.datetime.now()
+        if threaded is None:
+            threaded = self._threaded
         if isinstance(from_paths, (str, pathlib.Path)):
             path_list = [from_paths]
         else:
@@ -183,7 +244,7 @@ class Query(Filter):
         recursive: bool | None = None,
         files_only: bool | None = None,
         now: DatetimeOrNone = None,
-        threaded: bool = False,
+        threaded: bool | None = None,
     ) -> ResultSet:
         """
         Return a ResultSet of files matching the filter expr for a path or a list of paths.

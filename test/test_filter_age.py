@@ -4,7 +4,7 @@ import datetime as dt
 import operator
 import os
 import pathlib
-from typing import Callable
+from typing import Callable,Any
 
 import pytest
 
@@ -168,3 +168,23 @@ def test_age_filter_eq_ne_behaviour(
     assert not operator.ne(filter_cls(), 1).match(f, stat_proxy=StatProxy(f), now=now)
     assert operator.eq(filter_cls(), 1).match(f, stat_proxy=StatProxy(f), now=now)
     assert not operator.ne(filter_cls(), 1).match(f, stat_proxy=StatProxy(f), now=now)
+
+def test_age_filter_missing_stat_proxy():
+    """Raise TypeError if filter is not fully specified."""
+    # Arrange
+    f = pathlib.Path("foo.txt")
+    age_filter = AgeMinutes(10)
+    # Act & Assert
+    with pytest.raises(TypeError, match="filter not fully specified"):
+        age_filter.match(f, stat_proxy=None)
+
+@pytest.mark.parametrize("filter_cls", [AgeMinutes, AgeHours, AgeDays, AgeYears])
+@pytest.mark.parametrize("bad_value", [1.5, "10", None, [10], {"val": 10}])
+def test_age_filter_invalid_threshold_type(filter_cls, bad_value):
+    """Raise TypeError for non-integer threshold values."""
+    # Arrange
+    f = filter_cls(bad_value)
+    # Act & Assert
+    with pytest.raises(TypeError, match="filter not fully specified"):
+        f.match(pathlib.Path("foo.txt"), stat_proxy=None)
+

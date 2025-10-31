@@ -170,3 +170,87 @@ def test_end_to_end_query_and_aggregations(test_result_folder: pathlib.Path) -> 
     assert expected_files == len(files), (
         f"Expected {expected_files} files, got {len(files)}"
     )
+
+@pytest.fixture
+def sample_files(tmp_path):
+    """Create sample files with different names and sizes."""
+    files = []
+    for i, name in enumerate(["a.txt", "b.md", "c.log"]):
+        f = tmp_path / name
+        f.write_text("x" * (i + 1))  # size: 1, 2, 3
+        files.append(f)
+    return ResultSet(files)
+
+def test_resultset_name_suffix_stem(sample_files):
+    """Test extraction of name, suffix, and stem fields."""
+    # Arrange
+    rs = sample_files
+    # Act & Assert
+    names = [f.name for f in rs]
+    suffixes = [f.suffix for f in rs]
+    stems = [f.stem for f in rs]
+    assert rs.max(ResultField.NAME) == max(names)
+    assert rs.min(ResultField.NAME) == min(names)
+    assert rs.max(ResultField.SUFFIX) == max(suffixes)
+    assert rs.min(ResultField.SUFFIX) == min(suffixes)
+    assert rs.max(ResultField.STEM) == max(stems)
+    assert rs.min(ResultField.STEM) == min(stems)
+
+def test_resultset_path_parent_parents(sample_files):
+    """Test extraction of path, parent, parents, parents_stem_suffix."""
+    # Arrange
+    rs = sample_files
+    # Act & Assert
+    assert all(isinstance(rs.max(ResultField.PATH), str) for _ in rs)
+    assert all(isinstance(rs.min(ResultField.PARENT), str) for _ in rs)
+    assert all(isinstance(rs.max(ResultField.PARENTS), tuple) for _ in rs)
+    assert all(isinstance(rs.min(ResultField.PARENTS_STEM_SUFFIX), tuple) for _ in rs)
+
+def test_resultset_size_fields(sample_files):
+    """Test extraction of size field."""
+    # Arrange
+    rs = sample_files
+    # Act & Assert
+    assert isinstance(rs.max(ResultField.SIZE), int)
+    assert isinstance(rs.min(ResultField.SIZE), int)
+
+def test_resultset_aggregates(sample_files):
+    """Test average, median, count_, sort_, top_n, bottom_n."""
+    # Arrange
+    rs = sample_files
+    # Act
+    avg_size = rs.average(ResultField.SIZE)
+    med_size = rs.median(ResultField.SIZE)
+    count = rs.count_()
+    sorted_rs = rs.sort_(ResultField.SIZE)
+    top = rs.top_n(ResultField.SIZE, 2)
+    bottom = rs.bottom_n(ResultField.SIZE, 2)
+    # Assert
+    sizes = [f.stat().st_size for f in rs]
+    assert avg_size == pytest.approx(sum(sizes) / len(rs))
+    assert med_size == 2
+    assert count == 3
+    assert sorted_rs[0].stat().st_size == 1
+    assert top[0].stat().st_size == 3
+    assert bottom[0].stat().st_size == 1
+
+def test_resultset_empty():
+    """Test aggregates on empty ResultSet."""
+    # Arrange
+    rs = ResultSet([])
+    # Act & Assert
+    assert rs.max(ResultField.SIZE) is None
+    assert rs.min(ResultField.SIZE) is None
+    assert rs.average(ResultField.SIZE) is None
+    assert rs.median(ResultField.SIZE) is None
+    assert rs.count_() == 0
+    assert rs.top_n(ResultField.SIZE, 2) == []
+    assert rs.bottom_n(ResultField.SIZE, 2) == []
+
+def test_resultset_invalid_field(sample_files):
+    """Test ValueError for unknown ResultField."""
+    # Arrange
+    rs = sample_files
+    # Act & Assert
+    with pytest.raises(ValueError):
+        rs.max("not_a_field")
