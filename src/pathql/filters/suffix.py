@@ -10,6 +10,7 @@ You can construct filters using:
     Suffix(["log", "txt"])
     Suffix() == "csv"
     Suffix() == ["csv", "tsv"]
+    Suffix() == "{foo,fum}"
 
 The Suffix filter is composable with other filters and supports instance-level equality
 and inequality operators for expressive query building.
@@ -19,7 +20,7 @@ import pathlib
 import re
 from typing import List
 
-from .alias import DatetimeOrNone, StrOrListOfStr,StatProxyOrNone
+from .alias import DatetimeOrNone, StrOrListOfStr, StatProxyOrNone
 from .base import Filter
 from .stat_proxy_guard import StatProxyGuard
 
@@ -44,14 +45,13 @@ class Suffix(Filter):
         self.nosplit = nosplit
         self.ignore_case = ignore_case
         self.patterns = self._normalize_patterns(patterns)
-        if not self.patterns:
-            raise ValueError("Suffix filter requires at least one pattern.")
+        self._negate = False  # For != operator
 
     def _normalize_patterns(self, patterns: StrOrListOfStr | None) -> List[str]:
         if patterns is None:
             return []
         if isinstance(patterns, str):
-            # Brace expansion: "{foo,,fum}" -> ["foo", "fum"]
+            # Brace expansion: "{foo,fum}" -> ["foo", "fum"]
             brace_match = re.match(r"^\{(.+)\}$", patterns.strip())
             if brace_match:
                 patterns = brace_match.group(1).split(",")
@@ -78,7 +78,9 @@ class Suffix(Filter):
         """
         Return True if the file's name ends with any of the patterns (with dot prefix).
         Supports multi-part extensions.
-        """  # If stat_proxy is not provided, use a dummy proxy that raises if accessed
+        """
+        if not self.patterns:
+            raise ValueError("Suffix filter requires at least one pattern.")
         if stat_proxy is None:
             stat_proxy = StatProxyGuard(path)
 
@@ -87,8 +89,8 @@ class Suffix(Filter):
             # Ensure pattern starts with a dot
             dot_pattern = f".{pattern}" if not pattern.startswith(".") else pattern
             if filename.endswith(dot_pattern):
-                return True
-        return False
+                return not self._negate
+        return self._negate
 
     def __eq__(self, other: object):
         """
@@ -98,31 +100,76 @@ class Suffix(Filter):
         - Otherwise return NotImplemented.
         """
         if isinstance(other, str):
-            return Suffix(other, nosplit=self.nosplit, ignore_case=self.ignore_case)
+            obj = Suffix(other, nosplit=self.nosplit, ignore_case=self.ignore_case)
+            obj._negate = False
+            return obj
         if isinstance(other, list):
-            return Suffix(other, nosplit=self.nosplit, ignore_case=self.ignore_case)
+            obj = Suffix(other, nosplit=self.nosplit, ignore_case=self.ignore_case)
+            obj._negate = False
+            return obj
         if isinstance(other, tuple):
-            return Suffix(
-                list(other), nosplit=self.nosplit, ignore_case=self.ignore_case
-            )
+            obj = Suffix(list(other), nosplit=self.nosplit, ignore_case=self.ignore_case)
+            obj._negate = False
+            return obj
         if isinstance(other, Suffix):
-            return self.patterns == other.patterns
+            return self.patterns == other.patterns and self._negate == other._negate
         return NotImplemented
 
     def __ne__(self, other: object):
         """
         Instance-level inequality and factory behavior.
-        - If `other` is a str/list/tuple, return an empty Suffix filter.
+        - If `other` is a str/list/tuple, return a negated Suffix filter.
         - If `other` is a Suffix, return boolean inequality of patterns.
         - Otherwise return NotImplemented.
         """
-        if isinstance(other, (str, list, tuple)):
-            return Suffix([], nosplit=self.nosplit, ignore_case=self.ignore_case)
+        if isinstance(other, str):
+            obj = Suffix(other, nosplit=self.nosplit, ignore_case=self.ignore_case)
+            obj._negate = True
+            return obj
+        if isinstance(other, list):
+            obj = Suffix(other, nosplit=self.nosplit, ignore_case=self.ignore_case)
+            obj._negate = True
+            return obj
+        if isinstance(other, tuple):
+            obj = Suffix(list(other), nosplit=self.nosplit, ignore_case=self.ignore_case)
+            obj._negate = True
+            return obj
         if isinstance(other, Suffix):
-            return self.patterns != other.patterns
+            return self.patterns != other.patterns or self._negate != other._negate
         return NotImplemented
 
+    def __lt__(self, other):
+        raise NotImplementedError("Suffix does not support '<' operator")
+    def __le__(self, other):
+        raise NotImplementedError("Suffix does not support '<=' operator")
+    def __gt__(self, other):
+        raise NotImplementedError("Suffix does not support '>' operator")
+    def __ge__(self, other):
+        raise NotImplementedError("Suffix does not support '>=' operator")
+    def __xor__(self, other):
+        raise NotImplementedError("Suffix does not support '^' operator")
 
-# Alias for pathlib-like naming
+    def __mod__(self, other):
+        raise NotImplementedError("Suffix does not support '%' operator")
+
+    def __floordiv__(self, other):
+        raise NotImplementedError("Suffix does not support '//' operator")
+
+    def __add__(self, other):
+        raise NotImplementedError("Suffix does not support '+' operator")
+
+    def __sub__(self, other):
+        raise NotImplementedError("Suffix does not support '-' operator")
+
+    def __mul__(self, other):
+        raise NotImplementedError("Suffix does not support '*' operator")
+
+    def __truediv__(self, other):
+        raise NotImplementedError("Suffix does not support '/' operator")
+
+    def __or__(self, other):
+        raise NotImplementedError("Suffix does not support '|' operator")
+
+    def __and__(self, other):
+        raise NotImplementedError("Suffix does not support '&' operator")
 Ext = Suffix
-Ext.__doc__ = "Alias for Suffix. See Suffix for usage.\n\n" + (Suffix.__doc__ or "")

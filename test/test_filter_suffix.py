@@ -1,7 +1,7 @@
 """Tests for Suffix and Ext filters (operator, multi-extension, case-insensitive)."""
 
 import pathlib
-from typing import Type
+from typing import Type, Callable
 
 import pytest
 
@@ -138,3 +138,88 @@ def test_suffix_multi_part_extensions(suffix_class) -> None:
     assert suffix_class(".tar.zip").match(f6, StatProxy(f6))
     assert not suffix_class(".tar.zip").match(f1, StatProxy(f1))
     assert not suffix_class(".tar.zip").match(f2, StatProxy(f2))
+
+def test_suffix_eq_new_style():
+    f_txt = pathlib.Path("foo.txt")
+    f_md = pathlib.Path("bar.md")
+    assert (Suffix() == "txt").match(f_txt)
+    assert not (Suffix() == "txt").match(f_md)
+    assert (Suffix() == ["txt", "md"]).match(f_md)
+    assert (Suffix() == ["txt", "md"]).match(f_txt)
+
+def test_suffix_ne_new_style():
+    f_log = pathlib.Path("baz.log")
+    f_txt = pathlib.Path("qux.txt")
+    assert not (Suffix() != "log").match(f_log)
+    assert (Suffix() != "log").match(f_txt)
+
+def test_suffix_eq_brace_expansion_new_style():
+    f_foo = pathlib.Path("a.foo")
+    f_fum = pathlib.Path("b.fum")
+    f_bar = pathlib.Path("c.bar")
+    suffix_filter = Suffix() == "{foo,fum}"
+    assert suffix_filter.match(f_foo)
+    assert suffix_filter.match(f_fum)
+    assert not suffix_filter.match(f_bar)
+
+
+@pytest.mark.parametrize("op", [
+    lambda s: s < "txt",
+    lambda s: s <= "txt",
+    lambda s: s > "txt",
+    lambda s: s >= "txt",
+])
+def test_suffix_unsupported_operators(op):
+    s = Suffix()
+    with pytest.raises(NotImplementedError):
+        op(s)
+
+def test_suffix_eq_new_style() -> None:
+    """Test Suffix() == ... matches file extensions."""
+    # Arrange
+    f_txt = pathlib.Path("foo.txt")
+    f_md = pathlib.Path("bar.md")
+    # Act & Assert
+    assert (Suffix() == "txt").match(f_txt)
+    assert not (Suffix() == "txt").match(f_md)
+    assert (Suffix() == ["txt", "md"]).match(f_md)
+    assert (Suffix() == ["txt", "md"]).match(f_txt)
+
+def test_suffix_ne_new_style() -> None:
+    """Test Suffix() != ... negates file extension matching."""
+    # Arrange
+    f_log = pathlib.Path("baz.log")
+    f_txt = pathlib.Path("qux.txt")
+    # Act & Assert
+    assert not (Suffix() != "log").match(f_log)
+    assert (Suffix() != "log").match(f_txt)
+
+def test_suffix_eq_brace_expansion_new_style() -> None:
+    """Test Suffix() == '{foo,fum}' supports brace expansion."""
+    # Arrange
+    f_foo = pathlib.Path("a.foo")
+    f_fum = pathlib.Path("b.fum")
+    f_bar = pathlib.Path("c.bar")
+    # Act
+    suffix_filter = Suffix() == "{foo,fum}"
+    # Assert
+    assert suffix_filter.match(f_foo)
+    assert suffix_filter.match(f_fum)
+    assert not suffix_filter.match(f_bar)
+
+@pytest.mark.parametrize("op", [
+    lambda s: s | "txt",
+    lambda s: s & "txt",
+    lambda s: s ^ "txt",
+    lambda s: s % "txt",
+    lambda s: s // "txt",
+    lambda s: s + "txt",
+    lambda s: s - "txt",
+    lambda s: s * "txt",
+    lambda s: s / "txt",
+])
+def test_suffix_other_unsupported_operators(op: Callable[[Suffix], object]) -> None:
+    """Test Suffix raises for other unsupported operators."""
+    s = Suffix()
+    with pytest.raises(NotImplementedError):
+        op(s)
