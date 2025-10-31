@@ -22,13 +22,11 @@ var/
 .installed.cfg
 *.egg
 
-<<<<<<< HEAD
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
 coverage.xml
 *.cover
-<<<<<<< HEAD
 .hypothesis/
 .pytest_cache/
 
