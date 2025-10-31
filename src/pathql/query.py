@@ -27,7 +27,6 @@ from .result_set import ResultSet
 
 
 class Query(Filter):
-
     """
     Query engine for pathql.
 
@@ -75,7 +74,6 @@ class Query(Filter):
         self._where_expr = expr
         return self
 
-
     def recursive(self, value: bool = True) -> "Query":
         """Set whether to search recursively."""
         self._recursive = value
@@ -95,7 +93,6 @@ class Query(Filter):
         """Set whether to use threaded search."""
         self._threaded = value
         return self
-
 
     # --- Property getters for testing fluent interface ---
     # These are provided to allow tests to verify internal state after using builder methods.
@@ -128,7 +125,6 @@ class Query(Filter):
     def get_threaded(self):
         """For test support: get internal threaded value."""
         return self._threaded
-
 
     # --- Query logic ---
     def match(
