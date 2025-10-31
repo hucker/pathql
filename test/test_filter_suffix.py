@@ -208,8 +208,6 @@ def test_suffix_eq_brace_expansion_new_style() -> None:
     assert not suffix_filter.match(f_bar)
 
 @pytest.mark.parametrize("op", [
-    lambda s: s | "txt",
-    lambda s: s & "txt",
     lambda s: s ^ "txt",
     lambda s: s % "txt",
     lambda s: s // "txt",

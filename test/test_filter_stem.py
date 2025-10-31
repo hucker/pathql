@@ -90,3 +90,58 @@ def test_stem_fnmatch_patterns(cls: type) -> None:
     assert not cls("[a-z][a-z][a-z]", ignore_case=False).match(f9)
     assert cls("[a-z][a-z][a-z]", ignore_case=False).match(f8)
     assert not cls("[a-z][a-z][a-z]", ignore_case=False).match(f9)
+
+
+def test_stem_eq_new_style() -> None:
+    """Test Stem() == ... matches file stems."""
+    # Arrange
+    f_foo = pathlib.Path("foo.txt")
+    f_bar = pathlib.Path("bar.txt")
+    # Act & Assert
+    assert (Stem() == "foo").match(f_foo)
+    assert not (Stem() == "foo").match(f_bar)
+    assert (Stem() == ["foo", "bar"]).match(f_foo)
+    assert (Stem() == ["foo", "bar"]).match(f_bar)
+
+def test_stem_ne_new_style() -> None:
+    """Test Stem() != ... negates file stem matching."""
+    # Arrange
+    f_foo = pathlib.Path("foo.txt")
+    f_bar = pathlib.Path("bar.txt")
+    # Act & Assert
+    assert not (Stem() != "foo").match(f_foo)
+    assert (Stem() != "foo").match(f_bar)
+
+@pytest.mark.parametrize("op", [
+    lambda s: s < "foo",
+    lambda s: s <= "foo",
+    lambda s: s > "foo",
+    lambda s: s >= "foo",
+    lambda s: s ^ "foo",
+    lambda s: s % "foo",
+    lambda s: s // "foo",
+    lambda s: s + "foo",
+    lambda s: s - "foo",
+    lambda s: s * "foo",
+    lambda s: s / "foo",
+])
+def test_stem_unsupported_operators(op) -> None:
+    """Test Stem raises for unsupported operators."""
+    # Arrange
+    s = Stem()
+    # Act & Assert
+    with pytest.raises(NotImplementedError):
+        op(s)
+
+def test_stem_case_sensitivity() -> None:
+    """Test Stem(ignore_case=...) matches stems with/without case sensitivity."""
+    # Arrange
+    f_upper = pathlib.Path("FOO.txt")
+    f_lower = pathlib.Path("foo.txt")
+    # Act & Assert
+    # Case-insensitive (default)
+    assert (Stem(ignore_case=True) == "foo").match(f_upper)
+    assert (Stem(ignore_case=True) == "FOO").match(f_lower)
+    # Case-sensitive
+    assert (Stem(ignore_case=False) == "FOO").match(f_upper)
+    assert not (Stem(ignore_case=False) == "FOO").match(f_lower)

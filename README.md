@@ -21,13 +21,13 @@ PathQL lets you write queries against the file system in a composable form:
 
 ```python
 from pathql import AgeYears, Suffix, Query
-for f in Query(where_expr=(AgeYears() > 1) & Suffix(".bak"), from_paths="c:/logs").files():
+for f in Query(where_expr=(AgeYears() > 1) & (Suffix() == ".bak"), from_paths="c:/logs").files():
     print(f"Files to delete - {f.resolve()}")
 ```
 
 ```python
 from pathql import AgeDays, Size, FileType, Suffix, Query
-for f in Query(where_expr=(AgeDays() == 0) & (Size() > "10 mb") & Suffix("log"), from_paths="C:/logs", threaded=True).files():
+for f in Query(where_expr=(AgeDays() == 0) & (Size() > "10 mb") & (Suffix()=="log"), from_paths="C:/logs", threaded=True).files():
     print(f"Files to zip - {f.resolve()}")
 ```
 
@@ -36,7 +36,7 @@ from pathql import AgeDays, Size, Suffix, Query,ResultField
 
 # Count, largest file size, and oldest file in the result set
 query = Query(
-    where_expr=(AgeDays() == 0) & (Size() > "10 mb") & Suffix("log"),
+    where_expr=(AgeDays() == 0) & (Size() > "10 mb") & (Suffix() == "log"),
     from_paths="C:/logs",
     threaded=True
 )
@@ -70,7 +70,7 @@ The query language implemented by `PathQL` should be thought of as a mathematica
 
 You must say
 
-`(AgeDays() < 2) & (Suffix("txt))`
+`(AgeDays() < 2) & (Suffix() =="txt")`
 
 for precedence to work as you expect, or use the `All`/`Any` methods.
 
@@ -138,8 +138,8 @@ Filters should be pure functions without side effects, as short-circuiting means
 #### Example Filters
 
 - `Size() <= 1_000_000` — files up to 1MB
-- `Suffix({".png", ".jpg"})` — files with .png or .jpg extension
-- `Stem("report_*")` — files whose stem matches a glob pattern (e.g., starts with "report_")
+- `Suffix() == [".png", ".jpg"}]` — files with .png or .jpg extension
+- `Stem()=="report_*")` — files whose stem matches a glob pattern (e.g., starts with "report_")
 - `FileType().file` — 'file, 'dir', 'link'
 - `AgeMinutes() < 10` — modified in the last 10 minutes
 - `Between(Size(), 1000, 2000)` — files with size >= 1000 and < 2000 bytes (inclusive lower, exclusive upper)

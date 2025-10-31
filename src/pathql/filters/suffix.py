@@ -167,9 +167,5 @@ class Suffix(Filter):
     def __truediv__(self, other):
         raise NotImplementedError("Suffix does not support '/' operator")
 
-    def __or__(self, other):
-        raise NotImplementedError("Suffix does not support '|' operator")
 
-    def __and__(self, other):
-        raise NotImplementedError("Suffix does not support '&' operator")
 Ext = Suffix
