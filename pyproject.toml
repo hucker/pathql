@@ -1,6 +1,6 @@
 [project]
 name = "pathql"
-version = "0.0.8"
+version = "0.0.9"
 description = "PathQL: A Python project for declarative file system querying."
 authors = [
 	{name = "Chuck Bass", email = "chuck@acrocad.net"}

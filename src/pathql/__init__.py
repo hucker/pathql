@@ -40,7 +40,7 @@ from .result_fields import ResultField
 from .result_set import ResultSet
 from .utils import normalize_path
 
-__version__ = "0.0.8"
+__version__ = "0.0.9"
 
 __all__ = [
     "AgeDays",

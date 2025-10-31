@@ -1,5 +1,5 @@
 
-![pytest](https://img.shields.io/badge/pytest-597-brightgreen) ![ruff](https://img.shields.io/badge/ruff-passed-brightgreen) ![Python 3.10–3.14](https://img.shields.io/badge/python-3.10--3.14-blue.svg)
+![pytest](https://img.shields.io/badge/pytest-644-brightgreen) ![ruff](https://img.shields.io/badge/ruff-passed-brightgreen) ![Python 3.10–3.14](https://img.shields.io/badge/python-3.10--3.14-blue.svg)
 
 
 ## PathQL: Declarative Filesystem Query Language for Python
@@ -680,8 +680,10 @@ Project-level conventions, contributor guidance, and release steps are maintaine
 
 ## Release Summary
 
-### Version: **v0.0.8** &nbsp;|&nbsp; Date: 2025-10-29
+### Version: **v0.0.9** &nbsp;|&nbsp; Date: 2025-10-31
 
 #### Highlights
 
-- **README.md refactored:** Fixed issue in `README.md` file. Did not double check AI.
+- Added fluent interface for query. `query =Query().from_paths("c:/logs").where(Suffix() == 'txt').select()`.
+- Updated  Stem()/Suffix() to support `==`/`!=` operators allowing  `Stem() == "txt"`
+- Improved test coverage.
